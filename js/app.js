@@ -1,16 +1,21 @@
 import { h, clear, toast } from './lib/dom.js';
-import { mdi, md } from './lib/md.js';
+import { mdi, md, loadKatex } from './lib/md.js';
 import { icons, logo } from './lib/icons.js';
 import { store } from './store.js';
 import { cover, heroArt, animateHero, principleArt } from './art.js';
-import { courses, getCourse } from './courses/index.js';
+import { courses } from './courses/catalog.js';
 import { renderLesson } from './lesson.js';
+import { loadWidgets } from './widgets/index.js';
 import { s } from './lib/svg.js';
 
 const root = document.getElementById('app');
 let sessionFilter = 'all';
 let sessionLevel = 'all';
 const LEVELS = ['Foundational', 'Intermediate', 'Advanced'];
+
+// the catalog has every course without its lesson steps; a full course loads when a lesson opens
+const getCourse = (id) => courses.find((c) => c.id === id);
+const loadCourse = (id) => import(`./courses/${id}.js`).then((m) => m.default);
 
 // ---------- theme ----------
 function applyTheme(t) {
@@ -29,22 +34,50 @@ function go(hash) {
 }
 window.addEventListener('hashchange', route);
 
-function route() {
+// A deploy since this tab opened can pair new course or widget files with old shared modules
+// that no longer fit; a reload fetches a matching set. At most once a minute, so it never loops.
+function reloadOnce() {
+  try {
+    if (Date.now() - (+sessionStorage.getItem('openaha:reloaded') || 0) < 60000) return false;
+    sessionStorage.setItem('openaha:reloaded', String(Date.now()));
+  } catch (e) {
+    return false;
+  }
+  location.reload();
+  return true;
+}
+
+// The current page stays up while the next one loads what it needs; only the latest route renders.
+let routeSeq = 0;
+async function route() {
+  const seq = ++routeSeq;
+  const [page, a, b, stepNo] = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const c = getCourse(a);
+  let view = () => homePage(page === 'courses');
+  if (page === 'about') view = aboutPage;
+  else if (page === 'legal') view = legalPage;
+  else if (c && (page === 'course' || page === 'lesson')) {
+    view = () => coursePage(c);
+    try {
+      const [full] = await Promise.all([page === 'lesson' ? loadCourse(c.id) : null, loadKatex()]);
+      const all = full ? full.chapters.flatMap((ch) => ch.lessons) : [];
+      const idx = all.findIndex((l) => l.id === b);
+      if (idx >= 0) {
+        await loadWidgets(all[idx]);
+        view = () => renderLesson(root, { course: full, lesson: all[idx], next: all[idx + 1], go, start: stepNo ? Math.max(0, +stepNo - 1) : 0 });
+      }
+    } catch (e) {
+      if (seq !== routeSeq) return;
+      console.error(e);
+      if (navigator.onLine && reloadOnce()) return;
+      toast('Could not load this page. Check your connection and try again.');
+      if (root.firstChild) return;
+    }
+  }
+  if (seq !== routeSeq) return;
   root._cleanup?.();
   root._cleanup = null;
-  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-  const [page, a, b, stepNo] = parts;
-  if (page === 'course' && getCourse(a)) return coursePage(getCourse(a));
-  if (page === 'lesson' && getCourse(a)) {
-    const c = getCourse(a);
-    const all = c.chapters.flatMap((ch) => ch.lessons);
-    const idx = all.findIndex((l) => l.id === b);
-    if (idx >= 0) return renderLesson(root, { course: c, lesson: all[idx], next: all[idx + 1], go, start: stepNo ? Math.max(0, +stepNo - 1) : 0 });
-    return coursePage(c);
-  }
-  if (page === 'about') return aboutPage();
-  if (page === 'legal') return legalPage();
-  return homePage(page === 'courses');
+  view();
 }
 
 // ---------- shared chrome ----------
@@ -161,7 +194,7 @@ function aboutPage() {
   document.title = 'About · OpenAha';
   clear(root);
   const nLessons = courses.reduce((a, c) => a + c.chapters.reduce((b, ch) => b + ch.lessons.length, 0), 0);
-  const nSteps = courses.reduce((a, c) => a + c.chapters.reduce((b, ch) => b + ch.lessons.reduce((d, l) => d + l.steps.length, 0), 0), 0);
+  const nSteps = courses.reduce((a, c) => a + c.chapters.reduce((b, ch) => b + ch.lessons.reduce((d, l) => d + l.nSteps, 0), 0), 0);
   const fmt = (n) => n.toLocaleString('en-US');
   const page = h('section.about.wrap',
     h('div.eyebrow', 'About OpenAha'),
@@ -258,7 +291,7 @@ function coursePage(c) {
   const pr = store.courseProgress(c);
   const n = nextLesson(c);
   const all = c.chapters.flatMap((ch) => ch.lessons);
-  const mins = all.reduce((a, l) => a + (l.minutes || Math.max(5, Math.round(l.steps.length * 0.9))), 0);
+  const mins = all.reduce((a, l) => a + l.minutes, 0);
 
   const hero = h('section.course-hero',
     h('div.wrap',
@@ -292,7 +325,7 @@ function coursePage(c) {
             h(`a.node${done ? '.is-done' : ''}${isNext ? '.is-next' : ''}`, { href: `#/lesson/${c.id}/${l.id}`, 'aria-label': `${l.title}${done ? ' (completed)' : ''}`, html: nodeIcon })),
           h('a.node-label', { href: `#/lesson/${c.id}/${l.id}` },
             h('strong', l.title),
-            h('span', l.summary || `${l.steps.length} steps`))));
+            h('span', l.summary || `${l.nSteps} steps`))));
     });
     chapters.append(
       h('section.chapter',
@@ -303,6 +336,11 @@ function coursePage(c) {
   root.append(header(), h(`main.page-enter.subject-${c.subject}`, hero, chapters), footer());
   window.scrollTo(0, 0);
   requestAnimationFrame(() => drawPaths(chapters));
+  // fetch the course and the widgets of the lesson the main button opens, so it starts at once
+  const first = n || all[0];
+  loadCourse(c.id)
+    .then((full) => loadWidgets(full.chapters.flatMap((ch) => ch.lessons).find((l) => l.id === first.id)))
+    .catch(() => {});
   const onResize = () => drawPaths(chapters);
   window.addEventListener('resize', onResize);
   root._cleanup = () => window.removeEventListener('resize', onResize);

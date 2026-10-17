@@ -8,6 +8,8 @@
 //   const m = await import('/scripts/layout-check.js'); await m.check(['powers'], { samples: 6 })
 import { courses } from '../js/courses/index.js';
 import { renderStep } from '../js/steps.js';
+import { loadWidgets } from '../js/widgets/index.js';
+import { loadKatex } from '../js/lib/md.js';
 import { textBoost, textFloor, keepInside } from '../js/lib/svg.js';
 
 // apply the phone text enlargement now (the page's ResizeObserver does not run in a hidden tab)
@@ -90,6 +92,7 @@ function setSlider(input, v) {
 }
 
 export async function check(ids, { samples = 4, minFont = 9, seed = 1 } = {}) {
+  await Promise.all([loadKatex(), loadWidgets(courses.filter((c) => !ids || ids.includes(c.id)))]);
   let rnd = seed;
   const rand = () => ((rnd = (rnd * 16807) % 2147483647) / 2147483647);
   const host = document.createElement('div');

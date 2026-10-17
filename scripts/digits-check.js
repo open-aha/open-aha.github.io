@@ -12,6 +12,8 @@
 //   const m = await import('/scripts/digits-check.js'); await m.check(['motion'])
 import { courses } from '../js/courses/index.js';
 import { renderStep } from '../js/steps.js';
+import { loadWidgets } from '../js/widgets/index.js';
+import { loadKatex } from '../js/lib/md.js';
 
 const tick = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
 const NUM = /[−-]?\d+(?:\.\d+)?/g;
@@ -116,6 +118,7 @@ async function exercise(ctrl, seen, clock, { frames, sweep }) {
 }
 
 export async function check(ids, { frames = 300, values = 8 } = {}) {
+  await Promise.all([loadKatex(), loadWidgets(courses.filter((c) => !ids || ids.includes(c.id)))]);
   const host = document.createElement('div');
   host.className = 'player';
   host.style.cssText = `position:absolute;left:-12000px;top:0;width:${Math.min(680, document.documentElement.clientWidth - 32)}px;`;

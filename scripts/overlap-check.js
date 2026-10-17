@@ -7,6 +7,8 @@
 //   const m = await import('/scripts/overlap-check.js'); await m.check(['powers'])
 import { courses } from '../js/courses/index.js';
 import { renderStep } from '../js/steps.js';
+import { loadWidgets } from '../js/widgets/index.js';
+import { loadKatex } from '../js/lib/md.js';
 import { boost } from './layout-check.js';
 
 // a message-channel tick is not throttled when the tab is in the background (unlike setTimeout)
@@ -150,6 +152,7 @@ function inspectSvg(svg, at, issues, figBg) {
 }
 
 export async function check(ids, { theme, extremes = true } = {}) {
+  await Promise.all([loadKatex(), loadWidgets(courses.filter((c) => !ids || ids.includes(c.id)))]);
   if (theme) document.documentElement.dataset.theme = theme;
   const host = document.createElement('div');
   host.className = 'player';
@@ -195,7 +198,8 @@ export async function check(ids, { theme, extremes = true } = {}) {
 }
 
 // Show one step full-screen (optionally solved) so it can be inspected or screenshotted.
-export function show(courseId, lessonId, n, { solved = false, end, set } = {}) {
+export async function show(courseId, lessonId, n, { solved = false, end, set } = {}) {
+  await Promise.all([loadKatex(), loadWidgets(courses.find((c) => c.id === courseId))]);
   const c = courses.find((x) => x.id === courseId);
   const l = c.chapters.flatMap((ch) => ch.lessons).find((x) => x.id === lessonId);
   let step = l.steps[n - 1];

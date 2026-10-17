@@ -17,8 +17,10 @@ behind every answer.
 | `js/steps.js` | Step types: explain, mcq, multi, numeric, interactive, order |
 | `js/widgets/` | Interactive figures: graph (the general workhorse: sliders, draggable points, animation), figure, balance, track, projectile, forces, energy, circuit, sampler, monty, orbit, collide, sieve, gas, doubleslit, network, decay, mandel, ipd, bits, symmetry, gates, turing |
 | `js/courses/` | Course content (data + small drawing helpers) |
+| `js/courses/catalog.js` | Generated: every course without its lesson steps, for the home and course pages. A course's full file loads only when one of its lessons opens |
 | `js/art.js` | Course cover illustrations |
 | `scripts/validate.mjs` | Content validator |
+| `scripts/build-catalog.mjs` | Builds `js/courses/catalog.js` (the validator runs it too) |
 
 Progress, XP and streaks are stored in `localStorage` on the viewer's device.
 
@@ -29,4 +31,4 @@ Dev shortcut: `#/lesson/<course>/<lesson>/<step>` opens a lesson at a given step
 1. Write `js/courses/<id>.js` exporting `{ id, subject, title, level, cover, tagline, description, prereq, chapters }`.
 2. Add a cover to `js/art.js` (keyed by `cover`).
 3. Import it in `js/courses/index.js` and place it in the learning path.
-4. Run `npm run validate`.
+4. Run `npm run validate`. It also regenerates `js/courses/catalog.js`.

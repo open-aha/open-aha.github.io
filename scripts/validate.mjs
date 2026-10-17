@@ -3,7 +3,8 @@
 import katex from 'katex';
 import { courses } from '../js/courses/index.js';
 import { covers } from '../js/art.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { updateCatalog } from './build-catalog.mjs';
 import { fixMiddleDot } from '../js/lib/md.js';
 import { evaluate as evaluateGates } from '../js/widgets/gates-core.js';
 import { withEdits as tmEdits } from '../js/widgets/turing-core.js';
@@ -17,8 +18,7 @@ Object.assign(macros, { '\\R': '\\mathbb{R}', '\\dd': '\\,\\mathrm{d}', '\\unit'
 
 // widget kinds registered in js/widgets/index.js
 const reg = readFileSync(new URL('../js/widgets/index.js', import.meta.url), 'utf8');
-const regBlock = reg.match(/const REGISTRY = \{([^}]*)\}/)[1];
-const KINDS = new Set(regBlock.split(',').map((s) => s.trim().split(':')[0].trim()).filter(Boolean));
+const KINDS = new Set([...reg.matchAll(/^\s*(\w+): \(\) => import\(/gm)].map((m) => m[1]));
 
 const errors = [];
 const warns = [];
@@ -71,6 +71,9 @@ for (const c of courses) {
   for (const f of ['id', 'subject', 'title', 'level', 'cover', 'tagline', 'description', 'chapters'])
     if (!c[f]) errors.push(`${cw}: missing ${f}`);
   if (courseIds.has(c.id)) errors.push(`${cw}: duplicate id`);
+  // the app loads js/courses/<id>.js on demand
+  const file = new URL(`../js/courses/${c.id}.js`, import.meta.url);
+  if (!existsSync(file) || (await import(file)).default !== c) errors.push(`${cw}: must be the default export of js/courses/${c.id}.js`);
   courseIds.add(c.id);
   if (!['math', 'physics'].includes(c.subject)) errors.push(`${cw}: bad subject`);
   if (!covers[c.cover]) errors.push(`${cw}: unknown cover "${c.cover}"`);
@@ -231,6 +234,7 @@ for (const c of courses) {
 
 const lessons = courses.reduce((a, c) => a + c.chapters.reduce((b, ch) => b + ch.lessons.length, 0), 0);
 console.log(`${courses.length} courses, ${lessons} lessons, ${stepCount} steps, ${mathCount} formulas checked`);
+if (!errors.length && updateCatalog()) console.log('updated js/courses/catalog.js');
 for (const w of warns) console.log('warn  ' + w);
 for (const e of errors) console.log('ERROR ' + e);
 if (errors.length) {

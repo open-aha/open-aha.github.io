@@ -20,6 +20,28 @@ const KATEX_OPTS = {
   macros,
 };
 
+// KaTeX (script and stylesheet) loads the first time a page with math is about to render.
+let katexReady;
+export function loadKatex() {
+  if (katexReady) return katexReady;
+  if (window.katex) return Promise.resolve();
+  const add = (tag, attrs) =>
+    new Promise((resolve, reject) => {
+      const el = Object.assign(document.createElement(tag), attrs, { onload: resolve, onerror: reject });
+      // the stylesheet goes before ours, so our .katex rules still win
+      document.head.insertBefore(el, tag === 'link' ? document.head.querySelector('link[rel="stylesheet"]') : null);
+    });
+  const base = new URL('../../vendor/katex/', import.meta.url);
+  katexReady = Promise.all([
+    add('link', { rel: 'stylesheet', href: new URL('katex.min.css', base).href }),
+    add('script', { src: new URL('katex.min.js', base).href }),
+  ]).catch((e) => {
+    katexReady = null;
+    throw e;
+  });
+  return katexReady;
+}
+
 export function tex(src, display = false) {
   if (!window.katex) return escapeHtml(src);
   // KaTeX can't use a middle dot inside \text{}; write units like m·K safely

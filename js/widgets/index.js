@@ -1,38 +1,56 @@
-import { graph } from './graph.js';
-import { figure } from './figure.js';
-import { balance } from './balance.js';
-import { track } from './track.js';
-import { projectile } from './projectile.js';
-import { forces } from './forces.js';
-import { energy } from './energy.js';
-import { circuit } from './circuit.js';
-import { sampler } from './sampler.js';
-import { monty } from './monty.js';
-import { orbit } from './orbit.js';
-import { collide } from './collide.js';
-import { sieve } from './sieve.js';
-import { gas } from './gas.js';
-import { doubleslit } from './doubleslit.js';
-import { network } from './network.js';
-import { decay } from './decay.js';
-import { mandel } from './mandel.js';
-import { julia } from './julia.js';
-import { ipd } from './ipd.js';
-import { bits } from './bits.js';
-import { symmetry } from './symmetry.js';
-import { gates } from './gates.js';
-import { turing } from './turing.js';
-import { pcp } from './pcp.js';
-import { ising } from './ising.js';
-import { robot } from './robot.js';
-import { trace } from './trace.js';
-import { reactor } from './reactor.js';
 import { ensureDefs } from '../lib/svg.js';
 
-const REGISTRY = { graph, figure, balance, track, projectile, forces, energy, circuit, sampler, monty, orbit, collide, sieve, gas, doubleslit, network, decay, mandel, julia, ipd, bits, symmetry, gates, turing, pcp, ising, robot, trace, reactor };
+// Each widget is its own module, fetched the first time a lesson needs it.
+const LOADERS = {
+  graph: () => import('./graph.js'),
+  figure: () => import('./figure.js'),
+  balance: () => import('./balance.js'),
+  track: () => import('./track.js'),
+  projectile: () => import('./projectile.js'),
+  forces: () => import('./forces.js'),
+  energy: () => import('./energy.js'),
+  circuit: () => import('./circuit.js'),
+  sampler: () => import('./sampler.js'),
+  monty: () => import('./monty.js'),
+  orbit: () => import('./orbit.js'),
+  collide: () => import('./collide.js'),
+  sieve: () => import('./sieve.js'),
+  gas: () => import('./gas.js'),
+  doubleslit: () => import('./doubleslit.js'),
+  network: () => import('./network.js'),
+  decay: () => import('./decay.js'),
+  mandel: () => import('./mandel.js'),
+  julia: () => import('./julia.js'),
+  ipd: () => import('./ipd.js'),
+  bits: () => import('./bits.js'),
+  symmetry: () => import('./symmetry.js'),
+  gates: () => import('./gates.js'),
+  turing: () => import('./turing.js'),
+  pcp: () => import('./pcp.js'),
+  ising: () => import('./ising.js'),
+  robot: () => import('./robot.js'),
+  trace: () => import('./trace.js'),
+  reactor: () => import('./reactor.js'),
+};
+const REGISTRY = {};
 
 export function registerWidget(name, fn) {
   REGISTRY[name] = fn;
+}
+
+// widget kinds used anywhere inside obj (a course, a lesson or a step)
+function kindsIn(obj, out = new Set(), seen = new Set()) {
+  if (!obj || typeof obj !== 'object' || seen.has(obj)) return out;
+  seen.add(obj);
+  if (typeof obj.kind === 'string' && Object.prototype.hasOwnProperty.call(LOADERS, obj.kind)) out.add(obj.kind);
+  for (const v of Object.values(obj)) kindsIn(v, out, seen);
+  return out;
+}
+
+// load every widget used inside obj, so createWidget can stay synchronous
+export function loadWidgets(obj) {
+  const kinds = [...kindsIn(obj)].filter((k) => !REGISTRY[k]);
+  return Promise.all(kinds.map((k) => LOADERS[k]().then((m) => (REGISTRY[k] ||= m[k]))));
 }
 
 export function createWidget(box, spec, api) {

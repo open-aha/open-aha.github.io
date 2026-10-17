@@ -3,11 +3,14 @@
 //   const m = await import('/scripts/render-check.js'); await m.check(['series'])
 import { courses } from '../js/courses/index.js';
 import { renderStep } from '../js/steps.js';
+import { loadWidgets } from '../js/widgets/index.js';
+import { loadKatex } from '../js/lib/md.js';
 
 const BAD = /NaN|undefined|Infinity/;
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
 export async function check(ids) {
+  await Promise.all([loadKatex(), loadWidgets(courses.filter((c) => !ids || ids.includes(c.id)))]);
   const host = document.createElement('div');
   host.style.cssText = 'position:absolute;left:-12000px;top:0;width:680px;';
   document.body.append(host);

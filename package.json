@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "validate": "node scripts/validate.mjs",
+    "catalog": "node scripts/build-catalog.mjs",
     "start": "python3 scripts/serve.py 5173"
   },
   "keywords": [],
