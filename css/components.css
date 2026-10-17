@@ -944,6 +944,27 @@ button.tcard:active {
   flex-wrap: wrap;
   gap: 12px;
 }
+
+/* ---------- impressum & privacy ---------- */
+.legal {
+  padding-top: clamp(40px, 7vw, 88px);
+  padding-bottom: 72px;
+  max-width: 720px;
+}
+.legal h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(32px, 5vw, 44px);
+}
+.legal h2 {
+  margin-top: 36px;
+  font-size: 22px;
+}
+.legal p {
+  margin-top: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
 @media (max-width: 360px) {
   /* very narrow phones: the logo alone leaves room for About, the streak and the theme switch */
   .brand span {

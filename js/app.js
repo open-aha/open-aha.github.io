@@ -43,6 +43,7 @@ function route() {
     return coursePage(c);
   }
   if (page === 'about') return aboutPage();
+  if (page === 'legal') return legalPage();
   return homePage(page === 'courses');
 }
 
@@ -75,7 +76,7 @@ function header(active) {
 function footer() {
   return h('footer.site-footer',
     h('div.wrap',
-      h('div', { html: `<strong style="color:var(--ink)">OpenAha</strong>: free, interactive math and science for everyone. <a href="#/about">About</a>` }),
+      h('div', { html: `<strong style="color:var(--ink)">OpenAha</strong>: free, interactive math and science for everyone. <a href="#/about">About</a> · <a href="#/legal">Impressum &amp; Privacy</a>` }),
       h('div',
         h('button.btn.btn-ghost.btn-sm', {
           type: 'button',
@@ -188,6 +189,24 @@ function aboutPage() {
       h('a.btn', { href: '#/courses' }, 'Browse the courses'),
       h('a.btn.btn-secondary', { href: '#/' }, 'Back to home')));
   root.append(header('about'), h('main.page-enter', page), footer());
+  window.scrollTo(0, 0);
+}
+
+// ---------- legal notice (§ 18 MStV) and privacy (Art. 13 GDPR) ----------
+function legalPage() {
+  document.title = 'Impressum & Privacy · OpenAha';
+  clear(root);
+  const page = h('section.legal.wrap',
+    h('h1', 'Impressum'),
+    h('p', 'Information according to § 18 (1) MStV:'),
+    h('p', { html: 'Kiarash Parvizi<br>Altheimer Straße 56a<br>64807 Dieburg<br>Germany' }),
+    h('h2', 'Privacy'),
+    h('p', 'Controller: Kiarash Parvizi, address above.'),
+    h('p', { html: 'This site is hosted on GitHub Pages by GitHub, Inc. (USA). When you visit, GitHub logs your IP address for security purposes (Art. 6 (1) (f) GDPR: our legitimate interest in a secure, working website). The site cannot be delivered without it. GitHub keeps these logs as long as it needs them for security and publishes no fixed period. GitHub takes part in the EU-US Data Privacy Framework; see the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub Privacy Statement</a>.' }),
+    h('p', 'Your progress, XP, streak and theme are saved only in your browser’s local storage, because the site needs them to work (§ 25 (2) no. 2 TDDDG). They are never sent to us or anyone else. You can delete them with “Reset progress” or by clearing this site’s data. There are no cookies, no tracking and no analytics.'),
+    h('p', 'You have the right to access, rectification, erasure, restriction of processing and data portability (Art. 15–18, 20 GDPR), and to lodge a complaint with a supervisory authority, such as the Hessian Commissioner for Data Protection and Freedom of Information (HBDI).'),
+    h('p', { html: '<strong>Right to object:</strong> you can object at any time, on grounds relating to your particular situation, to processing of your data based on Art. 6 (1) (f) GDPR (Art. 21 GDPR).' }));
+  root.append(header(), h('main.page-enter', page), footer());
   window.scrollTo(0, 0);
 }
 
