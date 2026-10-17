@@ -4,6 +4,8 @@ Free, interactive lessons in math and science. Every lesson is a short sequence 
 hands-on puzzles: predict, drag, simulate and solve, with instant feedback and an explanation
 behind every answer.
 
+**Start learning at [openaha.org](https://openaha.org)**
+
 ## Layout
 
 | Path | What it is |
