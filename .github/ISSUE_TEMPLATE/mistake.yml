@@ -1,0 +1,22 @@
+name: Something's wrong
+description: A wrong answer, a mistake in an explanation, a typo, or a widget that misbehaves.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for catching this! The "Suggest an improvement" button in a lesson fills in the first field for you.
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: Course, lesson and step, ideally with the link to the step.
+      placeholder: "Probability › The Monty Hall problem › step 3 of 12"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What's wrong
+      description: What did the lesson say or do, and what should it say or do instead? A screenshot helps.
+    validations:
+      required: true

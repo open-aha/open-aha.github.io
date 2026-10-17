@@ -83,8 +83,16 @@ export const store = {
     state.theme = t;
     save();
   },
+  // how often a one-off tip (e.g. 'suggest') has been shown
+  tipCount(id) {
+    return state.tips?.[id] ?? 0;
+  },
+  countTip(id) {
+    state.tips = { ...state.tips, [id]: this.tipCount(id) + 1 };
+    save();
+  },
   reset() {
-    state = { xp: 0, lessons: {}, streak: { count: 0, last: null }, last: null, theme: state.theme };
+    state = { xp: 0, lessons: {}, streak: { count: 0, last: null }, last: null, theme: state.theme, tips: state.tips };
     save();
   },
 };

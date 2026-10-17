@@ -838,3 +838,114 @@
     display: none;
   }
 }
+
+/* suggest-an-improvement dialog */
+.suggest-btn {
+  flex: none;
+  margin-right: -6px;
+}
+.dialog.suggest {
+  max-width: 480px;
+}
+.suggest-where {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.suggest-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 12px;
+}
+.suggest-kind {
+  padding: 8px 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
+  transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
+}
+.suggest-kind:hover {
+  border-color: var(--line-2);
+}
+.suggest-kind[aria-pressed="true"] {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--ink);
+}
+.suggest-text {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  resize: vertical;
+}
+.suggest-text:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.dialog .suggest-note {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+@media (max-width: 480px) {
+  .dialog.suggest .row {
+    flex-direction: column-reverse;
+  }
+}
+
+/* pointer to the suggest button, shown after a second wrong answer */
+.suggest-tip {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: calc(var(--gutter) - 6px);
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  width: min(300px, calc(100vw - 2 * var(--gutter)));
+  padding: 12px 6px 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: var(--shadow-pop);
+  font-size: 15px;
+  line-height: 1.45;
+  animation: fb-in var(--t-slow) var(--spring) both;
+}
+.suggest-tip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 16px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+.suggest-tip p {
+  flex: 1;
+}
+.suggest-tip-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -3px;
+  border-radius: var(--r-pill);
+  opacity: 0.7;
+}
+.suggest-tip-close:hover {
+  opacity: 1;
+}
+.suggest-tip-close svg {
+  width: 16px;
+  height: 16px;
+}

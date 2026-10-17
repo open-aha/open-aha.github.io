@@ -5,7 +5,8 @@
   "scripts": {
     "validate": "node scripts/validate.mjs",
     "catalog": "node scripts/build-catalog.mjs",
-    "start": "python3 scripts/serve.py 5173"
+    "start": "python3 scripts/serve.py 5173",
+    "social-card": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --virtual-time-budget=4000 --screenshot=img/social.png http://localhost:5173/scripts/social-card.html"
   },
   "keywords": [],
   "author": "",

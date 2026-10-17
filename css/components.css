@@ -945,6 +945,70 @@ button.tcard:active {
   gap: 12px;
 }
 
+.about-help {
+  margin-top: 28px;
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+.about-help h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(28px, 4vw, 36px);
+  letter-spacing: -0.015em;
+}
+.about-help-lead {
+  margin-top: 12px;
+  max-width: 680px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.about-help-ways {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  max-width: 680px;
+}
+.about-help-ways li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.about-help-ways li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+.about-help-ways strong {
+  color: var(--ink);
+}
+.about-help-cta {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.about-help-mail {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 2px solid var(--line);
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.about-help-mail a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 /* ---------- impressum & privacy ---------- */
 .legal {
   padding-top: clamp(40px, 7vw, 88px);

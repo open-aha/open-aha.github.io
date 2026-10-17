@@ -1,0 +1,24 @@
+name: Suggest an improvement
+description: Something confusing, a step that doesn't land, or an idea to make a lesson click.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! The most useful notes describe a moment as a learner: "I didn't get why...", "I expected... but...".
+        The "Suggest an improvement" button in a lesson fills in the first field for you.
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: Course, lesson and step, ideally with the link to the step.
+      placeholder: "Probability › The Monty Hall problem › step 3 of 12"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Your suggestion
+      description: What confused you or could be better, and how you would change it.
+    validations:
+      required: true

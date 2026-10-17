@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- Source of img/social.png, the link-preview image. To regenerate: npm start, then
+     npm run social-card -->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../css/tokens.css" />
+<style>
+  html, body { margin: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font-sans); }
+  .card { position: relative; width: 1200px; height: 630px; overflow: hidden; }
+  .text { position: absolute; left: 76px; top: 0; bottom: 0; width: 560px; display: flex; flex-direction: column; justify-content: center; }
+  .brand { display: flex; align-items: center; gap: 14px; font-family: var(--font-display); font-weight: 600; font-size: 40px; letter-spacing: -0.02em; }
+  .brand svg { width: 48px; height: 48px; }
+  h1 { margin: 44px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 78px; line-height: 1.02; letter-spacing: -0.025em; }
+  p { margin: 28px 0 0; font-size: 28px; line-height: 1.35; color: var(--ink-2); font-weight: 500; }
+  .mosaic { position: absolute; left: 640px; top: -40px; display: grid; grid-template-columns: repeat(2, 270px); gap: 20px; transform: rotate(-9deg); transform-origin: top left; }
+  .col { display: flex; flex-direction: column; gap: 20px; }
+  .col:nth-child(2) { margin-top: -70px; }
+  .tile { width: 270px; height: 169px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 2px var(--line); }
+  .tile svg { width: 100%; height: 100%; }
+  .m { --cc: var(--blue); --cc-soft: var(--blue-soft); }
+  .p { --cc: var(--coral); --cc-soft: var(--coral-soft); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="text">
+    <div class="brand" id="brand">OpenAha</div>
+    <h1>Learn math and science by doing.</h1>
+    <p>Free, interactive lessons. No account, no paywall, open source.</p>
+  </div>
+  <div class="mosaic" id="mosaic"></div>
+</div>
+<script type="module">
+  import { covers } from '../js/art.js';
+  import { logo } from '../js/lib/icons.js';
+  document.getElementById('brand').insertAdjacentHTML('afterbegin', logo);
+  const cols = [
+    [['fractals', 'm'], ['waves', 'p'], ['probability', 'm'], ['complex', 'm']],
+    [['quantum', 'p'], ['balance', 'm'], ['planets', 'p'], ['relativity', 'p']],
+  ];
+  document.getElementById('mosaic').innerHTML = cols
+    .map((c) => `<div class="col">${c.map(([k, s]) => `<div class="tile ${s}">${covers[k] || covers.default}</div>`).join('')}</div>`)
+    .join('');
+  document.fonts.ready.then(() => document.body.setAttribute('data-ready', ''));
+</script>
+</body>
+</html>

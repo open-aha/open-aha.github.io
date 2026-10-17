@@ -3,10 +3,12 @@ import { md, mdi } from './lib/md.js';
 import { icons } from './lib/icons.js';
 import { renderStep } from './steps.js';
 import { store } from './store.js';
+import { openSuggest } from './feedback.js';
 
 const PRAISE = ['Correct!', 'Nice work!', 'Exactly right!', 'Spot on!', 'You got it!', 'Brilliant!'];
 const NOT_YET = ['Not quite', 'Not yet', 'Close, but no'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const SUGGEST_TIP_MAX = 3; // times the "suggest an improvement" pointer is ever shown
 
 export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   clear(root);
@@ -27,7 +29,13 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   const seg = h('div.segbar', { 'aria-hidden': 'true' }, steps.map(() => h('span')));
   const closeBtn = h('button.icon-btn', { type: 'button', 'aria-label': 'Exit lesson', html: icons.x, onClick: () => exit() });
   const progressLabel = h('span.sr-only', { 'aria-live': 'polite' });
-  const top = h('header.player-top', closeBtn, h('div.player-title', lesson.title), seg, progressLabel);
+  const suggestBtn = h('button.icon-btn.suggest-btn', { type: 'button', 'aria-label': 'Suggest an improvement', title: 'Suggest an improvement', html: icons.flag,
+    onClick: () => {
+      hideTip();
+      openSuggest({ course, lesson, step: finished ? null : i + 1, total: steps.length });
+    } });
+  const top = h('header.player-top', closeBtn, h('div.player-title', lesson.title), seg, suggestBtn, progressLabel);
+  let tip = null;
   const stage = h('main.stage', { id: 'stage' });
 
   // action bar
@@ -87,6 +95,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
 
   function showStep(k) {
     const prev = stage.firstElementChild;
+    hideTip();
     const mount = () => {
       ctrl?.destroy?.();
       clear(stage);
@@ -187,6 +196,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
     if (r.correct) {
       if (attempts === 1) firstTry[i] = true;
       else if (firstTry[i] == null) firstTry[i] = false;
+      hideTip();
       const gained = attempts === 1 ? 10 : 5;
       xp += gained;
       state = 'correct';
@@ -218,6 +228,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
       if (hint && (r.msg === hint || attempts >= 2)) parts.push(['Hint', hint]);
       showNote('is-wrong', parts);
       fbMsg.innerHTML = parts.length ? 'Read the note above, then try again.' : 'Take another look and try again.';
+      if (attempts === 2) showTip();
       main.textContent = 'Try again';
       main.className = 'btn btn-main btn-error';
       main.disabled = false;
@@ -247,6 +258,20 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
     setTimeout(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
   }
 
+  // after a second wrong answer, point at the flag button (only the first few times ever)
+  function showTip() {
+    if (tip || store.tipCount('suggest') >= SUGGEST_TIP_MAX) return;
+    store.countTip('suggest');
+    tip = h('div.suggest-tip', { role: 'status' },
+      h('p', 'Is this step unclear? Use this button to suggest how we could explain it better.'),
+      h('button.suggest-tip-close', { type: 'button', 'aria-label': 'Dismiss', html: icons.x, onClick: hideTip }));
+    top.append(tip);
+  }
+  function hideTip() {
+    tip?.remove();
+    tip = null;
+  }
+
   // a small "+10 XP" that floats up under the top bar and fades away
   function xpPop(n) {
     player.querySelector('.xp-pop')?.remove();
@@ -272,6 +297,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
 
   function finish() {
     finished = true;
+    hideTip();
     back.hidden = true;
     ctrl?.destroy?.();
     const qs = firstTry.filter((v) => v != null);

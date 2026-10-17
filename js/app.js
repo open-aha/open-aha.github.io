@@ -5,6 +5,7 @@ import { store } from './store.js';
 import { cover, heroArt, animateHero, principleArt } from './art.js';
 import { courses } from './courses/catalog.js';
 import { renderLesson } from './lesson.js';
+import { openSuggest, REPO, EMAIL } from './feedback.js';
 import { loadWidgets } from './widgets/index.js';
 import { s } from './lib/svg.js';
 
@@ -218,6 +219,17 @@ function aboutPage() {
       h('article.tcard',
         h('h3', 'What you can learn'),
         h('p', 'From fractions and logic puzzles to relativity, quantum computing and cosmology. Courses are grouped as Foundational, Intermediate and Advanced, so you can start wherever you are.'))),
+    h('section.about-help',
+      h('h2', 'Help make it better'),
+      h('p.about-help-lead', 'AI tools helped us build this many lessons quickly. What turns a good lesson into a great one is human insight: the moment a step confused you, a clearer example, a mistake only a careful reader spots. OpenAha is open source, and every suggestion is read.'),
+      h('ul.about-help-ways',
+        h('li', h('strong', 'In a lesson,'), ' tap the flag at the top. Your suggestion arrives with the exact step it’s about.'),
+        h('li', h('strong', 'Beginners:'), ' your confusion is the most valuable feedback there is. Experts no longer notice the gaps.'),
+        h('li', h('strong', 'Teachers:'), ' tell us what would make a lesson work in your classroom, or which topic is missing.')),
+      h('div.about-help-cta',
+        h('button.btn', { type: 'button', onClick: () => openSuggest() }, 'Suggest an improvement'),
+        h('a.btn.btn-secondary', { href: `${REPO}/blob/main/CONTRIBUTING.md`, target: '_blank', rel: 'noopener' }, 'Contribute on GitHub')),
+      h('p.about-help-mail', { html: `Want to use OpenAha in your school, help translate it, or partner with us? Or have something you’d rather not post publicly? Write to <a href="mailto:${EMAIL}">${EMAIL}</a>.` })),
     h('div.about-cta',
       h('a.btn', { href: '#/courses' }, 'Browse the courses'),
       h('a.btn.btn-secondary', { href: '#/' }, 'Back to home')));
@@ -233,10 +245,11 @@ function legalPage() {
     h('h1', 'Impressum'),
     h('p', 'Information according to § 18 (1) MStV:'),
     h('p', { html: 'Kiarash Parvizi<br>Altheimer Straße 56a<br>64807 Dieburg<br>Germany' }),
+    h('p', { html: `Email: <a href="mailto:${EMAIL}">${EMAIL}</a>` }),
     h('h2', 'Privacy'),
     h('p', 'Controller: Kiarash Parvizi, address above.'),
     h('p', { html: 'This site is hosted on GitHub Pages by GitHub, Inc. (USA). When you visit, GitHub logs your IP address for security purposes (Art. 6 (1) (f) GDPR: our legitimate interest in a secure, working website). The site cannot be delivered without it. GitHub keeps these logs as long as it needs them for security and publishes no fixed period. GitHub takes part in the EU-US Data Privacy Framework; see the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub Privacy Statement</a>.' }),
-    h('p', 'Your progress, XP, streak and theme are saved only in your browser’s local storage, because the site needs them to work (§ 25 (2) no. 2 TDDDG). They are never sent to us or anyone else. You can delete them with “Reset progress” or by clearing this site’s data.'),
+    h('p', 'Your progress, XP, streak, theme and how often a tip has been shown to you are saved only in your browser’s local storage, because the site needs them to work (§ 25 (2) no. 2 TDDDG). They are never sent to us or anyone else. You can delete them with “Reset progress” or by clearing this site’s data.'),
     h('p', { html: 'To count visits, this site uses Cloudflare Web Analytics by Cloudflare, Inc. (USA). On each page view your browser sends Cloudflare the page address, the referring site, your browser, operating system, screen size and page load times, along with your IP address (Art. 6 (1) (f) GDPR: our legitimate interest in knowing how the site is used). Cloudflare uses no cookies or local storage for this and does not use the data to identify or follow you; we only see totals, never individual visitors. Cloudflare publishes no fixed retention period and takes part in the EU-US Data Privacy Framework; see the <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">Cloudflare Privacy Policy</a>.' }),
     h('p', 'There are no cookies, no advertising and no tracking across sites.'),
     h('p', 'You have the right to access, rectification, erasure, restriction of processing and data portability (Art. 15–18, 20 GDPR), and to lodge a complaint with a supervisory authority, such as the Hessian Commissioner for Data Protection and Freedom of Information (HBDI).'),
