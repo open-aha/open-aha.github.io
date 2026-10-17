@@ -1,0 +1,207 @@
+@font-face {
+  font-family: "Newsreader";
+  src: url("../vendor/fonts/newsreader-latin-standard-normal.woff2") format("woff2-variations");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Newsreader";
+  src: url("../vendor/fonts/newsreader-latin-standard-italic.woff2") format("woff2-variations");
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Figtree";
+  src: url("../vendor/fonts/figtree-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../vendor/fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #ffffff;
+  --surface: #f5f3f1;
+  --surface-2: #ece9e5;
+  --card: #ffffff;
+  --overlay: rgba(17, 17, 17, 0.45);
+
+  /* ink */
+  --ink: #111111;
+  --ink-2: rgba(17, 17, 17, 0.64);
+  --ink-3: rgba(17, 17, 17, 0.46);
+  --line: rgba(17, 17, 17, 0.1);
+  --line-2: rgba(17, 17, 17, 0.16);
+  --edge: rgba(17, 17, 17, 0.1);
+  /* night sky for space illustrations: dark in both themes */
+  --night: #14181f;
+
+  /* actions */
+  --primary: #111111;
+  --primary-ink: #ffffff;
+  --primary-edge: #000000;
+
+  /* states */
+  --success: #12843b;
+  --success-bright: #29cc57;
+  --success-tint: #e8f8ed;
+  --success-edge: #bfe9cc;
+  --error: #c9353a;
+  --error-tint: #fdeeee;
+  --error-edge: #f5c9ca;
+  --select: #3358e6;
+  --select-tint: #eef2ff;
+  --select-edge: #c3cffb;
+  --warn: #b26b00;
+  --warn-tint: #fff5e0;
+
+  /* diagram palette */
+  --blue: #456dff;
+  --blue-soft: #e3e9ff;
+  --coral: #ff6b4a;
+  --coral-soft: #ffe7e0;
+  --teal: #1fa594;
+  --teal-soft: #daf3ef;
+  --amber: #ffb020;
+  --amber-soft: #fff1d4;
+  --violet: #8b5cf6;
+  --violet-soft: #ede5ff;
+  --pink: #ec4899;
+  --pink-soft: #fde4f1;
+  --grid: rgba(17, 17, 17, 0.07);
+  --axis: rgba(17, 17, 17, 0.55);
+
+  /* type */
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* shape */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-pill: 9999px;
+  --shadow-soft: 0 4px 14px rgba(17, 17, 17, 0.06);
+  --shadow-pop: 0 18px 48px rgba(17, 17, 17, 0.16);
+
+  /* motion */
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 150ms;
+  --t: 240ms;
+  --t-slow: 420ms;
+
+  /* layout */
+  --page: 1180px;
+  --prose: 640px;
+  --gutter: clamp(16px, 4vw, 32px);
+  --header-h: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    /* slate "dimmed" dark: lifted base, lighter raised surfaces, off-white ink, softened accents */
+    --bg: #22272e;
+    --surface: #2b3139;
+    --surface-2: #363d47;
+    --card: #2d333b;
+    --overlay: rgba(10, 13, 17, 0.6);
+    --ink: #e6eaef;
+    --night: #161b22;
+    --ink-2: rgba(230, 234, 239, 0.74);
+    --ink-3: rgba(230, 234, 239, 0.54);
+    --line: rgba(205, 217, 229, 0.12);
+    --line-2: rgba(205, 217, 229, 0.2);
+    --edge: rgba(10, 13, 17, 0.45);
+    --primary: #e6eaef;
+    --primary-ink: #22272e;
+    --primary-edge: #9aa5b1;
+    --success: #57d38c;
+    --success-tint: #2f453f;
+    --success-edge: #3c6d58;
+    --error: #ff8085;
+    --error-tint: #47393f;
+    --error-edge: #794f56;
+    --select: #8ea6ff;
+    --select-tint: #353e52;
+    --select-edge: #505c82;
+    --warn: #f5c062;
+    --warn-tint: #463f36;
+    --blue: #7f9cff;
+    --blue-soft: #3c465e;
+    --coral: #ff8f73;
+    --coral-soft: #534445;
+    --teal: #4cc9b7;
+    --teal-soft: #334e51;
+    --amber: #f5c050;
+    --amber-soft: #514c3f;
+    --violet: #ab8fff;
+    --violet-soft: #44445e;
+    --pink: #f07ab8;
+    --pink-soft: #504052;
+    --grid: rgba(205, 217, 229, 0.08);
+    --axis: rgba(230, 234, 239, 0.55);
+    --shadow-soft: 0 4px 14px rgba(10, 13, 17, 0.25);
+    --shadow-pop: 0 18px 48px rgba(10, 13, 17, 0.45);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  /* slate "dimmed" dark: lifted base, lighter raised surfaces, off-white ink, softened accents */
+  --bg: #22272e;
+  --surface: #2b3139;
+  --surface-2: #363d47;
+  --card: #2d333b;
+  --overlay: rgba(10, 13, 17, 0.6);
+  --ink: #e6eaef;
+  --night: #161b22;
+  --ink-2: rgba(230, 234, 239, 0.74);
+  --ink-3: rgba(230, 234, 239, 0.54);
+  --line: rgba(205, 217, 229, 0.12);
+  --line-2: rgba(205, 217, 229, 0.2);
+  --edge: rgba(10, 13, 17, 0.45);
+  --primary: #e6eaef;
+  --primary-ink: #22272e;
+  --primary-edge: #9aa5b1;
+  --success: #57d38c;
+  --success-tint: #2f453f;
+  --success-edge: #3c6d58;
+  --error: #ff8085;
+  --error-tint: #47393f;
+  --error-edge: #794f56;
+  --select: #8ea6ff;
+  --select-tint: #353e52;
+  --select-edge: #505c82;
+  --warn: #f5c062;
+  --warn-tint: #463f36;
+  --blue: #7f9cff;
+  --blue-soft: #3c465e;
+  --coral: #ff8f73;
+  --coral-soft: #534445;
+  --teal: #4cc9b7;
+  --teal-soft: #334e51;
+  --amber: #f5c050;
+  --amber-soft: #514c3f;
+  --violet: #ab8fff;
+  --violet-soft: #44445e;
+  --pink: #f07ab8;
+  --pink-soft: #504052;
+  --grid: rgba(205, 217, 229, 0.08);
+  --axis: rgba(230, 234, 239, 0.55);
+  --shadow-soft: 0 4px 14px rgba(10, 13, 17, 0.25);
+  --shadow-pop: 0 18px 48px rgba(10, 13, 17, 0.45);
+}

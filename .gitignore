@@ -1,0 +1,5 @@
+node_modules/
+local-only/
+.claude/
+.DS_Store
+DESIGN.md
