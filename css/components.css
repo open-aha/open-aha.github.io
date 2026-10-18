@@ -245,7 +245,7 @@
   .header-nav {
     margin-left: 8px;
   }
-  .header-nav a[href="#/courses"] {
+  .header-nav a[href="/courses/"] {
     display: none;
   }
   .header-nav a {
@@ -317,6 +317,12 @@
     max-width: 520px;
     width: 100%;
   }
+}
+
+/* On a page built by scripts/build-site.mjs, the art waits for the script (pages.js adds .is-ready),
+   so its animation starts once, when the page becomes interactive. */
+.js .hero-art:not(.is-ready) {
+  visibility: hidden;
 }
 
 /* hero animation pieces */
@@ -1009,25 +1015,59 @@ button.tcard:active {
   font-weight: 600;
 }
 
-/* ---------- impressum & privacy ---------- */
-.legal {
+/* ---------- text pages: impressum & privacy, not found, lesson outline ---------- */
+.text-page {
   padding-top: clamp(40px, 7vw, 88px);
   padding-bottom: 72px;
   max-width: 720px;
 }
-.legal h1 {
+.text-page h1 {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: clamp(32px, 5vw, 44px);
 }
-.legal h2 {
+.text-page h2 {
   margin-top: 36px;
   font-size: 22px;
 }
-.legal p {
+.text-page p {
   margin-top: 14px;
   color: var(--ink-2);
   line-height: 1.6;
+}
+
+/* A lesson's outline, written into its page for search engines and browsers without JavaScript.
+   Where JavaScript runs, the lesson player replaces it. */
+.js .lesson-static {
+  display: none;
+}
+.lesson-outline .eyebrow {
+  margin-top: 22px;
+}
+.lesson-outline h1 {
+  margin-top: 10px;
+}
+.lesson-outline .lead {
+  font-size: 19px;
+  color: var(--ink);
+}
+.lesson-outline ul,
+.lesson-outline ol {
+  margin-top: 12px;
+  padding-left: 22px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.lesson-outline li + li {
+  margin-top: 6px;
+}
+.lesson-pager {
+  margin-top: 36px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  font-weight: 600;
 }
 @media (max-width: 360px) {
   /* very narrow phones: the logo alone leaves room for About, the streak and the theme switch */

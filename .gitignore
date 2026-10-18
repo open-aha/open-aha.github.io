@@ -3,3 +3,4 @@ local-only/
 .claude/
 .DS_Store
 DESIGN.md
+_site/

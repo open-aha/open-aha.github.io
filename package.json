@@ -5,7 +5,9 @@
   "scripts": {
     "validate": "node scripts/validate.mjs",
     "catalog": "node scripts/build-catalog.mjs",
+    "build": "node scripts/build-site.mjs",
     "start": "python3 scripts/serve.py 5173",
+    "preview": "node scripts/build-site.mjs && python3 scripts/serve.py 4173 _site",
     "social-card": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --virtual-time-budget=4000 --screenshot=img/social.png http://localhost:5173/scripts/social-card.html"
   },
   "keywords": [],
@@ -18,5 +20,8 @@
     "@fontsource-variable/newsreader": "^5.3.0",
     "katex": "^0.16.11"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "linkedom": "^0.18.13"
+  }
 }

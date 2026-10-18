@@ -29,7 +29,8 @@ post publicly, or to talk about using OpenAha in a school, write to
 
 ## Fixing a lesson yourself
 
-The site is plain HTML, CSS and JavaScript, with no build step. You need Node.js and Python 3.
+The site is plain HTML, CSS and JavaScript, with no build step while you work on it. You need
+Node.js and Python 3.
 To run it locally:
 
 ```bash
@@ -44,8 +45,9 @@ npm start
 is already in use, it stops with an error; pick another port instead, for example
 `python3 scripts/serve.py 8000`, and open <http://localhost:8000>.
 
-To jump straight to a step, add `#/lesson/<course>/<lesson>/<step>` to the address (steps count
-from 1). The link in an issue has this form.
+To jump straight to a step, open `/courses/<course>/<lesson>/?step=<n>` (steps count from 1),
+for example <http://localhost:5173/courses/ratios/fractions/?step=3>. The link in an issue has
+this form.
 
 Every course is one file in [`js/courses/`](js/courses). A lesson is a list of steps, and each
 step is a plain object:

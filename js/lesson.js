@@ -4,6 +4,7 @@ import { icons } from './lib/icons.js';
 import { renderStep } from './steps.js';
 import { store } from './store.js';
 import { openSuggest } from './feedback.js';
+import { paths } from './routes.js';
 
 const PRAISE = ['Correct!', 'Nice work!', 'Exactly right!', 'Spot on!', 'You got it!', 'Brilliant!'];
 const NOT_YET = ['Not quite', 'Not yet', 'Close, but no'];
@@ -12,7 +13,6 @@ const SUGGEST_TIP_MAX = 3; // times the "suggest an improvement" pointer is ever
 
 export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   clear(root);
-  document.title = `${lesson.title} · ${course.title} · OpenAha`;
   store.setLast(course.id, lesson.id);
 
   const steps = lesson.steps;
@@ -313,11 +313,11 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
     bar.classList.remove('is-correct', 'is-wrong');
     secondary.hidden = false;
     secondary.textContent = 'Back to course';
-    secondary.onclick = () => go(`#/course/${course.id}`);
+    secondary.onclick = () => go(paths.course(course.id));
     main.className = 'btn btn-main';
     main.disabled = false;
     main.textContent = next ? 'Next lesson' : 'Finish course';
-    main.onclick = () => go(next ? `#/lesson/${course.id}/${next.id}` : `#/course/${course.id}`);
+    main.onclick = () => go(next ? paths.lesson(course.id, next.id) : paths.course(course.id));
     main.removeEventListener('click', onMain);
     secondary.removeEventListener('click', onSecondary);
 
@@ -348,14 +348,14 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   }
 
   function exit() {
-    if (finished || i === 0) return go(`#/course/${course.id}`);
+    if (finished || i === 0) return go(paths.course(course.id));
     const dlg = h('div.dialog-backdrop', { onClick: (e) => e.target === dlg && dlg.remove() },
       h('div.dialog', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-t' },
         h('h3#dlg-t', 'Leave this lesson?'),
         h('p', 'Your progress in this lesson will be lost. You can start it again any time.'),
         h('div.row',
           h('button.btn.btn-secondary', { type: 'button', onClick: () => dlg.remove() }, 'Keep learning'),
-          h('button.btn', { type: 'button', onClick: () => { dlg.remove(); go(`#/course/${course.id}`); } }, 'Leave'))));
+          h('button.btn', { type: 'button', onClick: () => { dlg.remove(); go(paths.course(course.id)); } }, 'Leave'))));
     document.body.append(dlg);
     dlg.querySelector('.btn-secondary').focus();
   }

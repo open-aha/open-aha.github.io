@@ -9481,7 +9481,7 @@ export const courses = [
      {
       "id": "euler",
       "title": "Euler’s Formula",
-      "summary": "e^{iπ} + 1 = 0",
+      "summary": "e^(iπ) + 1 = 0",
       "icon": "sparkle",
       "nSteps": 6,
       "minutes": 5

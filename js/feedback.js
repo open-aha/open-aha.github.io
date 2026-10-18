@@ -1,8 +1,8 @@
 // "Suggest an improvement": a small dialog that hands the learner's note, plus where they are,
 // to a pre-filled GitHub issue.
 import { h } from './lib/dom.js';
+import { ORIGIN, paths } from './routes.js';
 
-export const SITE = 'https://openaha.org/';
 export const REPO = 'https://github.com/open-aha/open-aha.github.io';
 export const EMAIL = 'contact@openaha.org';
 
@@ -16,7 +16,7 @@ const KINDS = [
 // From a lesson: { course, lesson, step (1-based, or null for the whole lesson), total }.
 // With no lesson, the suggestion is about OpenAha in general.
 export function openSuggest({ course, lesson, step, total } = {}) {
-  const link = lesson ? `${SITE}#/lesson/${course.id}/${lesson.id}${step ? `/${step}` : ''}` : SITE;
+  const link = ORIGIN + (lesson ? paths.lesson(course.id, lesson.id, step) : paths.home());
   const place = lesson ? `${course.title} › ${lesson.title}${step ? ` › step ${step} of ${total}` : ''}` : 'OpenAha in general';
   let kind = lesson ? KINDS[0] : KINDS[2];
 

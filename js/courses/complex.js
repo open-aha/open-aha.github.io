@@ -279,7 +279,7 @@ which is exactly "lengths multiply, angles add".`,
         {
           id: 'euler',
           title: 'Euler’s Formula',
-          summary: 'e^{iπ} + 1 = 0',
+          summary: 'e^(iπ) + 1 = 0',
           icon: 'sparkle',
           steps: [
             {

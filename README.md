@@ -10,9 +10,13 @@ behind every answer.
 
 | Path | What it is |
 |---|---|
-| `index.html` | App shell |
+| `index.html` | App shell, and the template for every built page |
 | `css/` | Design tokens (light/dark), components, lesson player, widgets |
-| `js/app.js` | Router and pages (home, course path) |
+| `js/app.js` | Starts the app: picks the page for the address, loads courses and lessons |
+| `js/routes.js` | The site's URLs (`/courses/<course>/<lesson>/`), and redirects for old `#/` links |
+| `js/router.js` | Navigation between pages without reloading (History API) |
+| `js/pages.js` | Pages (home, course, about, legal, not found), each with its title, description and structured data |
+| `js/head.js` | Writes a page's `<head>` tags |
 | `js/lesson.js` | Lesson player: steps, Check → feedback, XP, streak, completion |
 | `js/steps.js` | Step types: explain, mcq, multi, numeric, interactive, order |
 | `js/widgets/` | Interactive figures: graph (the general workhorse: sliders, draggable points, animation), figure, balance, track, projectile, forces, energy, circuit, sampler, monty, orbit, collide, sieve, gas, doubleslit, network, decay, mandel, ipd, bits, symmetry, gates, turing |
@@ -21,10 +25,13 @@ behind every answer.
 | `js/art.js` | Course cover illustrations |
 | `scripts/validate.mjs` | Content validator |
 | `scripts/build-catalog.mjs` | Builds `js/courses/catalog.js` (the validator runs it too) |
+| `scripts/build-site.mjs` | Builds the deployed site in `_site/`: a real page for every course and lesson, `sitemap.xml`, `robots.txt`, `404.html` |
+| `.github/workflows/deploy.yml` | On every push to `main`: validate, build, publish on GitHub Pages |
 
 Progress, XP and streaks are stored in `localStorage` on the viewer's device.
 
-Dev shortcut: `#/lesson/<course>/<lesson>/<step>` opens a lesson at a given step (steps count from 1).
+Dev shortcut: `/courses/<course>/<lesson>/?step=<n>` opens a lesson at a given step (steps count from 1).
+
 
 ## Adding a course
 

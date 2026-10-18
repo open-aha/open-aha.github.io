@@ -32,8 +32,10 @@ export function loadKatex() {
       document.head.insertBefore(el, tag === 'link' ? document.head.querySelector('link[rel="stylesheet"]') : null);
     });
   const base = new URL('../../vendor/katex/', import.meta.url);
+  // pages built with math in them (scripts/build-site.mjs) already link the stylesheet
+  const hasCss = document.querySelector('link[href$="/katex.min.css"]');
   katexReady = Promise.all([
-    add('link', { rel: 'stylesheet', href: new URL('katex.min.css', base).href }),
+    hasCss ? null : add('link', { rel: 'stylesheet', href: new URL('katex.min.css', base).href }),
     add('script', { src: new URL('katex.min.js', base).href }),
   ]).catch((e) => {
     katexReady = null;
