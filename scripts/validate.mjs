@@ -6,6 +6,7 @@ import { covers } from '../js/art.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { updateCatalog } from './build-catalog.mjs';
 import { fixMiddleDot } from '../js/lib/md.js';
+import { prereqProblem } from '../js/lib/prereq.js';
 import { evaluate as evaluateGates } from '../js/widgets/gates-core.js';
 import { withEdits as tmEdits } from '../js/widgets/turing-core.js';
 import { solves as robotSolves, parseWorld } from '../js/widgets/robot-core.js';
@@ -77,6 +78,9 @@ for (const c of courses) {
   courseIds.add(c.id);
   if (!['math', 'physics'].includes(c.subject)) errors.push(`${cw}: bad subject`);
   if (!covers[c.cover]) errors.push(`${cw}: unknown cover "${c.cover}"`);
+  // the course page links every course named here (js/lib/prereq.js)
+  const prereqIssue = c.prereq && prereqProblem(c, courses);
+  if (prereqIssue) errors.push(`${cw}: prereq ${prereqIssue}`);
   checkMath(c.description, cw);
   const lessonIds = new Set();
   for (const ch of c.chapters) {

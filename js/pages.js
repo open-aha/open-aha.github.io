@@ -9,6 +9,7 @@ import { h, toast } from './lib/dom.js';
 import { mdi, md } from './lib/md.js';
 import { icons, logo } from './lib/icons.js';
 import { s } from './lib/svg.js';
+import { prereqParts } from './lib/prereq.js';
 import { store } from './store.js';
 import { cover, heroArt, animateHero, principleArt } from './art.js';
 import { courses } from './courses/catalog.js';
@@ -26,6 +27,23 @@ const HOME_TITLE = 'OpenAha: Learn math and science by doing';
 export const getCourse = (id) => courses.find((c) => c.id === id);
 export const loadCourse = (id) => import(`./courses/${id}.js`).then((m) => m.default);
 const lessonsOf = (c) => c.chapters.flatMap((ch) => ch.lessons);
+
+// Which courses each course names as helpful background (before), and which name it (after),
+// in catalogue order. Built once, from the prereq texts (js/lib/prereq.js).
+let related = null;
+function relatedCourses(c) {
+  if (!related) {
+    related = new Map(courses.map((x) => [x.id, { before: [], after: [] }]));
+    for (const x of courses) {
+      for (const p of x.prereq ? prereqParts(x.prereq, courses) : []) {
+        if (!p.course) continue;
+        related.get(x.id).before.push(p.course);
+        related.get(p.course.id).after.push(x);
+      }
+    }
+  }
+  return related.get(c.id);
+}
 const subjectName = (c) => (c.subject === 'math' ? 'Math' : 'Natural Sciences');
 const sentence = (t) => (/[.!?]$/.test(t) ? t : `${t}.`);
 const toTop = ({ hydrating }) => {
@@ -328,7 +346,7 @@ export function coursePage(c) {
           h('span', { html: `${icons.check}${pr.done}/${pr.total} complete` })),
         h('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap' } },
           h('a.btn', { href: paths.lesson(c.id, (n || all[0]).id) }, pr.done === 0 ? 'Start course' : n ? 'Continue' : 'Review from start'),
-          c.prereq ? h('span.muted', { style: { alignSelf: 'center', fontSize: '15px' }, html: mdi(`Helpful background: ${c.prereq}`) }) : null)),
+          c.prereq ? h('span.muted.prereq', 'Helpful background: ', prereqParts(c.prereq, courses).map((p) => (p.course ? h('a', { href: paths.course(p.course.id) }, p.course.title) : p.text))) : null)),
       h('div.cover', { html: cover(c.cover) })));
 
   const chapters = h('div.chapters.wrap');
@@ -355,6 +373,15 @@ export function coursePage(c) {
         path));
   });
 
+  // courses that name this one as helpful background: where a learner can go next
+  const { before, after } = relatedCourses(c);
+  const next = after.length
+    ? h('section.section.next-courses',
+      h('div.wrap',
+        h('div.section-head', h('div', h('h2.section-title', 'Courses that build on this'), h('p.section-sub', `Ready for more? These courses use what you learn in ${c.title}.`))),
+        h('div.course-grid', after.map(courseCard))))
+    : null;
+
   const url = ORIGIN + paths.course(c.id);
   const suffix = ` Free interactive course with ${all.length} hands-on lessons.`;
   const tagline = sentence(c.tagline);
@@ -378,12 +405,13 @@ export function coursePage(c) {
             educationalLevel: c.level,
             timeRequired: `PT${mins}M`,
             syllabusSections: c.chapters.map((ch) => ({ '@type': 'Syllabus', name: ch.title, description: ch.summary })),
+            ...(before.length ? { coursePrerequisites: before.map((p) => ({ '@type': 'Course', '@id': ORIGIN + paths.course(p.id), name: p.title })) } : {}),
           },
           breadcrumbs(['OpenAha', paths.home()], [c.title, paths.course(c.id)]),
         ],
       },
     },
-    body: [header(), h(`main.page-enter.subject-${c.subject}`, hero, chapters), footer()],
+    body: [header(), h(`main.page-enter.subject-${c.subject}`, hero, chapters, next), footer()],
     mount({ hydrating }) {
       toTop({ hydrating });
       requestAnimationFrame(() => drawPaths(chapters));

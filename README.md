@@ -36,6 +36,7 @@ Dev shortcut: `/courses/<course>/<lesson>/?step=<n>` opens a lesson at a given s
 ## Adding a course
 
 1. Write `js/courses/<id>.js` exporting `{ id, subject, title, level, cover, tagline, description, prereq, chapters }`.
+   `prereq` (optional) names the courses that help as background by their exact titles, joined with commas or "and", with an optional note in parentheses: `'Sequences & Series, and Complex Numbers (for the Mandelbrot and Julia set lessons)'`. The course page links each one and lists the courses that build on it; the validator rejects any other text.
 2. Add a cover to `js/art.js` (keyed by `cover`).
 3. Import it in `js/courses/index.js` and place it in the learning path.
 4. Run `npm run validate`. It also regenerates `js/courses/catalog.js`.

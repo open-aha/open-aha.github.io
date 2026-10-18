@@ -109,7 +109,7 @@ export default {
   cover: 'circular',
   tagline: 'Centripetal force, banked curves, loop-the-loops, artificial gravity, centrifuges and fairground rides.',
   description: r`Why do you lurch sideways on a sharp bend? What keeps a roller coaster on the track upside down? How could a spinning space station create gravity? Discover the inward acceleration behind all circular motion, and the everyday forces that provide it, from centrifuges to swinging chairs.`,
-  prereq: 'Forces',
+  prereq: 'Forces & Newton’s Laws',
   chapters: [
     {
       title: 'Going Round',
