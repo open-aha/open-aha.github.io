@@ -91,5 +91,5 @@ open an issue or write to [contact@openaha.org](mailto:contact@openaha.org) and 
 
 ## License
 
-By contributing, you agree that your contributions are licensed under the project's
-[MIT License](LICENSE).
+By contributing, you agree that your contributions are licensed under the project's licenses:
+code under the [MIT License](LICENSE), course content under [CC BY-SA 4.0](LICENSE-CONTENT.md).
