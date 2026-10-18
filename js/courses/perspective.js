@@ -309,7 +309,7 @@ Any perspective projection from one line to another keeps the cross-ratio unchan
         {
           id: 'infinity',
           title: 'Points at Infinity',
-          summary: 'Where parallel lines meet',
+          summary: 'A plane where any two lines meet',
           icon: 'sparkle',
           steps: [
             {

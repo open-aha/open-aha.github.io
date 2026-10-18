@@ -360,7 +360,7 @@ export function coursePage(c) {
   const tagline = sentence(c.tagline);
   return {
     head: {
-      title: `${c.title}: free interactive course · OpenAha`,
+      title: `${c.title} · Free interactive course · OpenAha`,
       description: tagline.length + suffix.length <= 160 ? tagline + suffix : tagline,
       path: paths.course(c.id),
       jsonld: {

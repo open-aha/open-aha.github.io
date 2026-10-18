@@ -1944,7 +1944,7 @@ export const courses = [
      {
       "id": "infinity",
       "title": "Points at Infinity",
-      "summary": "Where parallel lines meet",
+      "summary": "A plane where any two lines meet",
       "icon": "sparkle",
       "nSteps": 6,
       "minutes": 5
