@@ -941,11 +941,17 @@ button.tcard:active {
   font-size: 15px;
   color: var(--ink-2);
 }
+/* three cards side by side, or stacked: never two plus one alone */
 .about-grid {
   margin-top: 28px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+}
+@media (max-width: 860px) {
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .about-grid .tcard {
   padding: 24px;
