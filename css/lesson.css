@@ -949,3 +949,142 @@
   width: 16px;
   height: 16px;
 }
+
+/* share-this-step dialog */
+.share-btn {
+  flex: none;
+  margin-right: -10px;
+}
+.share-btn svg {
+  width: 21px;
+  height: 21px;
+}
+.dialog.share {
+  position: relative;
+  max-width: 460px;
+}
+.share-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+}
+.share-close svg {
+  width: 20px;
+  height: 20px;
+}
+.dialog.share h3 {
+  padding-right: 36px;
+}
+.share-card {
+  margin: 14px 0 18px;
+  padding: 14px 16px 14px 18px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border-left: 4px solid var(--cc);
+}
+.share-where {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.share-title {
+  margin-top: 3px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.share-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.share-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 5px 5px 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  transition: border-color var(--t-fast) var(--ease);
+}
+.share-link:has(.share-url:focus) {
+  border-color: var(--blue);
+}
+.share-url {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  color: var(--ink-2);
+  text-overflow: ellipsis;
+}
+.share-url:focus {
+  outline: none;
+  color: var(--ink);
+}
+.share-copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  height: 42px;
+  padding: 0 18px 0 15px;
+  border-radius: var(--r-pill);
+}
+.share-copy-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+.share-copy.is-copied .share-copy-icon {
+  animation: badge-pop 420ms var(--spring) both;
+}
+.share-apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.share-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px 8px 11px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
+}
+.share-app:hover {
+  border-color: var(--line-2);
+  background: var(--surface);
+  color: var(--ink);
+}
+.share-app-icon svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+@media (max-width: 420px) {
+  .dialog.share {
+    padding: 22px 18px;
+  }
+  .share-copy span:last-child {
+    display: none;
+  }
+  .share-copy {
+    padding: 0 13px;
+  }
+}

@@ -4,6 +4,7 @@ import { icons } from './lib/icons.js';
 import { renderStep } from './steps.js';
 import { store } from './store.js';
 import { openSuggest } from './feedback.js';
+import { openShare } from './share.js';
 import { paths } from './routes.js';
 
 const PRAISE = ['Correct!', 'Nice work!', 'Exactly right!', 'Spot on!', 'You got it!', 'Brilliant!'];
@@ -34,7 +35,12 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
       hideTip();
       openSuggest({ course, lesson, step: finished ? null : i + 1, total: steps.length });
     } });
-  const top = h('header.player-top', closeBtn, h('div.player-title', lesson.title), seg, suggestBtn, progressLabel);
+  const shareBtn = h('button.icon-btn.share-btn', { type: 'button', 'aria-label': 'Share this step', title: 'Share this step', html: icons.share,
+    onClick: () => {
+      hideTip();
+      openShare({ course, lesson, step: finished ? null : i + 1, total: steps.length });
+    } });
+  const top = h('header.player-top', closeBtn, h('div.player-title', lesson.title), seg, shareBtn, suggestBtn, progressLabel);
   let tip = null;
   const stage = h('main.stage', { id: 'stage' });
 
