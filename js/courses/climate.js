@@ -9,6 +9,15 @@ const f2 = (v) => fix(v, 2);
 const forcing = (c) => 5.35 * Math.log(c / 280); // W/m², CO₂ in ppm
 const warming = (c) => 0.8 * forcing(c); // equilibrium, sensitivity 0.8 K per W/m²
 
+// an illustrative path: emissions grow until 2025 (40 Gt a year), hold until 2035, then fall to zero by 2070
+const BUDGET = (() => {
+  const E = (y) => (y <= 2025 ? 40 * ((y - 1850) / 175) ** 2 : y <= 2035 ? 40 : y <= 2070 ? 40 * (2070 - y) / 35 : 0);
+  const out = [];
+  let C = 0;
+  for (let y = 1850; y <= 2120; y += 0.5) { out.push({ y, e: E(y), c: C }); C += E(y) * 0.5; }
+  return out;
+})();
+
 export default {
   id: 'climate',
   subject: 'physics',
@@ -534,6 +543,30 @@ where $C_0 = 280$ ppm (parts per million) is the pre-industrial level. The plane
               body: r`CO₂ stays in the atmosphere for centuries, so warming depends mainly on **cumulative** emissions, the total ever emitted, not on any single year's. Climate models find a roughly straight-line relationship: about **0.45 °C** of warming per 1,000 billion tonnes (gigatonnes, Gt) of CO₂.
 
 So any temperature limit implies a total "carbon budget". Once it's used up, emissions must be at net zero.`,
+            },
+            { /*anim:climate*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The level in the bathtub',
+              body: r`The {amber:amber area} is the yearly CO₂ emissions along one illustrative path: rising until today, levelling off, then falling to zero by 2070. The {coral:coral line} is the warming they cause, using the rule of about 0.45 °C per 1,000 Gt emitted in total.`,
+              widget: {
+                kind: 'graph', xmin: 1850, xmax: 2120, ymin: -6, ymax: 52, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 18, max: 285, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const yr = Math.min(2120, 1850 + p.t), pts = BUDGET.filter((b) => b.y <= yr), els = [];
+                  els.push(s('path', { d: `M${plot.X(1850)} ${plot.Y(0)}` + pts.map((b) => `L${plot.X(b.y).toFixed(1)} ${plot.Y(b.e).toFixed(1)}`).join('') + `L${plot.X(yr)} ${plot.Y(0)}Z`, class: 'fl-amber', opacity: 0.55 }));
+                  // warming on its own scale: 2 °C at the top
+                  const W = (c) => plot.Y((0.45 * c / 1000) * 24);
+                  els.push(s('path', { d: pts.map((b, i) => `${i ? 'L' : 'M'}${plot.X(b.y).toFixed(1)} ${W(b.c).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 3.5 }));
+                  els.push(s('line', { x1: plot.X(1850), x2: plot.X(2120), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.4 }));
+                  for (const yy of [1900, 2000, 2100]) els.push(s('text', { x: plot.X(yy), y: plot.Y(0) + 16, 'text-anchor': 'middle', class: 'tick', text: String(yy) }));
+                  els.push(s('line', { x1: plot.X(2025), x2: plot.X(2025), y1: plot.Y(0), y2: plot.Y(50), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '4 5' }));
+                  els.push(s('text', { x: plot.X(2025), y: plot.Y(50) - 4, 'text-anchor': 'middle', class: 'tick', text: 'today' }));
+                  return els;
+                },
+                readout: (p) => { const yr = Math.min(2120, 1850 + p.t), b = BUDGET[Math.min(BUDGET.length - 1, Math.round((yr - 1850) * 2))]; return `${fix(yr, 0)}: emitting ${fix(b.e, 1)} Gt a year · emitted so far ${fix(b.c, 0)} Gt · warming ≈ ${fix((0.45 * b.c) / 1000, 2)} °C`; },
+              },
+              after: r`The warming tracks the **total** emitted, the area under the amber curve, not the yearly rate. So even while emissions fall, warming keeps rising, because every year still adds to the total. It only stops rising when emissions reach **zero**, and then it stays roughly level for centuries rather than falling back. Like a bath filling from a tap: turning the tap down slows the rise, but only turning it off stops it.`,
             },
             {
               type: 'numeric',

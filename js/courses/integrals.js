@@ -597,6 +597,39 @@ Archimedes used slicing arguments 2000 years before calculus. Integration made t
               hint: r`$\int_{-3}^{3} (9 - y^2)\,dy = \left[9y - \tfrac{y^3}{3}\right]_{-3}^{3}$.`,
               explain: r`$\left[9y - \frac{y^3}{3}\right]_{-3}^{3} = (27 - 9) - (-27 + 9) = 36$, so $V = 36\pi \approx 113$ cm³, whether the ball is a marble-sized bead or the size of the Earth. The ball's radius cancels out: a bigger ball needs a wider hole to leave a 6 cm ring, and the ring gets thinner as it gets wider. It's also the volume of a solid ball 6 cm across, the limiting case with no hole at all.`,
             },
+            { /*anim:integrals*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Rings from any ball',
+              body: r`On the left, a 6 cm tall {amber:napkin ring} cut from a ball whose size keeps changing (seen side on). In the middle, the {amber:ring's slice} at height $y$, seen from above. On the right, the {blue:slice of a solid ball 6 cm across} at the same height.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.0, xmax: 9.0, ymin: -2.45, ymax: 2.1, grid: false, axes: false,
+                animate: { param: 't', speed: 1, max: 20 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const R = 3.02 + 2.5 * (1 - Math.cos(p.t / 5)), y = 2.85 * Math.sin(p.t), r = Math.sqrt(R * R - 9), k = 0.25, k2 = 0.24, els = [];
+                  const cx = -0.3, X = (x) => plot.X(cx + k * x), Y = (yy) => plot.Y(k * yy), rad = (q) => plot.X(q) - plot.X(0);
+                  const T = (x, yy, text) => s('text', { x: plot.X(x), y: plot.Y(yy), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-2)', text });
+                  // side view: the ball outline, then the two halves of the band
+                  els.push(s('circle', { cx: X(0), cy: Y(0), r: rad(k * R), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  for (const sg of [1, -1]) {
+                    const pts = [`M${X(sg * r).toFixed(1)} ${Y(-3).toFixed(1)}`];
+                    for (let i = 0; i <= 40; i++) { const yy = -3 + (6 * i) / 40; pts.push(`L${X(sg * Math.sqrt(R * R - yy * yy)).toFixed(1)} ${Y(yy).toFixed(1)}`); }
+                    els.push(s('path', { d: pts.join('') + 'Z', class: 'fl-amber', opacity: 0.6, stroke: 'var(--amber)', 'stroke-width': 2 }));
+                  }
+                  els.push(s('line', { x1: X(-R - 0.4), x2: X(R + 0.4), y1: Y(y), y2: Y(y), stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  // the ring's slice: an annulus
+                  const c2 = 4.75, ro = Math.sqrt(R * R - y * y), C = (cxx, q) => `M${plot.X(cxx + k2 * q)} ${plot.Y(0)}a${rad(k2 * q)} ${rad(k2 * q)} 0 1 0 ${-2 * rad(k2 * q)} 0a${rad(k2 * q)} ${rad(k2 * q)} 0 1 0 ${2 * rad(k2 * q)} 0Z`;
+                  els.push(s('path', { d: C(c2, ro) + C(c2, r), 'fill-rule': 'evenodd', class: 'fl-amber', opacity: 0.6, stroke: 'var(--amber)', 'stroke-width': 1.5 }));
+                  // the ball's slice
+                  const c3 = 8.0;
+                  els.push(s('circle', { cx: plot.X(c3), cy: plot.Y(0), r: rad(k2 * Math.sqrt(9 - y * y)), class: 'fl-blue', opacity: 0.6, stroke: 'var(--blue)', 'stroke-width': 1.5 }));
+                  els.push(T(cx, -2.25, 'ring'), T(c2, -2.25, 'ring slice'), T(c3, -2.25, 'ball slice'));
+                  return els;
+                },
+                readout: (p) => { const R = 3.02 + 2.5 * (1 - Math.cos(p.t / 5)), y = 2.85 * Math.sin(p.t); return `ball radius ${fix(R, 2)} cm · at $y = ${fix(y, 2)}$ both slices have area $\\pi(9 - y^2) = ${fix(Math.PI * (9 - y * y), 2)}$`; },
+              },
+              after: r`As the ball grows, the ring's slice gets wider but thinner, and the two effects cancel exactly: its area is $\pi\big((R^2 - y^2) - (R^2 - 9)\big) = \pi(9 - y^2)$, with no $R$ left. Every slice matches the slice of a solid ball of radius 3, so (by **Cavalieri's principle**: equal slices, equal volumes) every 6 cm ring holds $\frac43\pi \cdot 3^3 = 36\pi$ cm³.`,
+            },
           ],
           recap: [
             r`Volume by slicing: $V = \int A(x)\,dx$.`,

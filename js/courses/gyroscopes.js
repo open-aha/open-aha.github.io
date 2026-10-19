@@ -112,6 +112,33 @@ Crucially, the change happens in the direction of the **torque**, which need not
               body: r`A gyroscope's axle rests on a pivot at one end, sticking out horizontally. Gravity pulls the spinning disc down, creating a torque $\tau = mgr$ about the pivot. But that torque points **horizontally**, at right angles to the axle. So instead of falling, the angular momentum swings sideways: the axle sweeps around the pivot in a horizontal circle. This is **precession**, at a rate
 $$\Omega = \frac{\tau}{L} = \frac{mgr}{I\omega}$$`,
             },
+            { /*anim:gyroscopes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Torque turns the arrow',
+              body: r`Seen from above: a gyroscope's axle sticks out horizontally from the pivot (the dot), so its angular momentum $\mathbf L$ ({blue:blue arrow}) is horizontal too. Gravity's torque $\boldsymbol\tau$ ({coral:coral arrow}) is horizontal as well, but **at right angles** to the axle. Each moment, the torque adds a small piece $\boldsymbol\tau\,\Delta t$ to $\mathbf L$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.4, xmax: 2.4, ymin: -2.4, ymax: 2.4, grid: false, axes: false, maxWidth: 360,
+                animate: { param: 't', speed: 1, max: 2 * Math.PI / 0.35, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const Om = 0.35, a = Om * p.t, Lm = 1.6, els = [];
+                  const arrow = (x0, y0, x1, y1, col, wd, op = 1) => { const X0 = plot.X(x0), Y0 = plot.Y(y0), X1 = plot.X(x1), Y1 = plot.Y(y1), a2 = Math.atan2(Y1 - Y0, X1 - X0), h = 11; return s('path', { d: `M${X0} ${Y0}L${X1} ${Y1}M${X1 - h * Math.cos(a2 - 0.45)} ${Y1 - h * Math.sin(a2 - 0.45)}L${X1} ${Y1}L${X1 - h * Math.cos(a2 + 0.45)} ${Y1 - h * Math.sin(a2 + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': wd, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: op }); };
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(Lm) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  // earlier positions of L, fading
+                  for (let k = 1; k <= 5; k++) { const b = a - 0.3 * k; els.push(arrow(0, 0, Lm * Math.cos(b), Lm * Math.sin(b), 'blue', 2, 0.5 - 0.08 * k)); }
+                  // the axle and the spinning disc, seen edge-on from above
+                  const ux = Math.cos(a), uy = Math.sin(a);
+                  els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(1.1 * ux), y2: plot.Y(1.1 * uy), stroke: 'var(--ink-2)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  els.push(s('line', { x1: plot.X(1.1 * ux - 0.45 * uy), y1: plot.Y(1.1 * uy + 0.45 * ux), x2: plot.X(1.1 * ux + 0.45 * uy), y2: plot.Y(1.1 * uy - 0.45 * ux), stroke: 'var(--amber)', 'stroke-width': 9, 'stroke-linecap': 'round' }));
+                  els.push(arrow(0, 0, Lm * ux, Lm * uy, 'blue', 3.5));
+                  els.push(arrow(Lm * ux, Lm * uy, Lm * ux - 0.75 * uy, Lm * uy + 0.75 * ux, 'coral', 3.5));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: 6, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => `axle has swung round ${fix(((0.35 * p.t * 180) / Math.PI) % 360, 0)}° · $|\\mathbf L|$ unchanged`,
+              },
+              after: r`Because each small piece $\boldsymbol\tau\,\Delta t$ is at right angles to $\mathbf L$, it changes the arrow's **direction** but not its **length**, just as a sideways force on a stone on a string turns its velocity without speeding it up. And since the torque always points at right angles to the axle wherever the axle goes, $\mathbf L$ keeps swinging round in a horizontal circle: that is precession. The faster the spin, the longer $\mathbf L$, and the more slowly the same torque can turn it: $\Omega = \frac{\tau}{L}$.`,
+            },
             {
               type: 'explain',
               kicker: 'Explore',

@@ -158,6 +158,26 @@ function schelling(t) {
   return frames;
 }
 
+// Bill Gosper's glider gun (1970), run on a large hidden board so gliders never hit an edge
+const GUN = [[1, 5], [1, 6], [2, 5], [2, 6], [11, 5], [11, 6], [11, 7], [12, 4], [12, 8], [13, 3], [13, 9], [14, 3], [14, 9], [15, 6], [16, 4], [16, 8], [17, 5], [17, 6], [17, 7], [18, 6], [21, 3], [21, 4], [21, 5], [22, 3], [22, 4], [22, 5], [23, 2], [23, 6], [25, 1], [25, 2], [25, 6], [25, 7], [35, 3], [35, 4], [36, 3], [36, 4]];
+let GUN_GENS = null;
+const gunGens = () => GUN_GENS || (GUN_GENS = (() => {
+  const W = 90, H = 70, out = [];
+  let g = new Uint8Array(W * H);
+  for (const [x, y] of GUN) g[(y + 1) * W + x + 1] = 1;
+  for (let t = 0; t <= 150; t++) {
+    out.push(g);
+    const n = new Uint8Array(W * H);
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      let c = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) c += g[(y + dy) * W + x + dx];
+      n[y * W + x] = c === 3 || (g[y * W + x] && c === 2) ? 1 : 0;
+    }
+    g = n;
+  }
+  return out;
+})());
+
 export default {
   id: 'automata',
   subject: 'math',
@@ -401,6 +421,24 @@ Three cells have $2^3 = 8$ possible patterns, and the rule gives an output for e
                 { t: 'It was the first pattern that never changes', why: 'Still lifes like the block were known from the start.' },
               ],
               explain: r`Conway had offered a prize for a pattern that grows without limit, and the gun won it. Glider streams can carry information, and colliding streams act like logic gates. It's now known that the Game of Life is **Turing complete**: people have built working computers, and even a simulation of the Game of Life, inside it.`,
+            },
+            { /*anim:automata*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The glider gun',
+              body: r`Here is Gosper's glider gun. Two "shuttles" bounce back and forth between two still blocks, and every time they collide, a new glider is born and flies off to the lower right.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 0, xmax: 48, ymin: 0, ymax: 34, grid: false, axes: false, pad: 4,
+                animate: { param: 't', speed: 8, max: 151, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(150, Math.floor(p.t)), g = gunGens()[k], W = 90, w = plot.X(1) - plot.X(0);
+                  let d = '';
+                  for (let y = 0; y < 34; y++) for (let x = 0; x < 48; x++) if (g[y * W + x]) d += `M${plot.X(x).toFixed(1)} ${plot.Y(34 - y).toFixed(1)}h${(w - 1).toFixed(1)}v${(w - 1).toFixed(1)}h${(1 - w).toFixed(1)}z`;
+                  return [s('rect', { x: plot.X(0), y: plot.Y(34), width: plot.X(48) - plot.X(0), height: plot.Y(0) - plot.Y(34), class: 'fl-surface' }), s('path', { d, class: 'fl-ink' })];
+                },
+                readout: (p) => { const k = Math.min(150, Math.floor(p.t)); return `generation ${k} · gliders fired: ${Math.floor(k / 30)}`; },
+              },
+              after: r`The gun repeats itself every 30 generations, adding one more glider each time, so the number of live cells grows forever: this settled Conway's question of whether any pattern could grow without limit. Streams of gliders can act as signals, and where streams cross they can act like logic gates. That's the first step towards building a whole computer inside the Game of Life.`,
             },
             {
               type: 'mcq',

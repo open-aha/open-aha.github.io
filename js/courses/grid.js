@@ -442,6 +442,37 @@ Operators watch the frequency constantly and adjust generation to hold it steady
               ],
               explain: r`Each coil's field pulses along its own direction, a third of a cycle after the previous one, and together they make a field of constant strength rotating 50 times a second. Tesla's **induction motor** uses it: the spinning field induces currents in the rotor that drag it round, with no brushes or contacts. Most industrial motors, and many electric cars, work this way.`,
             },
+            { /*anim:grid*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Three coils, one turning field',
+              body: r`Three coils sit round a motor, $120°$ apart. Each one's magnetic field points along its own axis, growing, shrinking and reversing with its phase of the current: {coral:A}, {teal:B} and {violet:C}. The thick black arrow is their **sum**.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.1, xmax: 2.1, ymin: -2.1, ymax: 2.1, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 1.2, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const w = p.t, els = [], phases = [[Math.PI / 2, 0, 'coral'], [Math.PI / 2 + (2 * Math.PI) / 3, (2 * Math.PI) / 3, 'teal'], [Math.PI / 2 + (4 * Math.PI) / 3, (4 * Math.PI) / 3, 'violet']];
+                  const arrow = (dx, dy, col, wd) => { const X1 = plot.X(dx), Y1 = plot.Y(dy), L = Math.hypot(X1 - plot.X(0), Y1 - plot.Y(0)); if (L < 2) return null; const a = Math.atan2(Y1 - plot.Y(0), X1 - plot.X(0)), h = Math.min(12, L / 2); return s('path', { d: `M${plot.X(0)} ${plot.Y(0)}L${X1} ${Y1}M${X1 - h * Math.cos(a - 0.45)} ${Y1 - h * Math.sin(a - 0.45)}L${X1} ${Y1}L${X1 - h * Math.cos(a + 0.45)} ${Y1 - h * Math.sin(a + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': wd, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); };
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1.5) - plot.X(0), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '5 4' }));
+                  let sx = 0, sy = 0;
+                  for (const [ax, ph, col] of phases) {
+                    // the coil itself, as a block on its axis
+                    const cx = 1.85 * Math.cos(ax), cy = 1.85 * Math.sin(ax);
+                    els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(cy), r: 9, class: `fl-${col}`, opacity: 0.8 }));
+                  els.push(s('text', { x: plot.X(cx) + 13, y: plot.Y(cy) - 8, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text: 'ABC'[Math.round(ph / ((2 * Math.PI) / 3))] }));
+                    els.push(s('line', { x1: plot.X(-1.7 * Math.cos(ax)), y1: plot.Y(-1.7 * Math.sin(ax)), x2: plot.X(cx), y2: plot.Y(cy), stroke: `var(--${col})`, 'stroke-width': 1, opacity: 0.35 }));
+                    const b = Math.cos(w - ph);
+                    sx += b * Math.cos(ax); sy += b * Math.sin(ax);
+                    const el = arrow(b * Math.cos(ax), b * Math.sin(ax), col, 3);
+                    if (el) els.push(el);
+                  }
+                  els.push(arrow(sx, sy, 'ink', 5));
+                  return els;
+                },
+                readout: (p) => { const w = p.t; let sx = 0, sy = 0; [[Math.PI / 2, 0], [Math.PI / 2 + (2 * Math.PI) / 3, (2 * Math.PI) / 3], [Math.PI / 2 + (4 * Math.PI) / 3, (4 * Math.PI) / 3]].forEach(([ax, ph]) => { const b = Math.cos(w - ph); sx += b * Math.cos(ax); sy += b * Math.sin(ax); }); const deg = ((Math.atan2(sy, sx) * 180) / Math.PI + 360) % 360; return `{coral:A} ${fix(Math.cos(w), 2)} · {teal:B} ${fix(Math.cos(w - (2 * Math.PI) / 3), 2)} · {violet:C} ${fix(Math.cos(w - (4 * Math.PI) / 3), 2)} · sum: length ${fix(Math.hypot(sx, sy), 2)}, pointing at ${fix(deg, 0)}°`; },
+              },
+              after: r`None of the three fields turns: each just swings back and forth along its own line. Yet their sum keeps a constant length, $\frac32$ of one coil's peak, and sweeps steadily round the circle, once per cycle of the mains. Put a magnet (or a metal cage, in which the field induces currents) in the middle and it gets dragged round. That is the **induction motor**, Nikola Tesla's design from 1888, which still drives most of the world's machinery with no brushes or switches at all.`,
+            },
           ],
           recap: [
             'Three-phase AC uses three waves 120° apart, which add to zero at every instant.',

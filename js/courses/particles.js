@@ -40,6 +40,22 @@ const higgsSig = (m) => (30 / (2 * Math.sqrt(2 * Math.PI))) * Math.exp(-((m - 12
 const noise = (i, seed) => { let a = (i * 2654435761 + seed * 97) >>> 0; const u = () => { a = (a * 1664525 + 1013904223) >>> 0; return (a + 0.5) / 4294967296; }; return Math.sqrt(-2 * Math.log(u())) * Math.cos(2 * Math.PI * u()); };
 const higgsZ = (L) => { let S = 0, B = 0; for (let m = 121; m <= 129; m++) { S += higgsSig(m) * L; B += higgsBg(m) * L; } return S / Math.sqrt(B); };
 
+// tracks in a magnetic field (pointing into the page): radius r = p/(qB) shrinks as each particle loses energy in the liquid.
+// With r falling linearly with path length s, from r0 to 0 over L, the heading turns by (L/r0)·ln(1/(1 − s/L)).
+const PAIR_TRACKS = (() => {
+  const make = (sign, r0, L) => {
+    const pts = [[0, 0]];
+    let x = 0, y = 0;
+    for (let i = 1; i <= 900; i++) {
+      const sv = (0.985 * L * i) / 900, th = sign * (L / r0) * Math.log(1 / (1 - sv / L)), ds = (0.985 * L) / 900;
+      x += ds * Math.cos(th); y += ds * Math.sin(th);
+      pts.push([x, y]);
+    }
+    return pts;
+  };
+  return { minus: make(1, 3.2, 9), plus: make(-1, 2.4, 7) };
+})();
+
 export default {
   id: 'particles',
   subject: 'physics',
@@ -340,6 +356,31 @@ Every force you've ever felt (friction, tension, a push) is electromagnetism bet
               tol: 0.5,
               wrong: [{ v: 938.3, tol: 0.5, why: 'It must create two particles: a proton and an antiproton.' }],
               explain: r`At least $2 \times 938.3 = 1876.6$ MeV, available in the centre-of-mass frame: $E = mc^2$ run backwards. Firing a proton at a stationary target wastes most of the energy on motion, so the Bevatron at Berkeley was built with 6.2 GeV beams, and in 1955 it produced the first antiprotons.`,
+            },
+            { /*anim:particles*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A pair from nothing but light',
+              body: r`A high-energy gamma ray (dashed: being uncharged, it leaves no track) enters a bubble chamber with a magnetic field pointing into the page. Near a nucleus it turns into an {coral:electron} and a {blue:positron}. Watch their tracks.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -6.5, xmax: 6.5, ymin: -4.6, ymax: 4.6, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 1, max: 9, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const t = p.t, els = [], P = (pts) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('');
+                  const gx = Math.min(0, -6.5 + 6.5 * (t / 1.2));
+                  els.push(s('line', { x1: plot.X(-6.5), y1: plot.Y(0), x2: plot.X(gx), y2: plot.Y(0), stroke: 'var(--ink-3)', 'stroke-width': 2, 'stroke-dasharray': '6 5' }));
+                  if (t > 1.2) {
+                    const f = Math.min(1, (t - 1.2) / 5.5), n = Math.max(2, Math.floor(900 * f * (2 - f)));
+                    els.push(s('path', { d: P(PAIR_TRACKS.minus.slice(0, n).map(([x, y]) => [x, -y])), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.2 }));
+                    els.push(s('path', { d: P(PAIR_TRACKS.plus.slice(0, Math.floor(n * 0.95)).map(([x, y]) => [x, -y])), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.2 }));
+                    els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: 4, class: 'fl-ink' }));
+                  }
+                  for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) els.push(s('path', { d: `M${plot.X(-5.5 + 3.6 * i) - 4} ${plot.Y(-3.4 + 3.4 * j) - 4}l8 8m0 -8l-8 8`, stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  return els;
+                },
+                readout: (p) => (p.t < 1.2 ? 'a gamma ray, invisible in the chamber' : 'two tracks, curling opposite ways and tightening as they slow'),
+              },
+              after: r`The two particles have equal mass, so the field bends them equally hard, but in **opposite** directions, because their charges are opposite. As they plough through the liquid they lose energy, and a slower particle curls more tightly, so each track winds into a spiral. Curling tracks like these were the evidence that antimatter is real: Carl Anderson spotted the first positron in 1932, and pairs like this one were photographed the following year. The light's energy has become mass, $E = mc^2$ run in reverse, which needs a gamma ray of at least $2 \times 0.511$ MeV.`,
             },
             {
               type: 'mcq',

@@ -11,6 +11,10 @@ const ELEM = 'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn F
 const xi = (A) => (A === 1 ? 1 : 1 + ((A - 1) ** 2 / (2 * A)) * Math.log((A - 1) / (A + 1)));
 const MODS = [['water (hydrogen)', 1], ['heavy water (deuterium)', 2], ['graphite (carbon)', 12], ['uranium-238 itself', 238]];
 
+// the uranium-238 series: [symbol, mass number A, atomic number Z, how it decays, half-life]
+const U_CHAIN = [['U', 238, 92, 'α', '4.5 billion years'], ['Th', 234, 90, 'β', '24 days'], ['Pa', 234, 91, 'β', '1.2 minutes'], ['U', 234, 92, 'α', '245,000 years'], ['Th', 230, 90, 'α', '75,000 years'], ['Ra', 226, 88, 'α', '1,600 years'], ['Rn', 222, 86, 'α', '3.8 days'], ['Po', 218, 84, 'α', '3.1 minutes'], ['Pb', 214, 82, 'β', '27 minutes'], ['Bi', 214, 83, 'β', '20 minutes'], ['Po', 214, 84, 'α', '164 microseconds'], ['Pb', 210, 82, 'β', '22 years'], ['Bi', 210, 83, 'β', '5.0 days'], ['Po', 210, 84, 'α', '138 days'], ['Pb', 206, 82, '', 'stable']];
+const uStep = (t) => Math.min(14, Math.floor(t / 1.1));
+
 export default {
   id: 'nuclear',
   subject: 'physics',
@@ -157,6 +161,31 @@ In every nuclear equation, both the mass numbers and the charges (atomic numbers
               answer: 7,
               wrong: [{ v: 5, why: 'In beta decay a neutron turns into a proton, so Z goes **up** by 1.' }, { v: 6, why: 'The element changes: a neutron becomes a proton.' }],
               explain: r`A neutron turns into a proton (emitting an electron), so $Z = 6 + 1 = 7$: nitrogen. $$ {}^{14}_{6}\text{C} \to {}^{14}_{7}\text{N} + e^-$$ (plus a nearly undetectable antineutrino).`,
+            },
+            { /*anim:nuclear*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'From uranium to lead',
+              body: r`Uranium-238 doesn't decay just once. Each nucleus is plotted by its neutrons $N$ (across) and protons $Z$ (up), labelled with its element. An {coral:alpha decay} removes 2 protons and 2 neutrons (a step down and to the left); a {blue:beta decay} turns a neutron into a proton (a step up and to the left).`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 122.5, xmax: 147, ymin: 80.6, ymax: 93.4, grid: false, axes: { xticks: 2, yticks: 2, xAt: 123, yAt: 81, xlabel: 'N', ylabel: 'Z' }, maxWidth: 640,
+                animate: { param: 't', speed: 1, max: 20, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = uStep(p.t), els = [], w = plot.X(0.86) - plot.X(0);
+                  for (let i = 0; i <= k; i++) {
+                    const [sym, A, Z, mode] = U_CHAIN[i], N = A - Z;
+                    if (i < k) {
+                      const [, A2, Z2] = U_CHAIN[i + 1], N2 = A2 - Z2;
+                      els.push(s('line', { x1: plot.X(N), y1: plot.Y(Z), x2: plot.X(N2), y2: plot.Y(Z2), stroke: mode === 'α' ? 'var(--coral)' : 'var(--blue)', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+                    }
+                    els.push(s('rect', { x: plot.X(N) - w / 2, y: plot.Y(Z) - w / 2, width: w, height: w, rx: 3, class: i === k ? 'fl-amber' : 'fl-card', stroke: i === k ? 'var(--ink)' : 'var(--line-2)', 'stroke-width': i === k ? 2 : 1 }));
+                    els.push(s('text', { x: plot.X(N), y: plot.Y(Z) + 4, 'text-anchor': 'middle', style: `font-size:max(${Math.max(10, w * 0.5).toFixed(1)}px, var(--fmin, 0px));font-weight:700;fill:var(--${i === k ? 'night' : 'ink'})`, text: sym })); // the mass number is in the readout
+                  }
+                  return els;
+                },
+                readout: (p) => { const k = uStep(p.t), [sym, A, , mode, hl] = U_CHAIN[k]; return k === 14 ? `**lead-206** is stable: the chain ends after 8 alpha and 6 beta decays` : `**${sym}-${A}**: ${mode === 'α' ? '{coral:alpha}' : '{blue:beta}'} decay, half-life ${hl}`; },
+              },
+              after: r`Fourteen decays take uranium-238 down to stable lead-206: 8 alphas (losing $8 \times 4 = 32$ nucleons, from 238 to 206) and 6 betas (which turn 6 neutrons into protons, so the proton count falls by $16 - 6 = 10$, from 92 to 82). The half-lives span from 164 microseconds to 4.5 billion years. The slowest step sets the pace, so old rocks slowly fill up with lead; comparing a rock's uranium and lead tells us its age, which is how Earth was dated to 4.5 billion years.`,
             },
             {
               type: 'explain',

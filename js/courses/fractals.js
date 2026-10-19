@@ -108,6 +108,16 @@ const lorenz = () => {
   return (LORENZ = [run([1, 1, 20]), run([1 + 1e-5, 1, 20])]);
 };
 
+// points of the Koch curve from a to b, only where they can be seen in the window [x0, x1] (to the given depth)
+function kochZoomPts(a, b, depth, x0, x1, out) {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (Math.max(a[0], b[0]) + len * 0.3 < x0 || Math.min(a[0], b[0]) - len * 0.3 > x1) { if (out[out.length - 1]) out.push(null); return; } // nothing visible here: break the line
+  if (depth === 0) { out.push(b); return; }
+  const dx = (b[0] - a[0]) / 3, dy = (b[1] - a[1]) / 3, p1 = [a[0] + dx, a[1] + dy], p3 = [a[0] + 2 * dx, a[1] + 2 * dy];
+  const p2 = [p1[0] + dx / 2 - (Math.sqrt(3) / 2) * dy, p1[1] + dy / 2 + (Math.sqrt(3) / 2) * dx];
+  kochZoomPts(a, p1, depth - 1, x0, x1, out); kochZoomPts(p1, p2, depth - 1, x0, x1, out); kochZoomPts(p2, p3, depth - 1, x0, x1, out); kochZoomPts(p3, b, depth - 1, x0, x1, out);
+}
+
 export default {
   id: 'fractals',
   subject: 'math',
@@ -165,6 +175,24 @@ export default {
                 },
                 readout: (p) => r`perimeter $\times \left(\tfrac43\right)^{${p.n}} = ${f3((4 / 3) ** p.n)}$`,
               },
+            },
+            { /*anim:fractals*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Zooming forever',
+              body: r`Here's the edge of the snowflake (a Koch curve), and we keep zooming in on its left end. Watch closely: every time the zoom reaches 3 times, the picture is exactly the same as when we started.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.02, xmax: 1.0, ymin: -0.05, ymax: 0.32, grid: false, axes: false, clipExtra: true,
+                animate: { param: 't', speed: 0.3, max: 1000, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const z = 3 ** (p.t % 1), out = [[0, 0]];
+                  // drawing the curve scaled by z about the left end = viewing the window [0, 1/z]
+                  kochZoomPts([0, 0], [z, 0], z < 1.7 ? 6 : 7, -0.05, 1.05, out); // about a pixel per segment
+                  return [s('path', { d: out.map((q, i) => (q ? `${i && out[i - 1] ? 'L' : 'M'}${plot.X(q[0]).toFixed(1)} ${plot.Y(q[1]).toFixed(1)}` : '')).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2, 'stroke-linejoin': 'round' })];
+                },
+                readout: (p) => `${Math.floor(p.t)} full ×3 zooms so far, plus ×${fix(3 ** (p.t % 1), 2)} · the picture repeats at every ×3`,
+              },
+              after: r`The left third of a Koch curve is a copy of the whole curve, shrunk by a factor of 3, and its left third is a copy too, and so on forever. So zooming in by 3 brings back exactly the same picture, however far you go: there is never a smooth bit, which is why the curve has no tangent anywhere and infinite length. Real coastlines, clouds and ferns are self-similar too, though only roughly and only over a limited range of zooms.`,
             },
             {
               type: 'explain',

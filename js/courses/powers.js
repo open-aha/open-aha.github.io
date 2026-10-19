@@ -177,6 +177,43 @@ The king laughed and agreed. Square $n$ gets $2^{n-1}$ grains. The first row is 
               ],
               explain: r`Day 29: one doubling before full. On day 25 it was only $\frac{1}{32}$ covered, barely noticeable. Exponential growth looks harmless until the very end, which is why it's so easy to underestimate.`,
             },
+            { /*anim:powers*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'More than all the rest',
+              body: r`Here are the squares drawn to scale, one after another. On the right, the {amber:stack} piles up all the squares so far. Watch each {coral:new square} arrive and compare it with the stack. Watch each new square arrive.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 23.6, ymin: -0.12, ymax: 1.12, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 0.6, max: 20, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const N = Math.floor(p.t), f = p.t - N;
+                  const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+                  const a = ease(f / 0.45), b = ease((f - 0.5) / 0.45);
+                  const ymax = 2 ** (N - 1 + a);
+                  const H = (v) => plot.Y(0) - plot.Y(Math.min(1.05, v / ymax));
+                  const els = [s('line', { x1: plot.X(0.3), x2: plot.X(23.4), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.6 })];
+                  const bar = (x, v, cls) => s('rect', { x: plot.X(x - 0.38), y: plot.Y(0) - H(v), width: plot.X(0.76) - plot.X(0), height: H(v), class: cls, rx: 2 });
+                  for (let k = 1; k <= N; k++) if (k <= 20) els.push(bar(k, 2 ** (k - 1), k === N && a < 0.5 ? 'fl-coral' : 'fl-blue-soft'));
+                  if (N + 1 <= 20 && b > 0) els.push(bar(N + 1, 2 ** N * b, 'fl-coral'));
+                  // the stack: squares 1..N-1 in full, square N sliding in during the first half
+                  let y0 = plot.Y(0);
+                  for (let k = 1; k <= N; k++) {
+                    const v = k < N ? 2 ** (k - 1) : 2 ** (k - 1) * a, sx = 22.6;
+                    const hpx = (plot.Y(0) - plot.Y(v / ymax));
+                    if (hpx > 0.4) els.push(s('rect', { x: plot.X(sx - 0.38), y: y0 - hpx, width: plot.X(0.76) - plot.X(0), height: hpx, class: k % 2 ? 'fl-amber' : 'fl-amber-soft' }));
+                    y0 -= hpx;
+                  }
+                  const T = (x, y, text, o = {}) => s('text', { x, y, 'text-anchor': o.a || 'middle', class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));${o.fill ? 'fill:' + o.fill : ''}`, text });
+                  if (N) els.push(T(plot.X(22.6), plot.Y(0) + 18, `1 to ${N}`, { fill: 'var(--amber)' }));
+                  if (N + 1 <= 20 && b > 0) els.push(T(plot.X(N + 1), plot.Y(0) + 18, `#${N + 1}`, { fill: 'var(--coral)' }));
+                  if (N + 1 <= 20 && b > 0) els.push(s('line', { x1: plot.X(N + 1.5), x2: plot.X(22.2), y1: plot.Y(0) - H(2 ** N - 1), y2: plot.Y(0) - H(2 ** N - 1), stroke: 'var(--amber)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  if (N + 1 <= 20 && b > 0) els.push(T(plot.X(N + 1), plot.Y(Math.min(1.05, (2 ** N * b) / ymax)) - 8, 'new', { fill: 'var(--coral)' }));
+                  return els;
+                },
+                readout: (p) => { const N = Math.min(19, Math.floor(p.t)); return N ? `square ${N + 1}: ${(2 ** N).toLocaleString('en-GB')} grains · squares 1 to ${N} together: ${(2 ** N - 1).toLocaleString('en-GB')}` : 'square 1: 1 grain'; },
+              },
+              after: r`Every new square holds **one grain more than all the earlier squares put together**: $1 + 2 + 4 + \dots + 2^{n-1} = 2^n - 1$. Each time, the old squares shrink to half the height of the picture, and the newest one fills it. The picture never changes, only the numbers do. That's why the lily pads cover half the pond just one day before the end: in exponential growth, the latest step is always as big as all of history.`,
+            },
             {
               type: 'numeric',
               title: 'Ten doublings, a thousand',

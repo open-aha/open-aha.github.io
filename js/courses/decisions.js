@@ -1,3 +1,4 @@
+import { sig } from '../lib/svg.js';
 const r = String.raw;
 
 // optimal stopping (secretary problem), n = 100 candidates
@@ -25,6 +26,11 @@ const Phi = (z) => {
 };
 const etc = (n, T = 1000) => (n === 0 ? 0.55 * T : 1.1 * n + (T - 2 * n) * (0.5 + 0.1 * Phi((0.1 * Math.sqrt(n)) / Math.sqrt(0.49))));
 const ETC_MAX = Math.max(...Array.from({ length: 300 }, (_, n) => etc(n)));
+
+// 300 flips of the 60% coin (fixed, so every strategy sees the same luck)
+const KELLY_FLIPS = (() => { let a = 20240611; const out = []; for (let i = 0; i < 300; i++) { a = (a * 1103515245 + 12345) % 2147483648; out.push(a / 2147483648 < 0.6); } return out; })();
+const KELLY_F = [[0.1, 'teal'], [0.2, 'blue'], [0.4, 'amber'], [0.6, 'coral']];
+const kellyPath = (f, n) => { let w = Math.log10(100); const pts = [w]; for (let i = 0; i < n; i++) { w += Math.log10(KELLY_FLIPS[i] ? 1 + f : 1 - f); pts.push(w); } return pts; };
 
 export default {
   id: 'decisions',
@@ -318,6 +324,26 @@ Bet too little and you grow slowly. Bet everything and one tails wipes you out. 
               body: r`For a bet that pays $b$ times your stake if you win (probability $p$) and loses your stake otherwise ($q = 1 - p$), the growth-maximising fraction is
 $$f^* = p - \frac{q}{b}$$
 For our coin, $b = 1$: $f^* = 0.6 - 0.4 = 0.2$ ✓. If the edge is zero or negative, $f^* \le 0$: don't bet at all.`,
+            },
+            { /*anim:decisions*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Same luck, different bets',
+              body: r`Four gamblers start with £100 and bet on the **same** 300 flips of the 60% coin. They differ only in the fraction they stake each time: {teal:10%}, {blue:20% (Kelly)}, {amber:40%} and {coral:60%}. The vertical scale is logarithmic: each gridline is ten times the one below.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 300, ymin: -2, ymax: 6, grid: 50, gridY: 1, height: 320, padL: 64, clipExtra: true,
+                axes: { xlabel: 'flips', ylabel: 'money (£)', xticks: 50, yticks: 2, yAt: -2, yfmt: (v) => ({ '-2': '£0.01', 0: '£1', 2: '£100', 4: '£10k', 6: '£1m' })[v] ?? '' },
+                animate: { param: 't', speed: 40, max: 330, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = Math.min(300, Math.floor(p.t));
+                  return KELLY_F.map(([f, col]) => {
+                    const pts = kellyPath(f, n);
+                    return s('path', { d: pts.map((w, i) => `${i ? 'L' : 'M'}${plot.X(i).toFixed(1)} ${plot.Y(Math.max(-3, w)).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': f === 0.2 ? 3.5 : 2.5, 'stroke-linejoin': 'round' });
+                  });
+                },
+                readout: (p) => { const n = Math.min(300, Math.floor(p.t)); return `after ${n} flips: ` + KELLY_F.map(([f, col]) => { const w = 10 ** kellyPath(f, n)[n]; return `{${col}:${w >= 1 ? '£' + sig(w, 2, true) : w >= 0.01 ? Math.round(w * 100) + 'p' : 'under 1p'}}`; }).join(' · '); },
+              },
+              after: r`Betting more feels bolder, but losses hurt more than wins help: a 60% stake turns £100 into £160 on a win but into £40 on a loss, and a win followed by a loss leaves only £64. The Kelly fraction grows fastest in the long run; staking twice Kelly (40%) has a growth rate of about zero; anything above that sinks towards ruin, **even though every single bet has a positive expected value**.`,
             },
             {
               type: 'numeric',

@@ -85,6 +85,10 @@ const divAt = (f, x, y, h = 1e-4) => (f(x + h, y)[0] - f(x - h, y)[0]) / (2 * h)
 const SWIRL = (x, y) => [0, x * x - 1];
 const SPREAD = (x, y) => [x * x - 1, y];
 
+const GREEN_CELLS = [[0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2], [3, 0], [3, 1], [4, 0], [4, 1]];
+const greenHas = (i, j) => GREEN_CELLS.some(([a, b]) => a === i && b === j);
+const greenGap = (t) => { const u = Math.min(1, Math.max(0, ((t % 9) - 1.5) / 4)); return 0.45 * (1 - u * u * (3 - 2 * u)); };
+
 export default {
   id: 'vectorcalc',
   subject: 'math',
@@ -694,6 +698,37 @@ $$\text{curl}\,\mathbf F = \frac{\partial Q}{\partial x} - \frac{\partial P}{\pa
               body: r`Chop a region $R$ into tiny squares. The circulation around each square is its curl times its area. Add them all up: along every shared inner edge, neighbouring squares go round in opposite directions and cancel, leaving only the outer boundary. That's **Green's theorem**:
 $$\oint_{\partial R} \mathbf F \cdot d\mathbf r = \iint_R \left(\frac{\partial Q}{\partial x} - \frac{\partial P}{\partial y}\right) dA$$
 Circulation around the edge equals the total curl inside. The same cancelling trick with flux gives the **divergence theorem**: flux out of the edge equals the total divergence inside.`,
+            },
+            { /*anim:vectorcalc*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Inner edges cancel',
+              body: r`Twelve little squares, each with arrows showing its circulation going anticlockwise round its own edge. Watch them slide together into one region.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.6, xmax: 3.6, ymin: -2.1, ymax: 2.1, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 1, max: 9, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const g = greenGap(p.t), fade = Math.min(1, g / 0.3), els = [];
+                  const arrow = (x0, y0, x1, y1, col, op) => { const X0 = plot.X(x0), Y0 = plot.Y(y0), X1 = plot.X(x1), Y1 = plot.Y(y1), a = Math.atan2(Y1 - Y0, X1 - X0); return s('path', { d: `M${X0} ${Y0}L${X1} ${Y1}M${X1 - 8 * Math.cos(a - 0.45)} ${Y1 - 8 * Math.sin(a - 0.45)}L${X1} ${Y1}L${X1 - 8 * Math.cos(a + 0.45)} ${Y1 - 8 * Math.sin(a + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: op }); };
+                  for (const [i, j] of GREEN_CELLS) {
+                    const cx = (i - 2) * (1 + g), cy = (j - 1) * (1 + g);
+                    els.push(s('rect', { x: plot.X(cx - 0.5), y: plot.Y(cy + 0.5), width: plot.X(1) - plot.X(0), height: plot.Y(0) - plot.Y(1), class: 'fl-amber-soft', stroke: 'var(--amber)', 'stroke-width': 1 }));
+                  }
+                  for (const [i, j] of GREEN_CELLS) {
+                    const cx = (i - 2) * (1 + g), cy = (j - 1) * (1 + g), o = 0.12;
+                    // anticlockwise: along the bottom to the right, up the right side, along the top to the left, down the left side
+                    const edges = [[0, -1, cx - 0.3, cy - 0.5 + o, cx + 0.3, cy - 0.5 + o], [1, 0, cx + 0.5 - o, cy - 0.3, cx + 0.5 - o, cy + 0.3], [0, 1, cx + 0.3, cy + 0.5 - o, cx - 0.3, cy + 0.5 - o], [-1, 0, cx - 0.5 + o, cy + 0.3, cx - 0.5 + o, cy - 0.3]];
+                    for (const [di, dj, x0, y0, x1, y1] of edges) {
+                      const inner = greenHas(i + di, j + dj);
+                      if (inner && fade > 0) els.push(arrow(x0, y0, x1, y1, 'coral', fade));
+                      if (!inner) els.push(arrow(x0, y0, x1, y1, 'blue', 1));
+                    }
+                  }
+                  return els;
+                },
+                readout: (p) => (greenGap(p.t) > 0.1 ? '12 separate squares, each with its own {blue:outer} and {coral:inner} edges' : greenGap(p.t) > 0 ? 'touching: along each shared edge, the two arrows point opposite ways' : 'the 16 shared edges cancel in pairs: only the {blue:outer boundary} is left'),
+              },
+              after: r`Where two squares meet, one goes up the shared edge and the other goes down it, so their contributions cancel exactly. Add up all twelve circulations and every inner edge drops out, leaving just the walk round the outside. That's why the total curl inside (the sum of the little circulations) equals the circulation round the boundary, for any shape you can chop into tiny squares.`,
             },
             {
               type: 'interactive',

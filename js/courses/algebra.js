@@ -626,6 +626,43 @@ $$(a + b)(a - b) = a^2 - ab + ab - b^2 = a^2 - b^2$$
 That gives a lovely shortcut for multiplying two numbers equally spaced around a round number:
 $$51 \times 49 = (50 + 1)(50 - 1) = 2500 - 1 = 2499$$`,
             },
+            { /*anim:algebra*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Cut and turn',
+              body: r`Take a {blue:square of side $a$} and cut a small square of side $b$ out of its corner. What's left has area $a^2 - b^2$. Now cut it in two and move one piece. Watch.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.8, xmax: 7.8, ymin: -0.9, ymax: 5.6, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 0.45, max: 4, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const A = 5, B = 2, u = Math.min(1, Math.max(0, (p.t - 1) / 1.6)), e = u * u * (3 - 2 * u);
+                  const poly = (pts, o) => s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', 'stroke-linejoin': 'round', ...o });
+                  const T = (x, y, text, fill) => s('text', { x: plot.X(x), y: plot.Y(y) + 6, 'text-anchor': 'middle', class: 'lbl-math halo-text', style: `font-size:max(calc(18px * var(--fs, 1)), var(--fmin, 0px));fill:${fill}`, text });
+                  const els = [];
+                  // bottom piece: a wide, (a - b) tall
+                  els.push(poly([[0, 0], [A, 0], [A, A - B], [0, A - B]], { class: 'fl-blue', opacity: 0.8, stroke: 'var(--card)', 'stroke-width': 2 }));
+                  // top-left piece: (a - b) wide, b tall; turns a quarter and slides to the right
+                  const c0 = [(A - B) / 2, A - B / 2], c1 = [A + B / 2, (A - B) / 2];
+                  const cx = c0[0] + (c1[0] - c0[0]) * e, cy = c0[1] + (c1[1] - c0[1]) * e, th = (-Math.PI / 2) * e;
+                  const corner = ([dx, dy]) => [cx + dx * Math.cos(th) - dy * Math.sin(th), cy + dx * Math.sin(th) + dy * Math.cos(th)];
+                  els.push(poly([[-(A - B) / 2, -B / 2], [(A - B) / 2, -B / 2], [(A - B) / 2, B / 2], [-(A - B) / 2, B / 2]].map(corner), { class: 'fl-coral', opacity: 0.85, stroke: 'var(--card)', 'stroke-width': 2 }));
+                  // the removed corner, shown faintly
+                  if (e < 0.02) els.push(poly([[A - B, A - B], [A, A - B], [A, A], [A - B, A]], { fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  els.push(T(A / 2, -0.5, 'a', 'var(--blue)'));
+                  els.push(T(-0.45, (A - B) / 2, 'a − b', 'var(--blue)'));
+                  if (e > 0.98) {
+                    els.push(T((A + B) / 2, A - B + 0.5, 'a + b', 'var(--ink)'));
+                    els.push(T(A + B / 2, -0.5, 'b', 'var(--coral)'));
+                  } else if (e < 0.02) {
+                    els.push(T(A - B / 2, A - B / 2, 'b²', 'var(--ink-3)'));
+                    els.push(T(A + 0.45, A - B / 2, 'b', 'var(--ink-3)'));
+                  }
+                  return els;
+                },
+                readout: (p) => (p.t < 2.6 ? r`area left over: $a^2 - b^2$` : r`same area, now a rectangle: $(a + b)(a - b)$`),
+              },
+              after: r`Nothing was added or thrown away, so the areas match: $a^2 - b^2 = (a + b)(a - b)$. The picture is the algebra: the strip that turns and slides is exactly the $-ab + ab$ that cancels when you expand the brackets.`,
+            },
             {
               type: 'numeric',
               title: 'Around a hundred',

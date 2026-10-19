@@ -279,6 +279,36 @@ $$n_1 \sin\theta_1 = n_2 \sin\theta_2$$
 
 Why does slowing down cause bending? Picture a column of marching soldiers walking at an angle onto mud. The side that reaches the mud first slows down first, so the whole column swings around.`,
             },
+            { /*anim:light*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Why light bends',
+              body: r`Watch the {blue:wavefronts} (crests of the light wave) arrive at an angle from air into glass, where light travels 1.5 times slower. Think of a line of marchers stepping from pavement into mud.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3, xmax: 3, ymin: -2.2, ymax: 2.2, grid: false, axes: false, maxWidth: 520, clipExtra: true,
+                animate: { param: 't', speed: 0.6, max: 1000, autoplay: true },
+                under: ({ plot, s }) => [s('rect', { x: plot.X(-3), y: plot.Y(0), width: plot.X(3) - plot.X(-3), height: plot.Y(-2.2) - plot.Y(0), class: 'fl-blue-soft' })],
+                extra: ({ plot, p, s }) => {
+                  const n = 1.5, t1 = (40 * Math.PI) / 180, t2 = Math.asin(Math.sin(t1) / n), lam = 0.7, els = [];
+                  const d1 = [Math.sin(t1), -Math.cos(t1)], d2 = [Math.sin(t2), -Math.cos(t2)];
+                  // crest m: in air, d1·r = (m + t)λ; in glass, d2·r = (m + t)λ/n. Both meet on the surface.
+                  for (let m = -14; m <= 14; m++) {
+                    const c = (m + (p.t % 1)) * lam, x0 = c / Math.sin(t1); // where this crest touches the surface
+                    // each crest runs at right angles to its direction of travel: up into the air, down into the glass
+                    const pA = [x0 + 6 * Math.cos(t1), 6 * Math.sin(t1)], pB = [x0, 0], pC = [x0 - 6 * Math.cos(t2), -6 * Math.sin(t2)];
+                    els.push(s('path', { d: `M${plot.X(pA[0])} ${plot.Y(pA[1])}L${plot.X(pB[0])} ${plot.Y(pB[1])}L${plot.X(pC[0])} ${plot.Y(pC[1])}`, fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  }
+                  // a ray, perpendicular to the crests
+                  els.push(s('path', { d: `M${plot.X(-1.9 * d1[0] / -d1[1])} ${plot.Y(1.9)}L${plot.X(0)} ${plot.Y(0)}L${plot.X(2.1 * d2[0] / -d2[1])} ${plot.Y(-2.1)}`, fill: 'none', stroke: 'var(--coral)', 'stroke-width': 3, 'stroke-dasharray': '8 6' }));
+                  els.push(s('line', { x1: plot.X(-3), x2: plot.X(3), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  els.push(s('text', { x: plot.X(-2.85), y: plot.Y(1.95), class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--ink-3)', text: 'air' }));
+                  els.push(s('text', { x: plot.X(-2.85), y: plot.Y(-1.95), class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--ink-3)', text: 'glass' }));
+                  return els;
+                },
+                readout: () => r`crests are $1.5\times$ closer together in the glass · the light turns from $40°$ to $25.4°$ from the normal`,
+              },
+              after: r`The end of each crest that reaches the glass first slows down first, while the rest is still racing along in the air, so the whole crest swivels, like a line of marchers wheeling as one end steps into mud. The crests keep their timing, so in the slower glass they bunch closer together. Matching the crests along the surface gives exactly Snell's law: $\frac{\sin\theta_1}{v_1} = \frac{\sin\theta_2}{v_2}$.`,
+            },
             {
               type: 'numeric',
               title: 'Into water',

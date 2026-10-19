@@ -795,6 +795,31 @@ where $a$ is the starting value and $b$ is the growth factor. Stretch the window
               ],
               explain: r`At $x = 1000$, $x^{10} = 10^{30}$, but $1.1^{1000} \approx 2.5 \times 10^{41}$. An exponential with any base above 1 eventually beats any power of $x$, though it can take a while.`,
             },
+            { /*anim:functions*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Zooming out on the race',
+              body: r`Plot {blue:$x^{10}$} and {coral:$1.1^x$} together, then keep zooming out. The vertical axis rescales every moment so the larger curve always just fits.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 1, ymin: 0, ymax: 1.08, grid: false, axes: false, height: 300, padL: 20,
+                animate: { param: 't', speed: 0.11, max: 1.15, autoplay: true },
+                curves: [
+                  { f: (u, p) => { const X = 20 * 50 ** Math.min(1, p.t), M = Math.max(10 * Math.log(X), X * Math.log(1.1)); return u <= 0 ? 0 : Math.exp(10 * Math.log(u * X) - M); }, color: 'blue', width: 3 },
+                  { f: (u, p) => { const X = 20 * 50 ** Math.min(1, p.t), M = Math.max(10 * Math.log(X), X * Math.log(1.1)); return Math.exp(u * X * Math.log(1.1) - M); }, color: 'coral', width: 3 },
+                ],
+                extra: ({ plot, p, s }) => {
+                  const X = 20 * 50 ** Math.min(1, p.t), els = [];
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(1), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.6 }));
+                  for (const u of [0, 0.25, 0.5, 0.75, 1]) {
+                    els.push(s('line', { x1: plot.X(u), x2: plot.X(u), y1: plot.Y(0), y2: plot.Y(0) + 5, stroke: 'var(--axis)', 'stroke-width': 1.4 }));
+                    els.push(s('text', { x: plot.X(u), y: plot.Y(0) + 20, 'text-anchor': u === 1 ? 'end' : u === 0 ? 'start' : 'middle', class: 'tick', text: `x = ${Math.round(u * X)}` }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const X = 20 * 50 ** Math.min(1, p.t), a = 10 * Math.log10(X), b = X * Math.log10(1.1); const sci = (e) => `${fix(10 ** (e - Math.floor(e)), 1)} \\times 10^{${Math.floor(e)}}`; return r`at $x = ${Math.round(X)}$: $\;\blue{x^{10}} \approx ${sci(a)}$, $\;\coral{1.1^x} \approx ${sci(b)}$`; },
+              },
+              after: r`For a long time $x^{10}$ wins so hugely that $1.1^x$ looks like a flat line on the floor. But near $x \approx 685$ they cross, and from then on the exponential leaves the power behind for good: by $x = 1000$ it is about 250 billion times bigger. A power of $x$ grows by a **shrinking** percentage each step ($x^{10}$ grows by only about 1% from $x = 1000$ to $1001$), while $1.1^x$ always grows by 10%.`,
+            },
             {
               type: 'numeric',
               title: 'Half-life',

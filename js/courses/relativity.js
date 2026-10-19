@@ -330,6 +330,39 @@ Ben sits in the middle of the train, which is moving toward the front strike.`,
               ],
               explain: r`Ben rides toward the front flash, so it reaches him first. But Ben is in the middle of the train, and in his frame light moves at $c$ in both directions. So he concludes the front strike **happened first**.`,
             },
+            { /*anim:relativity*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two flashes, two passengers',
+              body: r`Seen from the platform: lightning strikes both ends of the train at the same moment, just as {blue:Ben} (in the middle of the train, moving right at half the speed of light) passes {coral:Ana} (standing on the platform). The {amber:flashes} spread out from where each strike hit the ground, at the speed of light.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 2.6, ymin: -0.75, ymax: 0.85, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 0.45, max: 2.6, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  // units: half the train's length (as seen from the platform) is 1, light speed is 1, the train moves at 0.5
+                  const t = Math.max(0, p.t - 0.25), bx = 0.5 * t, els = [];
+                  const T = (x, y, text, col) => s('text', { x: plot.X(x), y: plot.Y(y), 'text-anchor': 'middle', class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text });
+                  els.push(s('line', { x1: plot.X(-1.6), x2: plot.X(2.6), y1: plot.Y(-0.35), y2: plot.Y(-0.35), stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  els.push(s('rect', { x: plot.X(bx - 1), y: plot.Y(0.3), width: plot.X(2) - plot.X(0), height: plot.Y(-0.3) - plot.Y(0.3), rx: 8, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  // scorch marks where the bolts hit the ground
+                  for (const x of [-1, 1]) els.push(s('path', { d: `M${plot.X(x) - 7} ${plot.Y(-0.35)}l7 -9l7 9`, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2.5 }));
+                  if (p.t < 0.45) for (const x of [-1, 1]) els.push(s('path', { d: `M${plot.X(x) + 6} ${plot.Y(0.85)}L${plot.X(x) - 4} ${plot.Y(0.3)}L${plot.X(x) + 5} ${plot.Y(0.3)}L${plot.X(x) - 5} ${plot.Y(-0.3)}`, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 3 }));
+                  // the flashes, as dots of light travelling left and right from each strike
+                  for (const x0 of [-1, 1]) for (const dir of [-1, 1]) {
+                    const x = x0 + dir * t;
+                    if (t > 0 && x > -1.6 && x < 2.6) els.push(s('circle', { cx: plot.X(x), cy: plot.Y(0), r: 6, class: 'fl-amber' }));
+                  }
+                  // Ana at 0 sees both at t = 1; Ben meets the front flash at t = 2/3 and the back one at t = 2
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(-0.5), r: 9, class: 'fl-coral' }));
+                  els.push(T(0, -0.7, 'Ana', 'coral'));
+                  els.push(s('circle', { cx: plot.X(bx), cy: plot.Y(0), r: 9, class: 'fl-blue' }));
+                  els.push(T(bx, 0.42, 'Ben', 'blue'));
+                  return els;
+                },
+                readout: (p) => { const t = Math.max(0, p.t - 0.25), seen = (a, b) => (t >= a ? `{${b}:saw it}` : 'waiting'); return `Ben: front flash ${seen(2 / 3, 'blue')}, back flash ${seen(2, 'blue')} · Ana: both ${t >= 1 ? '{coral:arrive together}' : 'on their way'}`; },
+              },
+              after: r`Ana gets both flashes at once and, being halfway between the scorch marks, rightly concludes the strikes were simultaneous. Ben rides towards the front flash and away from the back one, so the front flash reaches him first. In his own frame he is at rest in the middle of the train, and light travels at the same speed both ways, so he concludes, just as rightly, that the front strike happened **first**. Neither is mistaken: "at the same time" depends on who is asking.`,
+            },
             {
               type: 'explain',
               title: 'No universal “now”',

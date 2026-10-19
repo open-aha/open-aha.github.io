@@ -59,6 +59,10 @@ const dfaDraw = ({ plot, s }, T, active) => {
 };
 const digitsShown = (n, k) => { const b = bin(n); return b.split('').map((c, i) => (i < k ? `**${c}**` : c)).join(' '); };
 
+// an imagined table: does program i halt when given program j as its input? (1 = halts, 0 = loops)
+const HALT_TABLE = [[1, 0, 1, 1, 0, 1], [0, 0, 1, 0, 1, 1], [1, 1, 1, 0, 0, 0], [0, 1, 0, 1, 1, 0], [1, 1, 0, 0, 0, 1], [0, 0, 1, 1, 1, 1]];
+const haltPhase = (t) => (t < 1 ? { stage: 0, k: -1 } : t < 8.2 ? { stage: 1, k: Math.min(5, Math.floor((t - 1) / 1.2)) } : { stage: 2, k: Math.min(5, Math.floor((t - 8.2) / 1.3)) });
+
 export default {
   id: 'computability',
   subject: 'math',
@@ -357,6 +361,40 @@ Turing proved that **no such program can exist**. The proof is a contradiction i
                 'So no program HALTS can exist.',
               ],
               explain: r`The program D is built to contradict whatever HALTS predicts about it. Since HALTS is assumed to be right about **every** program, including D, the assumption must be false. The halting problem is **undecidable**. As a corollary, Turing showed that Hilbert's decision problem has no solution either.`,
+            },
+            { /*anim:computability*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The diagonal trap',
+              body: r`Suppose HALTS existed. Then we could fill in this table for every program: row $i$, column $j$ says whether program $P_i$ halts ({teal:✓}) or loops forever ({coral:∞}) when fed program $P_j$ as input. Now build a new program $D$: given $P_j$, it asks HALTS about $P_j$ run on itself, then does the **opposite**.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 6.2, ymin: -1.6, ymax: 6.4, grid: false, axes: false, maxWidth: 420,
+                animate: { param: 't', speed: 1, max: 17, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { stage, k } = haltPhase(p.t), els = [], W = plot.X(1) - plot.X(0) - 4;
+                  const T = (x, y, text, col, wt = 400) => s('text', { x: plot.X(x), y: plot.Y(y) + 5, 'text-anchor': 'middle', class: 'halo-text', style: `font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:${wt};fill:var(--${col})`, text });
+                  const cell = (i, j, v, hl, row) => {
+                    const cx = j + 0.5, cy = 5.5 - i;
+                    els.push(s('rect', { x: plot.X(j) + 2, y: plot.Y(6 - i) + 2, width: W, height: W, rx: 4, class: hl ? 'fl-amber' : 'fl-card', opacity: hl ? 0.65 : 1, stroke: row ? 'var(--violet)' : 'var(--line-2)', 'stroke-width': row ? 2 : 1 }));
+                    if (v != null) els.push(T(cx, cy, v ? '✓' : '∞', v ? 'teal' : 'coral', 700));
+                  };
+                  for (let j = 0; j < 6; j++) els.push(T(j + 0.5, 6.15, `P${j + 1}`, 'ink-3'));
+                  for (let i = 0; i < 6; i++) {
+                    els.push(T(-0.6, 5.5 - i, `P${i + 1}`, 'ink-3'));
+                    for (let j = 0; j < 6; j++) cell(i, j, HALT_TABLE[i][j], (stage === 1 && i === j && j <= k) || (stage === 2 && i === k && j === k), stage === 2 && i === k);
+                  }
+                  // D's row underneath
+                  els.push(T(-0.6, -0.9, 'D', 'violet', 700));
+                  for (let j = 0; j < 6; j++) {
+                    const known = stage === 2 || (stage === 1 && j <= k);
+                    els.push(s('rect', { x: plot.X(j) + 2, y: plot.Y(-0.4) + 2, width: W, height: W, rx: 4, class: stage === 2 && j === k ? 'fl-amber' : 'fl-violet-soft', opacity: stage === 2 && j === k ? 0.65 : 1, stroke: 'var(--violet)' }));
+                    if (known) els.push(T(j + 0.5, -0.9, HALT_TABLE[j][j] ? '∞' : '✓', HALT_TABLE[j][j] ? 'coral' : 'teal', 700));
+                  }
+                  return els;
+                },
+                readout: (p) => { const { stage, k } = haltPhase(p.t); return stage === 0 ? 'the table of every program on every input' : stage === 1 ? `$D$ on $P_${k + 1}$: the diagonal says $P_${k + 1}$ ${HALT_TABLE[k][k] ? 'halts' : 'loops'} on itself, so $D$ ${HALT_TABLE[k][k] ? 'loops' : 'halts'}` : `is $D$ the same as $P_${k + 1}$? No: they disagree on input $P_${k + 1}$`; },
+              },
+              after: r`$D$ is a perfectly good program (if HALTS exists), so it must be one of the rows. But it can't be row $i$ for any $i$: by construction, $D$ disagrees with $P_i$ on input $P_i$, the diagonal square. So $D$ is nowhere in a table that lists every program. The only way out is that HALTS can't exist. It's the same diagonal trick Cantor used to show the real numbers can't be listed.`,
             },
             {
               type: 'mcq',

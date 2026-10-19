@@ -10,6 +10,10 @@ const boxE = (n, L) => (0.376 * n * n) / (L * L);
 // hydrogen-like atom energy in eV for an electron confined to radius r (nm): kinetic ħ²/2mr² minus Coulomb attraction
 const atomE = (r, m = 1) => 0.0381 / (m * r * r) - 1.44 / r;
 
+// an equal mix of the two lowest box states: |ψ|² = sin²(πx) + sin²(2πx) + 2 sin(πx) sin(2πx) cos φ, where φ = (E₂ − E₁)t/ħ
+const sloshP = (x, ph) => { const a = Math.sin(Math.PI * x), b = Math.sin(2 * Math.PI * x); return a * a + b * b + 2 * a * b * Math.cos(ph); };
+const sloshLeft = (ph) => { let s = 0; for (let i = 0; i < 200; i++) s += sloshP((i + 0.5) / 400, ph) / 400; return s; };
+
 export default {
   id: 'quantum',
   subject: 'physics',
@@ -421,6 +425,28 @@ Confinement **forces** quantisation.`,
                 solution: { n: 5 },
               },
               explain: r`State $n = 5$ has 4 nodes ($n - 1$ in general). At a node the electron is **never** found, yet it is found on both sides: the electron isn't a little ball shuttling back and forth, it's a wave spread through the box. Wiggly waves mean short wavelengths, high momentum and high energy, which is why $E \propto n^2$.`,
+            },
+            { /*anim:quantum*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A superposition sloshes',
+              body: r`Each single energy level is a **standing** wave: its probability (shaded) never changes. Now put the electron in an equal mix of the two lowest levels. The two parts vibrate at different rates, set by their energies, so they keep drifting in and out of step.`,
+              widget: {
+                kind: 'graph', xmin: -0.05, xmax: 1.05, ymin: -0.15, ymax: 3.1, grid: false, axes: false, height: 300, maxWidth: 520,
+                animate: { param: 't', speed: 1.2, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const ph = p.t, pts = [], els = [];
+                  for (let i = 0; i <= 120; i++) { const x = i / 120; pts.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(sloshP(x, ph)).toFixed(1)}`); }
+                  els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(0)}` + pts.join('').replace(/^M/, 'L') + `L${plot.X(1)} ${plot.Y(0)}Z`, class: 'fl-violet', opacity: 0.35 }));
+                  els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  els.push(s('line', { x1: plot.X(0.5), x2: plot.X(0.5), y1: plot.Y(0), y2: plot.Y(3), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '4 5' }));
+                  for (const x of [0, 1]) els.push(s('line', { x1: plot.X(x), x2: plot.X(x), y1: plot.Y(0), y2: plot.Y(3.05), stroke: 'var(--ink)', 'stroke-width': 4 }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(1), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  return els;
+                },
+                readout: (p) => `${fix((3.67 * p.t) / (2 * Math.PI), 2)} fs (in a 1 nm box) · chance it's in the left half: ${fix(100 * sloshLeft(p.t), 0)}%`,
+              },
+              after: r`The probability sloshes from one side of the box to the other and back, once every $\frac{h}{E_2 - E_1}$: for a 1 nm box that's about 3.7 femtoseconds. Only mixtures of different energies move; a state with one definite energy is frozen. This sloshing is also how atoms emit light: an electron caught between two levels has a charge that swings back and forth at exactly the frequency $\frac{E_2 - E_1}{h}$ of the photon it gives out.`,
             },
             {
               type: 'numeric',

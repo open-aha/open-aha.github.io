@@ -60,6 +60,9 @@ const LSQ = [[0, 1.3], [1, 1.2], [2, 2.4], [3, 2.3], [4, 3.4], [5, 3.2], [6, 4.4
 const sse = (m, b) => LSQ.reduce((s, [x, y]) => s + (y - (m * x + b)) ** 2, 0);
 const LSQ_FIT = (() => { const n = LSQ.length, mx = LSQ.reduce((s, q) => s + q[0], 0) / n, my = LSQ.reduce((s, q) => s + q[1], 0) / n; const m = LSQ.reduce((s, [x, y]) => s + (x - mx) * (y - my), 0) / LSQ.reduce((s, [x]) => s + (x - mx) ** 2, 0); return { m, b: my - m * mx }; })();
 
+// A = [[2,1],[1,2]] has eigenvectors (1,1)/√2 (λ = 3) and (1,−1)/√2 (λ = 1), so A^s v = 3^s (v·e1) e1 + (v·e2) e2
+const eigenPow = (t) => Math.min(5, Math.max(0, (t - 0.8) / 1.2));
+
 export default {
   id: 'linalg',
   subject: 'math',
@@ -425,6 +428,31 @@ This is the **characteristic equation**.`,
               answer: 1024,
               wrong: [{ v: 20, why: r`Each application **multiplies** by 2, so it's $2^{10}$, not $2 \times 10$.` }, { v: 100, why: r`It's $2^{10}$, not $10^2$.` }],
               explain: r`Each application of $A$ just doubles $\mathbf v$, so ten applications give $2^{10}\mathbf v = 1024\,\mathbf v$. This is the superpower of eigenvectors: repeated matrix multiplication becomes simple powers of numbers.`,
+            },
+            { /*anim:linalg*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Everything swings to the eigenvector',
+              body: r`Sixteen arrows point in all directions. We apply $A = \begin{pmatrix} 2 & 1 \\ 1 & 2 \end{pmatrix}$ to every one of them, again and again (smoothly, so you see it happen), rescaling each arrow back to the same length so it stays on screen. The dashed lines are $A$'s two eigenvector directions.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.1, xmax: 2.1, ymin: -2.1, ymax: 2.1, grid: false, axes: false, maxWidth: 360,
+                animate: { param: 't', speed: 1, max: 9, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = eigenPow(p.t), g = 3 ** n, r2 = Math.SQRT1_2, els = [];
+                  els.push(s('line', { x1: plot.X(-2), y1: plot.Y(-2), x2: plot.X(2), y2: plot.Y(2), stroke: 'var(--violet)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
+                  els.push(s('line', { x1: plot.X(-2), y1: plot.Y(2), x2: plot.X(2), y2: plot.Y(-2), stroke: 'var(--teal)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
+                  for (let k = 0; k < 16; k++) {
+                    const a = (k * Math.PI) / 8, vx = Math.cos(a), vy = Math.sin(a), c1 = (vx + vy) * r2, c2 = (vx - vy) * r2;
+                    let wx = g * c1 * r2 + c2 * r2, wy = g * c1 * r2 - c2 * r2;
+                    const L = Math.hypot(wx, wy); wx = (1.7 * wx) / L; wy = (1.7 * wy) / L;
+                    const X1 = plot.X(wx), Y1 = plot.Y(wy), an = Math.atan2(Y1 - plot.Y(0), X1 - plot.X(0)), onE2 = Math.abs(c1) < 1e-9;
+                    els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(0)}L${X1} ${Y1}M${X1 - 9 * Math.cos(an - 0.45)} ${Y1 - 9 * Math.sin(an - 0.45)}L${X1} ${Y1}L${X1 - 9 * Math.cos(an + 0.45)} ${Y1 - 9 * Math.sin(an + 0.45)}`, fill: 'none', stroke: onE2 ? 'var(--teal)' : 'var(--blue)', 'stroke-width': onE2 ? 3 : 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: onE2 ? 1 : 0.75 }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const n = eigenPow(p.t); return `$A$ applied ${fix(n, 1)} times · the $(1, 1)$ part has grown ×${fix(3 ** n, 0)}, the $(1, -1)$ part ×1`; },
+              },
+              after: r`Split any arrow into its two eigenvector parts. Each time $A$ acts, the $(1, 1)$ part triples while the $(1, -1)$ part stays the same, so after a few rounds the first part swamps the second and every arrow lines up with $(1, 1)$. Only the two arrows exactly along $(1, -1)$ (teal) have no $(1, 1)$ part at all, so they never turn. This is the **power method**: to find a matrix's dominant eigenvector, just multiply any starting vector by it many times. It's how PageRank was computed for the whole web.`,
             },
           ],
           recap: [

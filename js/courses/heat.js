@@ -133,6 +133,36 @@ where $A$ is the area, $d$ the thickness, $\Delta T$ the temperature difference,
 
 Metals conduct heat well because their free electrons carry energy quickly.`,
             },
+            { /*anim:heat*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Heat soaking through',
+              body: r`A cold metal rod (0 °C) has its left end suddenly held at 100 °C and its right end kept at 0 °C. Watch the temperature along the rod, and compare the heat flowing **in** at the hot end with the heat flowing **out** at the cold end.`,
+              widget: {
+                kind: 'graph', xmin: -0.05, xmax: 1.05, ymin: -28, ymax: 108, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 0.035, max: 0.6, autoplay: true },
+                curves: [{ f: (x, p) => { let T = 100 * (1 - x); for (let n = 1; n <= 60; n++) T -= (200 / (n * Math.PI)) * Math.sin(n * Math.PI * x) * Math.exp(-n * n * Math.PI * Math.PI * p.t); return Math.max(0, T); }, from: 0, to: 1, color: 'coral', width: 3, n: 300 }],
+                under: ({ plot, p, s }) => {
+                  const els = [];
+                  for (let i = 0; i < 40; i++) {
+                    const x = (i + 0.5) / 40;
+                    let T = 100 * (1 - x);
+                    for (let n = 1; n <= 60; n++) T -= (200 / (n * Math.PI)) * Math.sin(n * Math.PI * x) * Math.exp(-n * n * Math.PI * Math.PI * p.t);
+                    els.push(s('rect', { x: plot.X(i / 40), y: plot.Y(-8), width: plot.X(1 / 40) - plot.X(0) + 0.5, height: plot.Y(-22) - plot.Y(-8), class: 'fl-coral', opacity: (0.08 + 0.9 * Math.max(0, T) / 100).toFixed(2) }));
+                  }
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(1), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(1), y1: plot.Y(100), y2: plot.Y(0), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '5 5' }));
+                  return els;
+                },
+                readout: (p) => {
+                  // heat flow ∝ −dT/dx at each end (in units where the final steady flow is 100)
+                  let inn = 100, out = 100;
+                  for (let n = 1; n <= 400; n++) { const e = Math.exp(-n * n * Math.PI * Math.PI * Math.max(p.t, 1e-4)); inn += 200 * e; out += 200 * (n % 2 ? -1 : 1) * e; }
+                  return `heat flowing in at the hot end: ${fix(inn, 0)} · out at the cold end: ${fix(Math.max(0, out), 0)} (in units of the final steady flow)`;
+                },
+              },
+              after: r`At first, heat pours into the hot end but none comes out of the cold end: it's being stored, warming the rod. The difference shrinks as the profile fills in, and eventually the temperature falls in a **straight line** (dashed) from 100 °C to 0 °C. Then heat flows in and out at the same steady rate, just as Fourier's law $P = \frac{kA\,\Delta T}{d}$ describes. Thicker or less conductive objects take longer to reach that steady state, which is why a thick wall stays cool for hours on a hot day.`,
+            },
             {
               type: 'mcq',
               title: 'Cold to the touch',

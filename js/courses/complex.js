@@ -14,6 +14,8 @@ const winding = (R) => { const P = cubicImage(R); let tot = 0; for (let k = 1; k
 // Joukowski map w = z + 1/z applied to the circle through z = 1 with centre (cx, cy)
 const joukowski = (cx, cy, n = 240) => { const R = Math.hypot(1 - cx, cy); return Array.from({ length: n + 1 }, (_, k) => { const t = (2 * Math.PI * k) / n, x = cx + R * Math.cos(t), y = cy + R * Math.sin(t), d = x * x + y * y; return [x + x / d, y - y / d]; }); };
 
+const confS = (t) => { const u = (1 - Math.cos((Math.PI * t) / 5)) / 2; return u; }; // 0 → 1 → 0 every 10 s
+
 export default {
   id: 'complex',
   subject: 'math',
@@ -555,6 +557,41 @@ The winding number can only change when the loop passes **through** 0, that is, 
 - $\frac1z = \frac1r e^{-i\theta}$: points inside the unit circle are swapped with points outside, and flipped across the real axis.
 
 These maps distort sizes, but (away from a few special points) they preserve the **angles** between curves: tiny squares map to tiny squares, just tilted and scaled. Maps like this are called **conformal**.`,
+            },
+            { /*anim:complex*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Squares stay square',
+              body: r`A grid of little squares in the first quadrant, pushed through $w = z^a$ as the power $a$ slides from 1 (doing nothing) to 2 (squaring). Watch the {amber:shaded cells} and the crossings of the {blue:vertical} and {coral:horizontal} grid lines.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.1, xmax: 3.1, ymin: -0.35, ymax: 3.1, grid: false, axes: false, maxWidth: 520, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 10, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const a = 1 + confS(p.t), els = [], N = 6, h = 0.2;
+                  const f = (x, y) => { const r = Math.hypot(x, y) ** a, th = a * Math.atan2(y, x); return [r * Math.cos(th), r * Math.sin(th)]; };
+                  const P = (pts) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('');
+                  els.push(s('line', { x1: plot.X(-3.1), x2: plot.X(3.1), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(-0.35), y2: plot.Y(3.1), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  // shaded cells
+                  for (const [i, j] of [[4, 1], [2, 3], [5, 4], [1, 1]]) {
+                    const pts = [];
+                    for (let k = 0; k <= 8; k++) pts.push(f((i + k / 8) * h, j * h));
+                    for (let k = 0; k <= 8; k++) pts.push(f((i + 1) * h, (j + k / 8) * h));
+                    for (let k = 8; k >= 0; k--) pts.push(f((i + k / 8) * h, (j + 1) * h));
+                    for (let k = 8; k >= 0; k--) pts.push(f(i * h, (j + k / 8) * h));
+                    els.push(s('path', { d: P(pts) + 'Z', class: 'fl-amber', opacity: 0.6 }));
+                  }
+                  for (let i = 1; i <= N; i++) {
+                    const c = i * h, v = [], hz = [];
+                    for (let k = 0; k <= 40; k++) { v.push(f(c, (N * h * k) / 40)); hz.push(f((N * h * k) / 40, c)); }
+                    els.push(s('path', { d: P(v), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                    els.push(s('path', { d: P(hz), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  }
+                  return els;
+                },
+                readout: (p) => `$w = z^{${fix(1 + confS(p.t), 2)}}$ · the grid bends, but every crossing stays a right angle`,
+              },
+              after: r`The grid gets curved and stretched, and the quarter plane opens out into a half plane (angles double). But each **tiny** square stays a square: it may grow and turn, yet its corners stay right angles. Maps with this property are called **conformal**, and every complex function with a derivative (that isn't zero) has it. That's why engineers can use them to bend the simple flow round a circle into the flow round a wing.`,
             },
             {
               type: 'numeric',

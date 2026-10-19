@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const D = Math.PI / 180;
 
@@ -86,6 +87,37 @@ Gravity falls off as $\frac{1}{d^2}$, but tidal forces fall off **faster**, as $
                 { t: r`Earth’s spin flings water outward on the far side`, why: r`Spin is not the cause; it’s the difference in the Moon’s pull across Earth.` },
               ],
               explain: r`Tides come from the **difference** in gravity across Earth. The ocean nearest the Moon is pulled ahead of Earth’s centre; the centre is pulled ahead of the far ocean. Both sides bulge outward, giving two high tides a day.`,
+            },
+            { /*anim:tides*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Turning under the bulges',
+              body: r`Seen from above the North Pole: the water's two bulges point towards and away from the Moon (off to the right), and the Earth turns underneath them. Follow the {coral:town} and its tide gauge.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 5.6, ymin: -1.5, ymax: 1.5, grid: false, axes: false,
+                animate: { param: 't', speed: 4, max: 50, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const hrs = p.t, th = Math.PI + (2 * Math.PI * hrs) / 24.84, els = [];
+                  // the water: an ellipse stretched towards the Moon (exaggerated)
+                  els.push(s('ellipse', { cx: plot.X(0), cy: plot.Y(0), rx: plot.X(1.3) - plot.X(0), ry: plot.X(1.02) - plot.X(0), class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), class: 'fl-teal', opacity: 0.55 }));
+                  const [tx, ty] = [Math.cos(th), Math.sin(th)];
+                  els.push(s('circle', { cx: plot.X(tx), cy: plot.Y(ty), r: 7, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  els.push(s('path', { d: `M${plot.X(1.45)} ${plot.Y(0)}h18m-7 -6l7 6l-7 6`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  els.push(s('text', { x: plot.X(1.45), y: plot.Y(0) - 10, class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'Moon' }));
+                  // tide gauge: water height at the town over two days
+                  const X = (h) => plot.X(2.4 + (h / 50) * 3.1), Y = (v) => plot.Y(v * 0.9);
+                  els.push(s('line', { x1: X(0), x2: X(50), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  const pts = [];
+                  for (let i = 0; i <= 300; i++) { const h = (hrs * i) / 300; pts.push([X(h), Y(Math.cos(2 * (Math.PI + (2 * Math.PI * h) / 24.84)))]); }
+                  els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.5 }));
+                  for (const h of [0, 24, 48]) els.push(s('text', { x: X(h), y: Y(0) + 18, 'text-anchor': 'middle', class: 'tick', text: `${h} h` }));
+                  els.push(s('text', { x: X(25), y: Y(1) - 10, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'sea level at the town' }));
+                  return els;
+                },
+                readout: (p) => { const v = Math.cos(2 * (Math.PI + (2 * Math.PI * p.t) / 24.84)); return `hour ${fix(p.t, 1)} · the tide at the town is ${v > 0.7 ? '**high**' : v < -0.7 ? '**low**' : v > 0 ? 'rising or falling (above average)' : 'rising or falling (below average)'}`; },
+              },
+              after: r`Every place on Earth is carried through **both** bulges as the planet turns, so most coasts get two high tides and two low tides a day. The Moon also moves along its orbit in the same direction while the Earth turns, so the Earth needs about 50 extra minutes to catch up with it: high tides come every 12 hours 25 minutes, about 50 minutes later each day.`,
             },
             {
               type: 'numeric',

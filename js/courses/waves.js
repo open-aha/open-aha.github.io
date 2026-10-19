@@ -448,6 +448,36 @@ Waves on a string, like water ripples, are **transverse**: the string moves acro
 
 Noise-cancelling headphones use destructive interference. A microphone listens to outside noise, and the speaker plays the same sound shifted by half a cycle, so the two cancel at your ear.`,
             },
+            { /*anim:waves*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two sources',
+              body: r`Two dippers tap a pond in step, sending out ripples. The rings are wave **crests** from the {blue:left} and {teal:right} source. Watch the {amber:dots} where two crests meet.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -6, xmax: 6, ymin: -0.3, ymax: 7, grid: false, axes: false, clipExtra: true,
+                animate: { param: 't', speed: 0.6, max: 1000, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const c = 1.5, lam = 1, ph = (p.t % 1) * lam, els = [], R = (r) => plot.X(r) - plot.X(0);
+                  const radii = Array.from({ length: 10 }, (_, n) => ph + n * lam);
+                  // nodal lines: |r1 − r2| = (m + ½)λ, hyperbolas with the sources as foci
+                  const show = Math.min(1, Math.max(0, (p.t - 3) / 2));
+                  if (show > 0) for (const D of [0.5, 1.5, 2.5]) for (const sg of [-1, 1]) {
+                    const a = D / 2, b = Math.sqrt(c * c - a * a), pts = [];
+                    for (let i = 0; i <= 60; i++) { const u = (3 * i) / 60; pts.push([sg * a * Math.cosh(u), b * Math.sinh(u)]); }
+                    els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2, 'stroke-dasharray': '6 6', opacity: show }));
+                  }
+                  for (const [x0, col] of [[-c, 'blue'], [c, 'teal']]) for (const r of radii) els.push(s('circle', { cx: plot.X(x0), cy: plot.Y(0), r: R(r), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 1.5, opacity: 0.55 }));
+                  for (const r1 of radii) for (const r2 of radii) {
+                    const x = (r1 * r1 - r2 * r2) / (4 * c), y2 = r1 * r1 - (x + c) ** 2;
+                    if (y2 > 0) els.push(s('circle', { cx: plot.X(x), cy: plot.Y(Math.sqrt(y2)), r: 4, class: 'fl-amber' }));
+                  }
+                  for (const x0 of [-c, c]) els.push(s('circle', { cx: plot.X(x0), cy: plot.Y(0), r: 7, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => (p.t < 3 ? 'dots: crest meets crest, so the water rises twice as high' : 'dashed lines: crests always meet troughs here, so the water stays still'),
+              },
+              after: r`The crest-meets-crest dots slide outwards along fixed lines: lines of **constructive** interference, where the water heaves twice as high. In between run the dashed lines where a crest from one source always arrives with a trough from the other: **nodal lines** of calm water. Each is a hyperbola, the set of points whose distances to the two sources differ by $\tfrac12\lambda$, $1\tfrac12\lambda$, $2\tfrac12\lambda$, …. Two loudspeakers make the same pattern in sound: walk across a room and the note fades and returns.`,
+            },
             {
               type: 'explain',
               title: 'Beats',

@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 
 // galaxy rotation-curve model (kpc, km/s, solar masses)
@@ -44,6 +45,13 @@ const history = (om, ol) => {
 };
 // triangle on a sphere with one corner at the north pole and two on the equator, Δ apart in longitude
 const sphereView = (P) => { const el = 0.45, az = -0.7; const x1 = P[0] * Math.cos(az) - P[1] * Math.sin(az), y1 = P[0] * Math.sin(az) + P[1] * Math.cos(az); return [y1, P[2] * Math.cos(el) - x1 * Math.sin(el), x1 * Math.cos(el) + P[2] * Math.sin(el)]; };
+
+// a matter-only universe: size a = t^(2/3), with today t = 1 and c = 1; light reaching us today left at t_e = 0.05.
+// Our distance to the light at time t is 3 t^(2/3) (1 − t^(1/3)); to the galaxy that sent it, 3 t^(2/3) (1 − t_e^(1/3)).
+const TEAR_TE = 0.05;
+const tearLight = (t) => 3 * t ** (2 / 3) * (1 - t ** (1 / 3));
+const tearGal = (t) => 3 * t ** (2 / 3) * (1 - TEAR_TE ** (1 / 3));
+const tearT = (t) => TEAR_TE + (1 - TEAR_TE) * Math.min(1, Math.max(0, (t - 0.8) / 9));
 
 export default {
   id: 'cosmology',
@@ -216,6 +224,39 @@ $$1 + z = \frac{\lambda_{\text{observed}}}{\lambda_{\text{emitted}}} = \frac{1}{
                 { t: 'Less than 13.3 billion light-years', why: 'Expansion only adds distance. The galaxy is now much farther than the light’s travel time suggests.' },
               ],
               explain: r`Expansion stretched the path behind the light, so today the galaxy is about 31 billion light-years away. The edge of the observable universe is about 46 billion light-years away in every direction, even though the universe is only 13.8 billion years old. Nothing travels faster than light **through** space, but space itself can grow.`,
+            },
+            { /*anim:cosmology*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Light that first moves away',
+              body: r`In a simple expanding universe (made only of matter), a {blue:galaxy} sends us a pulse of {amber:light} when the universe is 5% of its present age. The top strip shows distances from us at each moment; the graph below records them. Distances are in units of light-travel over today's age of the universe.`,
+              widget: {
+                kind: 'graph', xmin: -0.12, xmax: 2.05, ymin: -0.15, ymax: 1.45, grid: false, axes: false, height: 360, maxWidth: 560,
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const t = tearT(p.t), els = [];
+                  // the strip: distance across at height 1.25
+                  const yS = 1.25;
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(2), y1: plot.Y(yS), y2: plot.Y(yS), stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(yS), r: 7, class: 'fl-ink' }));
+                  els.push(s('text', { x: plot.X(0), y: plot.Y(yS) - 13, 'text-anchor': 'middle', class: 'tick', text: 'us' }));
+                  els.push(s('circle', { cx: plot.X(tearGal(t)), cy: plot.Y(yS), r: 7, class: 'fl-blue' }));
+                  els.push(s('circle', { cx: plot.X(tearLight(t)), cy: plot.Y(yS), r: 6, class: 'fl-amber' }));
+                  // the graph: time across (scaled to x from 0 to 2), distance up (the galaxy's curve stops at the top of the graph)
+                  const X = (tt) => plot.X(2 * tt), Y = (d) => plot.Y(d);
+                  els.push(s('line', { x1: X(0), x2: X(1), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('line', { x1: X(0), x2: X(0), y1: Y(0), y2: Y(1.02), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('text', { x: X(1), y: Y(0) + 16, 'text-anchor': 'end', class: 'tick', text: 'today' }));
+                  els.push(s('text', { x: X(0) + 6, y: Y(1.02) + 4, class: 'tick', text: 'distance' }));
+                  const curve = (fn, col) => { const pts = []; for (let i = 0; i <= 80; i++) { const tt = TEAR_TE + ((t - TEAR_TE) * i) / 80; if (fn(tt) > 1) break; pts.push(`${i ? 'L' : 'M'}${X(tt).toFixed(1)} ${Y(fn(tt)).toFixed(1)}`); } els.push(s('path', { d: pts.join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 3 })); };
+                  curve(tearGal, 'blue');
+                  curve(tearLight, 'amber');
+                  if (t > 8 / 27) els.push(s('circle', { cx: X(8 / 27), cy: Y(4 / 9), r: 4.5, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => { const t = tearT(p.t), dl = 2 * t ** (-1 / 3) - 3; return `${fix(100 * t, 0)}% of today's age · light is ${fix(tearLight(t), 3)} away and ${dl > 0.005 ? '**getting farther**' : dl < -0.005 ? 'getting closer' : 'momentarily holding still'}`; },
+              },
+              after: r`The light always moves towards us through the space around it, but at first that space is stretching away from us faster than light can cross it, so the light is carried **away**. As the expansion slows, the light gains ground, turns round when the universe is about 30% of its present age, and finally reaches us. The galaxy that sent it, meanwhile, has been carried far beyond where the light ever was. This is why "how far away is it?" has no single answer in cosmology: the distance when the light left, the longest distance the light was ever from us, and the distance now are all different.`,
             },
           ],
           recap: [

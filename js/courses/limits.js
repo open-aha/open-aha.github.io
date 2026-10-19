@@ -146,6 +146,37 @@ This is the same fact as $\sin x \approx x$ for small angles (in radians). It's 
 $$\cos x \le \frac{\sin x}{x} \le 1$$
 As $x \to 0$, $\cos x \to 1$. The middle is **squeezed** between two things that both approach 1, so it must approach 1 too. This is the **squeeze theorem**.`,
             },
+            { /*anim:limits*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Three shapes, one limit',
+              body: r`On the unit circle, an angle $x$ makes three nested shapes: a {blue:small triangle} with area $\frac12\sin x$, a {amber:sector} with area $\frac12 x$, and a {coral:big triangle} with area $\frac12\tan x$. On the right, each area is divided by the sector's. Watch $x$ shrink.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.15, xmax: 3.75, ymin: -0.3, ymax: 1.7, grid: false, axes: false,
+                animate: { param: 't', speed: 1, max: 8, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const u = Math.min(1, Math.max(0, (p.t - 0.7) / 5.5)), x = 1.0 * 0.04 ** u, c = Math.cos(x), sn = Math.sin(x), tn = Math.tan(x), els = [];
+                  const P = (pts) => pts.map(([a, b], i) => `${i ? 'L' : 'M'}${plot.X(a).toFixed(1)} ${plot.Y(b).toFixed(1)}`).join('');
+                  const arc = (a0, a1) => { const out = []; for (let i = 0; i <= 40; i++) { const a = a0 + ((a1 - a0) * i) / 40; out.push([Math.cos(a), Math.sin(a)]); } return out; };
+                  els.push(s('path', { d: P(arc(0, Math.PI / 2)), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  els.push(s('path', { d: P([[0, 0], [1, 0], [1, tn]]) + 'Z', class: 'fl-coral-soft', stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+                  els.push(s('path', { d: P([[0, 0], ...arc(0, x)]) + 'Z', class: 'fl-amber', opacity: 0.55, stroke: 'var(--amber)', 'stroke-width': 2 }));
+                  els.push(s('path', { d: P([[0, 0], [1, 0], [c, sn]]) + 'Z', class: 'fl-blue', opacity: 0.6, stroke: 'var(--blue)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+                  // bars: areas divided by the sector's
+                  const base = 0, bars = [[1.9, sn / x, 'blue', 'sin x'], [2.55, 1, 'amber', 'x'], [3.2, tn / x, 'coral', 'tan x']];
+                  for (const [bx, h, col, lab] of bars) {
+                    els.push(s('rect', { x: plot.X(bx - 0.22), y: plot.Y(h), width: plot.X(0.44) - plot.X(0), height: plot.Y(0) - plot.Y(h), class: `fl-${col}`, opacity: 0.75 }));
+                    els.push(s('text', { x: plot.X(bx), y: plot.Y(base) + 17, 'text-anchor': 'middle', class: 'lbl-math', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px))', text: lab }));
+                  }
+                  els.push(s('line', { x1: plot.X(1.6), x2: plot.X(3.6), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.4 }));
+                  els.push(s('line', { x1: plot.X(1.6), x2: plot.X(3.6), y1: plot.Y(1), y2: plot.Y(1), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '5 4' }));
+                  els.push(s('text', { x: plot.X(3.62), y: plot.Y(1) + 4, class: 'tick', text: '1' }));
+                  return els;
+                },
+                readout: (p) => { const u = Math.min(1, Math.max(0, (p.t - 0.7) / 5.5)), x = 1.0 * 0.04 ** u; return `$x = ${fix(x, 3)}$ · $\\dfrac{\\sin x}{x} = ${fix(Math.sin(x) / x, 4)}$ · $\\dfrac{\\tan x}{x} = ${fix(Math.tan(x) / x, 4)}$`; },
+              },
+              after: r`The shapes are always nested, so $\sin x < x < \tan x$. Dividing by $\sin x$ and flipping gives $\cos x < \frac{\sin x}{x} < 1$, the squeeze from before. In the picture, the blue bar sits below 1 and the coral bar above it, and as $x$ shrinks both are pressed onto the line at 1: near zero the three shapes become indistinguishable.`,
+            },
             {
               type: 'numeric',
               title: 'Compound interest',

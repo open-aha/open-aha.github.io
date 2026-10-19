@@ -126,6 +126,31 @@ A positive number plus its reciprocal is always at least 2.`,
 $$\frac{a + b}{2} \ge \sqrt{ab}$$
 with equality only when $a = b$ (the chord passes through the centre). Algebraically, it's just $(\sqrt a - \sqrt b)^2 \ge 0$ again.`,
             },
+            { /*anim:inequalities*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Four rectangles in a square',
+              body: r`A second picture proof. Take four {blue:$a \times b$ rectangles} and arrange them like a pinwheel inside a square of side $a + b$. Watch as $a$ and $b$ change, keeping $a + b = 10$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.7, xmax: 10.7, ymin: -0.7, ymax: 10.7, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 0.6, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const a = 5 + 3.5 * Math.cos(p.t), b = 10 - a;
+                  const R = (x0, y0, w, h, o) => s('rect', { x: plot.X(Math.min(x0, x0 + w)), y: plot.Y(Math.max(y0, y0 + h)), width: Math.abs(plot.X(w) - plot.X(0)), height: Math.abs(plot.Y(0) - plot.Y(h)), stroke: 'var(--card)', 'stroke-width': 2, ...o });
+                  const els = [R(0, 0, 10, 10, { fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2 })];
+                  // pinwheel: each rectangle a long and b high, rotated a quarter turn from the last
+                  els.push(R(0, 0, a, b, { class: 'fl-blue', opacity: 0.75 }));
+                  els.push(R(10, 0, -b, a, { class: 'fl-blue', opacity: 0.6 }));
+                  els.push(R(10, 10, -a, -b, { class: 'fl-blue', opacity: 0.75 }));
+                  els.push(R(0, 10, b, -a, { class: 'fl-blue', opacity: 0.6 }));
+                  const lo = Math.min(a, b), hi = Math.max(a, b);
+                  if (hi - lo > 0.02) els.push(R(lo, lo, hi - lo, hi - lo, { class: 'fl-coral', opacity: 0.85 }));
+                  return els;
+                },
+                readout: (p) => { const a = 5 + 3.5 * Math.cos(p.t), b = 10 - a; return r`$a = ${fix(a, 2)},\ b = ${fix(b, 2)}$: $\;\blue{4ab} = ${fix(4 * a * b, 2)}$, $\;\coral{(a - b)^2} = ${fix((a - b) ** 2, 2)}$, total $(a + b)^2 = 100.00$`; },
+              },
+              after: r`The four rectangles plus the {coral:hole in the middle} fill the big square: $4ab + (a - b)^2 = (a + b)^2$. The hole can't have negative area, so $4ab \le (a + b)^2$, which is $\sqrt{ab} \le \frac{a + b}{2}$. The hole vanishes only when $a = b$: that's exactly when the two means are equal.`,
+            },
             {
               type: 'numeric',
               title: 'The best rectangle',

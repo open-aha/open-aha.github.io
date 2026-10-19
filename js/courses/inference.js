@@ -30,6 +30,19 @@ const Z = { 80: 1.2816, 90: 1.6449, 95: 1.96, 99: 2.5758 };
 const LEVELS = [80, 90, 95, 99];
 const SKILL = normals(160, 11), LUCK1 = normals(160, 23), LUCK2 = normals(160, 37);
 
+// 20 A/A tests (no real difference): after each batch of visitors, the running z-score is (sum of n standard normal steps)/√n
+let PEEK_RUNS = null;
+const peekRuns = () => {
+  if (PEEK_RUNS) return PEEK_RUNS;
+  let seed = 9;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+  const runs = [];
+  for (let r = 0; r < 20; r++) { let S = 0; const z = []; for (let n = 1; n <= 100; n++) { S += gauss(); z.push(S / Math.sqrt(n)); } runs.push(z); }
+  return (PEEK_RUNS = runs);
+};
+const peekN = (t) => Math.min(100, Math.max(1, Math.floor(t * 8)));
+
 export default {
   id: 'inference',
   subject: 'math',
@@ -375,6 +388,28 @@ $$SE = \sqrt{\frac{p(1 - p)}{n}}$$`,
                 { t: 'It makes false positives less likely, because more data is checked', why: 'Stopping early on a lucky fluctuation makes them more likely.' },
               ],
               explain: r`The running p-value wanders like a random walk, and given enough looks it dips below 0.05 surprisingly often: with hundreds of peeks the false positive rate can exceed 30%. Remedies are to fix the sample size in advance, or use "sequential" methods designed for continuous monitoring.`,
+            },
+            { /*anim:inference*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Peeking at twenty tests',
+              body: r`Twenty A/A tests: both "versions" are identical, so there's nothing to find. After each batch of visitors, the analyst checks the test statistic $z$. Inside the grey band ($|z| < 1.96$) the result isn't significant. A test turns {coral:coral} the first time it leaves the band, which is when a peeking analyst would stop and declare a winner.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 100, ymin: -3.6, ymax: 3.6, grid: false, height: 320, axes: { xticks: 20, yticks: 1, yAt: -3.6, xlabel: 'checks', ylabel: 'z' }, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 15, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const runs = peekRuns(), n = peekN(p.t), els = [];
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(1.96), width: plot.X(100) - plot.X(0), height: plot.Y(-1.96) - plot.Y(1.96), class: 'fl-muted', opacity: 0.18 }));
+                  for (const z of runs) {
+                    const hit = z.slice(0, n).findIndex((v) => Math.abs(v) > 1.96);
+                    els.push(s('path', { d: z.slice(0, n).map((v, i) => `${i ? 'L' : 'M'}${plot.X(i + 1).toFixed(1)} ${plot.Y(v).toFixed(1)}`).join(''), fill: 'none', stroke: hit >= 0 ? 'var(--coral)' : 'var(--blue)', 'stroke-width': hit >= 0 ? 2 : 1.6, opacity: hit >= 0 ? 0.9 : 0.55 }));
+                    if (hit >= 0) els.push(s('circle', { cx: plot.X(hit + 1), cy: plot.Y(z[hit]), r: 4.5, class: 'fl-coral' }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const runs = peekRuns(), n = peekN(p.t), k = runs.filter((z) => z.slice(0, n).some((v) => Math.abs(v) > 1.96)).length, last = runs.filter((z) => Math.abs(z[n - 1]) > 1.96).length; return `after ${n} checks: ${k} of 20 tests have *at some point* looked significant · at this check alone: ${last} of 20`; },
+              },
+              after: r`At any single, planned moment, about 1 test in 20 crosses the line, as a 5% false-positive rate promises. But each test's $z$ wanders like a random walk, and with a hundred looks, many of them stray out of the band at least once. Stop at the first crossing and you'll "find" a winner far more often than 5% of the time. The fixes: decide the sample size in advance, or use methods designed for repeated looks.`,
             },
           ],
           recap: [

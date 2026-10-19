@@ -82,6 +82,26 @@ function swStats(k) {
   return { avg: tot / (SW_N * (SW_N - 1)), max };
 }
 
+// Kruskal's algorithm on 12 towns: every pair could be joined, at a cost equal to the distance
+const KRUSKAL = (() => {
+  let a = 2718;
+  const rnd = () => (a = (a * 16807) % 2147483647) / 2147483647;
+  const P = Array.from({ length: 12 }, () => [0.4 + 9.2 * rnd(), 0.4 + 5.2 * rnd()]);
+  const E = [];
+  for (let i = 0; i < 12; i++) for (let j = i + 1; j < 12; j++) E.push([Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]), i, j]);
+  E.sort((x, y) => x[0] - y[0]);
+  const parent = P.map((_, i) => i), find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const steps = [];
+  let used = 0;
+  for (const [d, i, j] of E) {
+    if (used === 11) break;
+    const ok = find(i) !== find(j);
+    if (ok) { parent[find(i)] = find(j); used++; }
+    steps.push({ d, i, j, ok });
+  }
+  return { P, steps };
+})();
+
 export default {
   id: 'graphs',
   subject: 'math',
@@ -491,6 +511,32 @@ Family trees, file folders, and the branching of a river system are all trees.`,
 3. Stop when you have $n - 1$ edges.
 
 Unlike the greedy driver in the shortest-path lesson, greed is **provably optimal** here: the cheapest edge leaving any group of connected towns always belongs to some cheapest network. Spanning trees are used to design power grids, pipelines and computer networks, and even to stop data packets circling forever in office networks.`,
+            },
+            { /*anim:graphs*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Kruskal at work',
+              body: r`Twelve towns, and a road could join any two (cost = length). Kruskal's algorithm tries the possible roads from shortest to longest: {teal:built} if it links two separate groups, {coral:rejected} if it would close a loop.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 1.4, max: KRUSKAL.steps.length + 4, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { P, steps } = KRUSKAL, n = Math.min(steps.length, Math.floor(p.t)), els = [];
+                  steps.slice(0, n).forEach((st, k) => {
+                    const [x1, y1] = P[st.i], [x2, y2] = P[st.j], last = k === n - 1;
+                    if (st.ok) els.push(s('line', { x1: plot.X(x1), y1: plot.Y(y1), x2: plot.X(x2), y2: plot.Y(y2), stroke: 'var(--teal)', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+                    else if (last) els.push(s('line', { x1: plot.X(x1), y1: plot.Y(y1), x2: plot.X(x2), y2: plot.Y(y2), stroke: 'var(--coral)', 'stroke-width': 3, 'stroke-dasharray': '6 5' }));
+                  });
+                  P.forEach(([x, y]) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 8, class: 'fl-ink', stroke: 'var(--card)', 'stroke-width': 2 })));
+                  return els;
+                },
+                readout: (p) => {
+                  const { steps } = KRUSKAL, n = Math.min(steps.length, Math.floor(p.t)), built = steps.slice(0, n).filter((s) => s.ok);
+                  const last = steps[n - 1];
+                  return `roads tried: ${n} · built: ${built.length} of 11 · total length ${built.reduce((a, s) => a + s.d, 0).toFixed(1)}${last ? (last.ok ? '' : ' · {coral:that one would close a loop}') : ''}`;
+                },
+              },
+              after: r`Being greedy, always grabbing the cheapest road that doesn't close a loop, gives the cheapest network overall. That's unusual: greedy choices fail for many problems (like the travelling salesperson). It works here because whenever a road is the cheapest way to join two groups, some cheapest network must use it. After 11 roads, all 12 towns are connected: a tree with $n - 1$ edges.`,
             },
             {
               type: 'numeric',

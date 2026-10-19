@@ -136,6 +136,45 @@ $$\text{dip} \approx \left(\frac{R_{\text{planet}}}{R_{\text{star}}}\right)^2$$`
 
 In 1995, Michel Mayor and Didier Queloz found **51 Pegasi b** this way: the first planet discovered orbiting a Sun-like star. They shared the 2019 Nobel Prize in Physics.`,
             },
+            { /*anim:exoplanets*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watching the star wobble',
+              body: r`A star and a giant planet orbit their common {ink:centre of mass} (sizes and the wobble are exaggerated). We watch from far below the picture. On the right are a few dark lines in the star's spectrum, and below them the star's speed away from us, traced over time.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.7, xmax: 9.2, ymin: -3.1, ymax: 2.9, grid: false, axes: false, maxWidth: 640,
+                animate: { param: 't', speed: 0.9, max: 400 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const th = p.t, R = (r) => plot.X(r) - plot.X(0), els = [], v = -Math.cos(th);
+                  const T = (x, y, text, anchor = 'middle', col = 'ink-2') => s('text', { x: plot.X(x), y: plot.Y(y), 'text-anchor': anchor, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--${col})`, text });
+                  // orbits
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R(2), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5, 'stroke-dasharray': '4 5' }));
+                  els.push(s('circle', { cx: plot.X(-0.35 * Math.cos(th)), cy: plot.Y(-0.35 * Math.sin(th)), r: R(0.5), class: 'fl-amber', opacity: 0.85 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R(0.35), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }));
+                  els.push(s('path', { d: `M${plot.X(0) - 5} ${plot.Y(0)}h10M${plot.X(0)} ${plot.Y(0) - 5}v10`, stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(2 * Math.cos(th)), cy: plot.Y(2 * Math.sin(th)), r: 6, class: 'fl-blue' }));
+                  els.push(T(0, -2.85, 'to Earth ↓'));
+                  // spectrum strip
+                  const x0 = 3.4, x1 = 9.0, shift = 0.3 * v;
+                  els.push(s('rect', { x: plot.X(x0), y: plot.Y(2.6), width: R(x1 - x0), height: R(0.9), rx: 4, class: v > 0.15 ? 'fl-coral-soft' : v < -0.15 ? 'fl-blue-soft' : 'fl-surface', stroke: 'var(--line-2)' }));
+                  for (const lx of [4.1, 4.9, 6.0, 7.2, 8.1]) {
+                    els.push(s('line', { x1: plot.X(lx), x2: plot.X(lx), y1: plot.Y(2.6), y2: plot.Y(2.42), stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                    els.push(s('line', { x1: plot.X(lx + shift), x2: plot.X(lx + shift), y1: plot.Y(2.4), y2: plot.Y(1.7), stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  }
+                  els.push(T(x0, 1.3, '← bluer', 'start', 'blue'), T(x1, 1.3, 'redder →', 'end', 'coral'));
+                  // speed away from us over the last full orbit
+                  const yc = -1.1, A = 1.2, pts = [];
+                  for (let i = 0; i <= 120; i++) { const tt = th - 2 * Math.PI + (2 * Math.PI * i) / 120; pts.push(`${i ? 'L' : 'M'}${plot.X(x0 + ((x1 - x0) * i) / 120).toFixed(1)} ${plot.Y(yc - A * Math.cos(tt)).toFixed(1)}`); }
+                  els.push(s('line', { x1: plot.X(x0), x2: plot.X(x1), y1: plot.Y(yc), y2: plot.Y(yc), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  els.push(s('circle', { cx: plot.X(x1), cy: plot.Y(yc + A * v), r: 5.5, class: 'fl-violet' }));
+                  els.push(T(x0, yc + A + 0.15, 'away', 'start', 'ink-3'), T(x0, yc - A - 0.45, 'towards', 'start', 'ink-3'));
+                  return els;
+                },
+                readout: (p) => { const v = -Math.cos(p.t); return Math.abs(v) < 0.15 ? 'star moving across our view: no shift' : `star moving ${v > 0 ? 'away from' : 'towards'} us at ${fix(12.5 * Math.abs(v), 1)} m/s: lines shifted ${v > 0 ? '{coral:redder}' : '{blue:bluer}'}`; },
+              },
+              after: r`We can't see the planet, but the star's lines slide back and forth once per orbit. The size of the swing gives the star's speed (for the Sun pulled by Jupiter, about 12.5 m/s, a brisk cycling pace), and its period is the planet's year. The shifts are tiny, about 4 parts in 100 million of the wavelength, which is why it took until 1995 to find the first planet around a Sun-like star this way.`,
+            },
             {
               type: 'numeric',
               title: 'The Sun’s wobble',

@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const tau = (p) => p.R * p.C * 1e-3; // kΩ × μF → seconds
 const fmtHz = (f) => (f >= 1000 ? `${(f / 1000).toFixed(1)} kHz` : `${f.toFixed(0)} Hz`);
@@ -7,6 +8,20 @@ const EPS0 = 8.85e-12;
 const DIEL = [['air', 1], ['paper', 3.7], ['glass', 7]];
 
 const rcRipple = (C) => { const R = 100, dt = 2e-5; let v = 1, t = 0, lo = 1, hi = 0; while (t < 0.06) { const sv = Math.abs(Math.sin(2 * Math.PI * 50 * t)); v = sv > v ? sv : v * Math.exp(-dt / (R * C)); if (t > 0.03) { lo = Math.min(lo, v); hi = Math.max(hi, v); } t += dt; } return hi - lo; };
+// a sine whose frequency sweeps from 0.13 to 10 times the cutoff, fed through an RC low-pass filter (RC = 1 s)
+const CHIRP = (() => {
+  const T = 40, f0 = 0.02, f1 = 1.6, dt = 0.004, n = Math.round(T / dt), r = f1 / f0;
+  const vin = new Float64Array(n + 1), vout = new Float64Array(n + 1), freq = (t) => f0 * r ** (t / T);
+  let v = 0;
+  for (let i = 0; i <= n; i++) {
+    const t = i * dt, ph = ((2 * Math.PI * f0 * T) / Math.log(r)) * (r ** (t / T) - 1);
+    vin[i] = Math.sin(ph);
+    if (i) v += ((vin[i - 1] + vin[i]) / 2 - v) * dt; // dv/dt = (v_in − v)/RC
+    vout[i] = v;
+  }
+  return { T, dt, vin, vout, freq };
+})();
+
 export default {
   id: 'rc',
   subject: 'physics',
@@ -213,6 +228,22 @@ large at low frequencies, small at high frequencies.`,
                 readout: (p) => `cutoff frequency **${fmtHz(1 / (2 * Math.PI * 1000 * p.C * 1e-6))}**`,
               },
               after: r`Below the cutoff, signals pass almost unchanged; above it, they're increasingly suppressed. Swap the resistor and capacitor and you get a **high-pass** filter. Speakers use such pairs (crossovers) to send bass to the big woofer and treble to the small tweeter.`,
+            },
+            { /*anim:rc*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Sweeping the pitch',
+              body: r`Feed the filter a {blue:tone that slides from low to high} (a "chirp") and watch the {coral:output}. The cutoff frequency here is $f_c = \frac{1}{2\pi RC}$.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 40, ymin: -1.3, ymax: 1.3, grid: false, height: 260, axes: { xlabel: 'time', xticks: 0, yticks: 0 },
+                animate: { param: 't', speed: 3.2, max: 44, autoplay: true },
+                curves: [
+                  { f: (x, p) => (x <= p.t ? CHIRP.vin[Math.round(x / CHIRP.dt)] : NaN), color: 'blue', width: 1.5, n: 2400 },
+                  { f: (x, p) => (x <= p.t ? CHIRP.vout[Math.round(x / CHIRP.dt)] : NaN), color: 'coral', width: 2.5, n: 2400 },
+                ],
+                readout: (p) => { const t = Math.min(40, p.t), f = CHIRP.freq(t) * 2 * Math.PI; return `input frequency: ${fix(f, 2)} × cutoff · output amplitude ≈ ${fix(100 / Math.sqrt(1 + f * f), 0)}% of the input`; },
+              },
+              after: r`Well below the cutoff the output follows the input almost perfectly. As the pitch climbs past $f_c$, the capacitor can't charge and discharge fast enough to keep up: the output shrinks and lags further behind. At 10 times the cutoff only about a tenth gets through. That's exactly what a tone control does when you turn down the treble.`,
             },
             {
               type: 'numeric',

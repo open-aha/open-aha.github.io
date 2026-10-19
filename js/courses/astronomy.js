@@ -27,6 +27,16 @@ const lum = (R, T) => R * R * (T / 5772) ** 4;
 const HR_STARS = [['Sun', 5772, 1], ['Sirius A', 9940, 25], ['Vega', 9600, 40], ['Rigel', 12100, 120000], ['Betelgeuse', 3600, 100000], ['Aldebaran', 3900, 440], ['Proxima Cen', 3040, 0.0017], ['Sirius B', 25000, 0.056]];
 const MAIN_SEQ = [[30000, 1e5], [20000, 2e4], [10000, 40], [7500, 6], [5772, 1], [4500, 0.2], [3500, 0.02], [2800, 0.001]];
 
+// a lumpy grid of galaxies, fixed once (a tiny deterministic shuffle so it doesn't look like a crystal)
+const HUBBLE_GAL = (() => {
+  const out = [];
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) - 0.5;
+  for (let i = -6; i <= 6; i++) for (let j = -4; j <= 4; j++) out.push([i * 1.1 + 0.5 * rnd(), j * 1.1 + 0.5 * rnd()]);
+  return out;
+})();
+const HUBBLE_HOME = [[0, 0], [2, 1], [-2, -1]].map(([i, j]) => (i + 6) * 9 + (j + 4));
+
 export default {
   id: 'astronomy',
   subject: 'physics',
@@ -682,6 +692,33 @@ Around 1910, Ejnar Hertzsprung and Henry Norris Russell plotted stars' luminosit
 A galaxy's recession speed $v$ is proportional to its distance $d$. The **Hubble constant** is about $H_0 \approx 70$ km/s per megaparsec (one megaparsec is about 3.26 million light-years).
 
 The speeds are measured from **redshift**: light from receding galaxies is stretched to longer wavelengths (as in the Waves course, the Doppler effect).`,
+            },
+            { /*anim:astronomy*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Everyone is the centre',
+              body: r`Here is a patch of space full of galaxies, and space stretches by the same factor everywhere. We follow the stretch from the point of view of galaxy {coral:A}, then {coral:B}, then {coral:C}. The faint trails show how far each galaxy has moved.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4, xmax: 4, ymin: -2.5, ymax: 2.5, grid: false, axes: false, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 15, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.floor(p.t / 5) % 3, u = Math.min(1, Math.max(0, ((p.t % 5) - 0.6) / 3.4)), a = 1 + 0.35 * u * u * (3 - 2 * u);
+                  const h = HUBBLE_GAL[HUBBLE_HOME[k]], els = [];
+                  for (const g of HUBBLE_GAL) {
+                    const dx = g[0] - h[0], dy = g[1] - h[1];
+                    if (Math.abs(dx) > 6 || Math.abs(dy) > 4) continue;
+                    els.push(s('line', { x1: plot.X(dx), y1: plot.Y(dy), x2: plot.X(a * dx), y2: plot.Y(a * dy), stroke: 'var(--blue)', 'stroke-width': 2.5, opacity: 0.3, 'stroke-linecap': 'round' }));
+                  }
+                  HUBBLE_GAL.forEach((g, n) => {
+                    const dx = a * (g[0] - h[0]), dy = a * (g[1] - h[1]), home = n === HUBBLE_HOME[k], li = HUBBLE_HOME.indexOf(n);
+                    els.push(s('circle', { cx: plot.X(dx), cy: plot.Y(dy), r: home ? 7 : 4.5, class: home ? 'fl-coral' : 'fl-blue' }));
+                    if (li >= 0) els.push(s('text', { x: plot.X(dx) + 9, y: plot.Y(dy) - 7, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${home ? 'coral' : 'ink-2'})`, text: 'ABC'[li] }));
+                  });
+                  return els;
+                },
+                readout: (p) => { const k = Math.floor(p.t / 5) % 3, u = Math.min(1, Math.max(0, ((p.t % 5) - 0.6) / 3.4)), a = 1 + 0.35 * u * u * (3 - 2 * u); return `seen from galaxy {coral:${'ABC'[k]}} · every distance has grown by ${fix(100 * (a - 1), 0)}%`; },
+              },
+              after: r`Whichever galaxy you watch from, the picture is the same: every other galaxy moves straight away from **you**, and one twice as far away moves twice as far in the same time. That is Hubble's law, $v = H_0 d$, seen from everywhere at once. So finding that all galaxies recede from us doesn't put us at the centre. A uniform stretch has no centre: every galaxy sees itself in the middle, like raisins in a rising loaf of bread.`,
             },
             {
               type: 'numeric',

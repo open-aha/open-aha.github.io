@@ -17,6 +17,18 @@ const hoverPower = (d) => Math.sqrt((2 * 9.8) ** 3 / (2 * RHO * Math.PI * (d / 2
 // a sailplane's sink rate (m/s) at airspeed v (m/s): parasitic drag grows like v³, induced drag like 1/v
 const sink = (v) => 2.5e-5 * v ** 3 + 12 / v;
 
+// an 80 kg skydiver: belly-down terminal speed 55 m/s; the canopy opens over 3 s from t = 20 s (terminal 5 m/s)
+const SKY = (() => {
+  const m = 80, g = 9.8, k1 = (m * g) / 55 ** 2, k2 = (m * g) / 5 ** 2, dt = 0.01, out = [];
+  let v = 0;
+  for (let i = 0; i <= 4000; i++) {
+    const t = i * dt, f = Math.min(1, Math.max(0, (t - 20) / 3)), k = k1 + (k2 - k1) * f * f;
+    out.push({ t, v, drag: k * v * v });
+    v += (g - (k * v * v) / m) * dt;
+  }
+  return out;
+})();
+
 export default {
   id: 'flight',
   subject: 'physics',
@@ -173,6 +185,35 @@ $$v_t = \sqrt{\frac{2mg}{\rho C_D A}}$$`,
                 { t: r`Air pushes the diver upwards`, why: r`Drag acts upwards while falling, but it only balances weight at the new, lower speed.` },
               ],
               explain: r`Terminal speed $\propto \sqrt{\frac{W}{C_dA}}$: a hundredfold increase in drag area gives a tenfold drop in speed. Landing at 5 m/s is like jumping off a 1.3 m wall.`,
+            },
+            { /*anim:flight*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A whole jump',
+              body: r`An 80 kg skydiver jumps, falls belly-down, then opens the parachute after 20 s. Watch the {coral:drag} catch up with the {blue:weight}, and the speed graph.`,
+              widget: {
+                kind: 'graph', xmin: -14, xmax: 40, ymin: -4, ymax: 62, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 2.5, max: 40, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const st = SKY[Math.min(SKY.length - 1, Math.round(p.t / 0.01))], els = [], open = p.t >= 20;
+                  // the diver, with force arrows (1 kN = 30 units)
+                  const cx = plot.X(-7), cy = plot.Y(34);
+                  if (open) els.push(s('path', { d: `M${cx - 50} ${cy - 70}Q${cx} ${cy - 120} ${cx + 50} ${cy - 70}Z`, class: 'fl-amber', opacity: Math.min(1, (p.t - 20) / 3) }), s('path', { d: `M${cx - 50} ${cy - 70}L${cx} ${cy - 10}L${cx + 50} ${cy - 70}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1 }));
+                  els.push(s('rect', { x: cx - 22, y: cy - 6, width: 44, height: 12, rx: 6, class: 'fl-ink' }));
+                  const arrow = (len, up, col) => { const y2 = cy + (up ? -1 : 1) * (12 + len); return [s('line', { x1: cx + (up ? 14 : -14), x2: cx + (up ? 14 : -14), y1: cy, y2, stroke: `var(--${col})`, 'stroke-width': 5 }), s('path', { d: `M${cx + (up ? 14 : -14) - 8} ${y2 + (up ? 8 : -8)}L${cx + (up ? 14 : -14)} ${y2}L${cx + (up ? 14 : -14) + 8} ${y2 + (up ? 8 : -8)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 4 })]; };
+                  els.push(arrow(Math.min(150, 0.12 * 784), false, 'blue'), arrow(Math.min(150, 0.12 * st.drag), true, 'coral'));
+                  // speed against time
+                  const X = (t) => plot.X(t), Y = (v) => plot.Y(v);
+                  els.push(s('line', { x1: X(0), x2: X(40), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }), s('line', { x1: X(0), x2: X(0), y1: Y(0), y2: Y(60), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  for (const [v, lab] of [[55, '55 m/s'], [5, '5 m/s']]) els.push(s('line', { x1: X(0), x2: X(40), y1: Y(v), y2: Y(v), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '4 5' }), s('text', { x: X(39.5), y: Y(v) - 5, 'text-anchor': 'end', class: 'tick', text: lab }));
+                  for (const t of [0, 20, 40]) els.push(s('text', { x: X(t), y: Y(0) + 16, 'text-anchor': 'middle', class: 'tick', text: `${t} s` }));
+                  const pts = SKY.filter((o, i) => o.t <= p.t && i % 10 === 0);
+                  els.push(s('path', { d: pts.map((o, i) => `${i ? 'L' : 'M'}${X(o.t).toFixed(1)} ${Y(o.v).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  return els;
+                },
+                readout: (p) => { const st = SKY[Math.min(SKY.length - 1, Math.round(p.t / 0.01))]; return `${fix(p.t, 1)} s · speed ${fix(st.v, 1)} m/s · {coral:drag ${fix(st.drag, 0)} N} against {blue:weight 784 N}`; },
+              },
+              after: r`At first the diver speeds up at nearly $g$, but drag grows like $v^2$ until it matches the weight, at about 55 m/s: no net force, so no more speeding up. Opening the canopy suddenly makes drag far bigger than the weight, so the diver **slows down** (they don't go upwards, they just fall more slowly) until drag and weight balance again at a gentle 5 m/s. Real canopies open over a few seconds to keep that deceleration bearable.`,
             },
             {
               type: 'mcq',

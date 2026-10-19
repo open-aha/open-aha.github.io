@@ -418,6 +418,50 @@ The black dot is where the turtle started; the coral turtle shows where it stops
 
 For a regular polygon with $n$ sides, each turn is $\dfrac{360°}{n}$, and each interior angle is $180° - \dfrac{360°}{n}$. Thinking like the turtle turns geometry facts into something you can feel by walking.`,
             },
+            { /*anim:coding*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Counting the turns',
+              body: r`Watch the turtle draw, and keep an eye on the dial: it adds up every turn the turtle makes, winding further out each time the total passes a full circle. Try the stars.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.25, xmax: 3.35, ymin: -1.2, ymax: 1.2, grid: false, axes: false,
+                animate: { param: 't', speed: 1.6, max: 600, autoplay: true },
+                params: { sh: { min: 0, max: 3, step: 1, value: 1, label: 'shape', color: 'violet', format: (v) => ['pentagon (turn 72°)', '5-pointed star (turn 144°)', '7-pointed star (turn 154.3°)', '8-pointed star (turn 135°)'][v] } },
+                extra: ({ plot, p, s }) => {
+                  const [n, k] = [[5, 1], [5, 2], [7, 3], [8, 3]][p.sh], beta = (2 * Math.PI * k) / n, R = 1, phi0 = Math.PI / 2;
+                  const V = (j) => [R * Math.cos(phi0 + j * beta), R * Math.sin(phi0 + j * beta)];
+                  const cyc = n * 1.5 + 2, tt = p.t % cyc;
+                  const seg = Math.min(n, Math.floor(tt / 1.5)), u = tt - seg * 1.5;
+                  const els = [];
+                  // path so far
+                  const pts = [V(0)];
+                  for (let j = 1; j <= seg; j++) pts.push(V(j));
+                  let pos = V(seg), turned = seg * beta;
+                  if (seg < n) {
+                    const a = Math.min(1, u), [x0, y0] = V(seg), [x1, y1] = V(seg + 1);
+                    pos = [x0 + (x1 - x0) * a, y0 + (y1 - y0) * a];
+                    pts.push(pos);
+                    if (u > 1) turned += beta * Math.min(1, (u - 1) / 0.5);
+                  }
+                  els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  const head = phi0 + beta / 2 + Math.PI / 2 + turned;
+                  const tri = [[16, 0], [-9, 9], [-9, -9]].map(([a, b]) => [plot.X(pos[0]) + a * Math.cos(head) + b * Math.sin(head), plot.Y(pos[1]) - (a * Math.sin(head) - b * Math.cos(head))]);
+                  els.push(s('path', { d: tri.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join('') + 'Z', class: 'fl-teal', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  // the dial: a spiral whose angle is the total turning, one ring per full turn
+                  const cx = 2.35, cy = 0.05, h0 = phi0 + beta / 2 + Math.PI / 2;
+                  els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(cy), r: plot.X(0.85) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  const sp = [];
+                  for (let i = 0; i <= 160; i++) { const a = (turned * i) / 160, rr = 0.3 + 0.13 * (a / (2 * Math.PI)); sp.push([cx + rr * Math.cos(h0 + a), cy + rr * Math.sin(h0 + a)]); }
+                  if (turned > 0.01) els.push(s('path', { d: sp.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--teal)', 'stroke-width': 3.5, 'stroke-linecap': 'round' }));
+                  const tip = sp[sp.length - 1];
+                  els.push(s('line', { x1: plot.X(cx), y1: plot.Y(cy), x2: plot.X(tip[0]), y2: plot.Y(tip[1]), stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  els.push(s('text', { x: plot.X(cx), y: plot.Y(-1.12), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--teal)', text: `turned ${Math.round((turned * 180) / Math.PI)}°` }));
+                  return els;
+                },
+                readout: (p) => { const [n, k] = [[5, 1], [5, 2], [7, 3], [8, 3]][p.sh]; return `${n} turns of ${(360 * k / n).toFixed(1).replace('.0', '')}° = ${360 * k}° in total = **${k} full turn${k > 1 ? 's' : ''}** (the turtle circles the middle ${k === 1 ? 'once' : k + ' times'})`; },
+              },
+              after: r`A simple polygon always adds up to exactly one full turn, 360°. A star that crosses itself winds around its centre more than once, so its turns add up to 2, 3, … full turns: $5 \times 144° = 720°$. Either way the total is a whole number of turns, because the turtle ends up facing the way it started. That's why only turns like $360°/n$ or $720°/n$ make closed shapes.`,
+            },
             {
               type: 'numeric',
               title: 'Inside an octagon',

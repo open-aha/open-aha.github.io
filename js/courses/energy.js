@@ -5,6 +5,29 @@ const G = 9.8;
 const f2 = (v) => (Math.round(v * 100) / 100).toString();
 const bowl = (x) => 0.2 * x * x;
 
+// three frictionless slides from (0, 3) to (6, 0): time to reach each x, from energy conservation
+const SLIDE_H = 3, SLIDE_L = 6;
+const SLIDES = [
+  { col: 'coral', y: (x) => SLIDE_H * (1 - x / SLIDE_L) ** 2.5 },
+  { col: 'blue', y: (x) => SLIDE_H * (1 - x / SLIDE_L) },
+  { col: 'teal', y: (x) => SLIDE_H * (1 - 0.35 * (x / SLIDE_L) - 0.65 * (x / SLIDE_L) ** 3) },
+].map((sl) => {
+  const n = 3000, T = [0], X = [0];
+  let t = 0;
+  for (let i = 1; i <= n; i++) {
+    const x0 = (SLIDE_L * (i - 1)) / n, x1 = (SLIDE_L * i) / n, ds = Math.hypot(x1 - x0, sl.y(x1) - sl.y(x0));
+    const v = Math.sqrt(2 * 9.8 * (SLIDE_H - sl.y((x0 + x1) / 2)));
+    t += ds / v; T.push(t); X.push(x1);
+  }
+  return { ...sl, T, X, end: t };
+});
+const slideX = (sl, t) => {
+  if (t >= sl.end) return SLIDE_L;
+  let lo = 0, hi = sl.T.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (sl.T[m] < t) lo = m; else hi = m; }
+  return sl.X[lo] + ((sl.X[hi] - sl.X[lo]) * (t - sl.T[lo])) / (sl.T[hi] - sl.T[lo]);
+};
+
 export default {
   id: 'energy',
   subject: 'physics',
@@ -421,6 +444,23 @@ The mass cancels out, so the speed at the bottom depends only on the height.`,
                 { t: 'The twisty slide', why: 'Without friction, the shape of the path doesn’t change the energy.' },
               ],
               explain: r`Each rider converts the same drop in PE, $mgh$, into KE, so they all reach $v = \sqrt{2gh}$. The path changes **how long** it takes, not the final speed. (Real slides have friction, which makes longer slides slower.)`,
+            },
+            { /*anim:energy*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The race',
+              body: r`Here are three frictionless slides, all dropping 3 m. Release three riders together and watch both the **finishing order** and the **speed** each one has at the bottom.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.4, xmax: 6.6, ymin: -0.5, ymax: 3.5, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.5, max: 3.3, autoplay: true },
+                curves: SLIDES.map((sl) => ({ f: (x) => sl.y(x), from: 0, to: SLIDE_L, color: sl.col, width: 3 })),
+                extra: ({ plot, p, s }) => SLIDES.map((sl) => {
+                  const x = slideX(sl, p.t), y = sl.y(x);
+                  return s('circle', { cx: plot.X(x), cy: plot.Y(y) - 9, r: 9, class: `fl-${sl.col}`, stroke: 'var(--card)', 'stroke-width': 2 });
+                }),
+                readout: (p) => `time ${fix(Math.min(p.t, 2.6), 2)} s · finished: ${SLIDES.map((sl) => (p.t >= sl.end ? `{${sl.col}:${fix(sl.end, 2)} s}` : `{${sl.col}:…}`)).join(', ')} · speed at the bottom: **${fix(Math.sqrt(2 * 9.8 * SLIDE_H), 2)} m/s** for all three`,
+              },
+              after: r`All three riders reach the bottom at the **same speed**, $\sqrt{2gh} = 7.67$ m/s, because each one turns the same drop of 3 m into kinetic energy. But they don't arrive together: the slide that drops steeply at the start wins, because its rider picks up speed early and keeps it for the rest of the way. Energy tells you **how fast**, not **how soon**. (The fastest possible shape is a curve called the brachistochrone.)`,
             },
             {
               type: 'numeric',

@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const G = 9.8;
 const speed = (lam, d) => Math.sqrt(((G * lam) / (2 * Math.PI)) * Math.tanh((2 * Math.PI * d) / lam));
@@ -395,6 +396,32 @@ $$H \propto d^{-1/4}$$
               body: r`Waves travel in **groups**: sets of larger waves with calmer gaps between them. Surfers wait for the sets. In deep water, the individual crests move at the phase speed $v = \frac{gT}{2\pi}$, but the **group**, and the energy, moves at only **half** that:
 $$c_g = \frac{gT}{4\pi}$$
 Watch a group closely and you'll see crests appear at its back, move forward through it, and fade out at its front.`,
+            },
+            { /*anim:oceanwaves*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Crests outrun their group',
+              body: r`A group of deep-water waves travelling to the right. Follow the {coral:marked crest} and the {blue:centre of the group}.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 90, ymin: -1.4, ymax: 1.4, grid: false, axes: false, height: 240,
+                animate: { param: 't', speed: 9, max: 125, autoplay: true },
+                curves: [
+                  { f: (x, p) => { const k = 1, w = 1, cg = 0.5, xc = 20 + cg * p.t; return Math.exp(-(((x - xc) / 10) ** 2)) * Math.cos(k * x - w * p.t); }, color: 'blue', width: 2.5, n: 700 },
+                  { f: (x, p) => Math.exp(-(((x - 20 - 0.5 * p.t) / 10) ** 2)), color: 'muted', dash: true, width: 1.5 },
+                ],
+                extra: ({ plot, p, s }) => {
+                  const cg = 0.5, xc = 20 + cg * p.t, D = 30 / cg, c0 = Math.floor(p.t / D) * D;
+                  // follow one crest from the back of the group (x − ct = 2πm) until it passes the front
+                  const m = Math.ceil((20 + cg * c0 - 15 - c0) / (2 * Math.PI)), x = 2 * Math.PI * m + p.t;
+                  const y = Math.exp(-(((x - xc) / 10) ** 2)) * Math.cos(x - p.t);
+                  return [
+                    s('path', { d: `M${plot.X(xc)} ${plot.Y(1.32)}l-7 -10h14z`, class: 'fl-blue' }),
+                    s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 7, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }),
+                  ];
+                },
+                readout: () => `the crest moves at the wave speed $v$ · the group moves at only $\\tfrac12 v$`,
+              },
+              after: r`Each crest is born at the back of the group, grows as it moves through the middle, and fades away at the front: it travels **twice as fast** as the group. In deep water, the group speed is exactly half the speed of the individual waves. The energy travels with the group, so a swell's arrival time (and the "How far away is the storm?" calculation) uses the group speed, not the crest speed.`,
             },
             {
               type: 'numeric',

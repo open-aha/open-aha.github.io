@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const G = 9.8, XEND = Math.PI, YEND = -2;
 
@@ -209,6 +210,30 @@ The straight line is the **shortest** path. But is it the **fastest**?`,
                 { t: 'The one released lowest', why: 'It has less distance, but it also moves more slowly. On a cycloid, these balance perfectly.' },
               ],
               explain: r`The cycloid is also the **tautochrone** ("same time" curve): from anywhere on it, the descent time to the bottom is identical, $\pi\sqrt{r/g}$. Christiaan Huygens discovered this in 1659 and used it to design pendulum clocks whose period doesn't depend on the swing's size.`,
+            },
+            { /*anim:curves*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Four beads, one finish',
+              body: r`Four beads slide without friction on an upside-down cycloid, the curve traced by a rolling wheel of radius 1 m. They are released together from different heights.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.4, xmax: 3.4, ymin: -0.35, ymax: 2.3, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.8, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  // bowl: x = φ + sin φ, y = 1 - cos φ, with arc length s = 4 sin(φ/2) from the bottom; on it, s(t) = s0 cos(ωt)
+                  const pt = (ph) => [ph + Math.sin(ph), 1 - Math.cos(ph)], els = [], curve = [];
+                  for (let i = 0; i <= 120; i++) { const [x, y] = pt(-Math.PI + (2 * Math.PI * i) / 120); curve.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`); }
+                  els.push(s('path', { d: curve.join(''), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+                  [[-2.9, 'blue'], [-2.1, 'coral'], [-1.3, 'teal'], [-0.55, 'violet']].forEach(([ph0, col], idx) => {
+                    const s0 = 4 * Math.sin(ph0 / 2), ph = 2 * Math.asin((s0 * Math.cos(p.t)) / 4), [x0, y0] = pt(ph0), [x, y] = pt(ph);
+                    els.push(s('circle', { cx: plot.X(x0), cy: plot.Y(y0), r: 7, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }));
+                    els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 11 - 2 * idx, class: `fl-${col}` })); // shrinking sizes, so all four show when they meet
+                  });
+                  return els;
+                },
+                readout: (p) => { const T = p.t / Math.sqrt(9.8 / 4); return Math.abs(Math.cos(p.t)) < 0.04 ? `${fix(T, 2)} s · **all four at the bottom together**` : `${fix(T, 2)} s since release`; },
+              },
+              after: r`They all arrive at the bottom at the same moment, about 1.00 s after release, whatever height they started from: the cycloid is the **tautochrone** ("same time") curve. A bead starting higher has farther to go, but the curve is steeper up there, so it speeds up more, and the two effects cancel exactly. Along the curve, the bead's distance from the bottom obeys the same equation as a spring, so the timing is the same for every swing. In 1673 Christiaan Huygens used this to design a pendulum clock whose period didn't depend on the size of its swing.`,
             },
           ],
           recap: [

@@ -3,6 +3,32 @@ const f2 = (v) => (Math.round(v * 100) / 100).toString();
 
 const DEG = Math.PI / 180;
 
+// Galperin's billiards: a light block between a wall and a heavy block; every collision is perfectly elastic
+const CLACK_CACHE = {};
+const clacks = (M) => CLACK_CACHE[M] || (CLACK_CACHE[M] = (() => {
+  let x1 = 1, v1 = 0, x2 = 2, v2 = -1, t = 0, n = 0;
+  const w1 = 0.25, ev = [{ t, x1, v1, x2, v2, n }];
+  for (let it = 0; it < 100000; it++) {
+    const tc = v1 > v2 ? (x2 - (x1 + w1)) / (v1 - v2) : Infinity, tw = v1 < 0 ? x1 / -v1 : Infinity;
+    if (tc === Infinity && tw === Infinity) break;
+    if (tc <= tw) {
+      x1 += v1 * tc; x2 += v2 * tc; t += tc;
+      [v1, v2] = [((1 - M) * v1 + 2 * M * v2) / (1 + M), (2 * v1 + (M - 1) * v2) / (1 + M)];
+    } else { x1 = 0; x2 += v2 * tw; t += tw; v1 = -v1; }
+    ev.push({ t, x1, v1, x2, v2, n: ++n });
+    if (v1 >= 0 && v2 >= v1) break;
+  }
+  return ev;
+})());
+const clackAt = (M, t) => {
+  const ev = clacks(M);
+  let lo = 0, hi = ev.length - 1;
+  if (t >= ev[hi].t) lo = hi;
+  else while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ev[m].t <= t) lo = m; else hi = m; }
+  const e = ev[lo], dt = t - e.t;
+  return { x1: e.x1 + e.v1 * dt, x2: e.x2 + e.v2 * dt, n: e.n };
+};
+
 export default {
   id: 'momentum',
   subject: 'physics',
@@ -333,6 +359,27 @@ $$v_1' = \frac{m_1 - m_2}{m_1 + m_2}\,v, \qquad v_2' = \frac{2m_1}{m_1 + m_2}\,v
 - Equal masses: $v_1' = 0$ and $v_2' = v$. They swap.
 - Very heavy hits light: the light one shoots off at almost $2v$.
 - Light hits very heavy: the light one bounces back at almost $v$.`,
+            },
+            { /*anim:momentum*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Counting clacks',
+              body: r`A puzzle found by Gregory Galperin in 2003. A heavy block slides towards a light one that sits near a wall. Everything is frictionless and every collision is perfectly elastic. Count **all** the collisions (block on block, and light block on wall) until the blocks are flying apart for good.`,
+              widget: {
+                kind: 'graph', xmin: -0.25, xmax: 4.6, ymin: -0.15, ymax: 1.0, grid: false, axes: false, height: 200,
+                animate: { param: 't', speed: 0.45, max: 10, autoplay: true },
+                params: { m: { min: 0, max: 2, step: 1, value: 1, label: 'heavy block', color: 'blue', format: (v) => ['1 kg (same as the light one)', '100 kg', '10,000 kg'][v] } },
+                extra: ({ plot, p, s }) => {
+                  const M = [1, 100, 10000][p.m], { x1, x2 } = clackAt(M, p.t), els = [];
+                  els.push(s('line', { x1: plot.X(-0.2), x2: plot.X(4.6), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  els.push(s('rect', { x: plot.X(-0.2), y: plot.Y(0.95), width: plot.X(0) - plot.X(-0.2), height: plot.Y(0) - plot.Y(0.95), class: 'fl-muted' }));
+                  const box = (x, w, h, cls, lab) => [s('rect', { x: plot.X(x), y: plot.Y(h), width: plot.X(w) - plot.X(0), height: plot.Y(0) - plot.Y(h), rx: 4, class: cls }), s('text', { x: plot.X(x + w / 2), y: plot.Y(h / 2) + 5, 'text-anchor': 'middle', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;fill:#fff', text: lab })];
+                  els.push(box(Math.min(x1, 4.6), 0.25, 0.25, 'fl-coral', '1'), box(Math.min(x2, 4.6), 0.6, 0.6, 'fl-blue', ['1', '100', '10⁴'][p.m]));
+                  return els;
+                },
+                readout: (p) => { const M = [1, 100, 10000][p.m], { n } = clackAt(M, p.t), total = clacks(M).length - 1; return `collisions so far: **${n}**${n === total ? ' (no more will happen)' : ''}`; },
+              },
+              after: r`With equal blocks there are **3** collisions. With a block 100 times heavier there are **31**; with 10,000 times heavier, **314**; then 3141, 31415, … the digits of $\pi$! The reason is hidden in the two conservation laws. Plot the two velocities (suitably scaled) as a point: conservation of energy keeps it on a circle, and each collision moves it a fixed tiny step round that circle, about $\frac{1}{\sqrt{M}}$ radians when the heavy block is $M$ times heavier. About $\pi\sqrt{M}$ of those steps fit before the blocks fly apart.`,
             },
             {
               type: 'numeric',

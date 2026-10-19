@@ -42,6 +42,37 @@ export default {
               ],
               explain: r`The wire is already full of electrons. Closing the switch makes them all start drifting at once, like water in a full hose: turn the tap and water comes out the far end immediately, even though no single drop travelled the whole way. Each electron's **drift speed** is typically well under 1 mm/s.`,
             },
+            { /*anim:electricity*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A pipe already full',
+              body: r`The wire is packed with free electrons all the way round, jiggling about randomly. Watch what happens when the switch closes, and follow the {coral:marked electron}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.5, xmax: 10.5, ymin: -0.6, ymax: 5.6, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 1, max: 16, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const on = p.t >= 3, L = 30, els = [];
+                  // the loop: a rectangle 10 × 5, measured by distance u along it
+                  const at = (u) => { u = ((u % L) + L) % L; return u < 10 ? [u, 0] : u < 15 ? [10, u - 10] : u < 25 ? [25 - u, 5] : [0, 30 - u]; };
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(5), width: plot.X(10) - plot.X(0), height: plot.Y(0) - plot.Y(5), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 14, 'stroke-linejoin': 'round' }));
+                  if (!on) els.push(s('rect', { x: plot.X(9.6), y: plot.Y(3.0), width: plot.X(0.8) - plot.X(0), height: plot.Y(0) - plot.Y(1.0), class: 'fl-surface' })); // the gap at the open switch
+                  // battery on the left side, bulb on the top, switch on the right
+                  els.push(s('rect', { x: plot.X(-0.35), y: plot.Y(3.2), width: plot.X(0.7) - plot.X(0), height: plot.Y(0) - plot.Y(1.4), rx: 4, class: 'fl-ink' }));
+                  els.push(s('circle', { cx: plot.X(5), cy: plot.Y(5), r: plot.X(0.55) - plot.X(0), class: on ? 'fl-amber' : 'fl-surface', stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  if (on) els.push(s('circle', { cx: plot.X(5), cy: plot.Y(5), r: plot.X(1.0) - plot.X(0), class: 'fl-amber', opacity: 0.25 }));
+                  els.push(s('line', { x1: plot.X(10), y1: plot.Y(2.0), x2: on ? plot.X(10) : plot.X(10.6), y2: on ? plot.Y(3.0) : plot.Y(2.8), stroke: 'var(--ink)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  const drift = on ? 0.25 * (p.t - 3) : 0;
+                  for (let k = 0; k < 75; k++) {
+                    const u0 = (k * L) / 75, j = 0.12 * Math.sin(7.3 * p.t + k * 2.1), [x, y] = at(u0 + drift + j);
+                    if (Math.abs(x - 10) < 0.01 && y > 1.8 && y < 3.2 && !on) continue;
+                    els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: k === 0 ? 6 : 3.5, class: k === 0 ? 'fl-coral' : 'fl-blue' }));
+                  }
+                  return els;
+                },
+                readout: (p) => (p.t < 3 ? 'switch open: the electrons only jiggle on the spot' : `switch closed: the bulb lit at once · the marked electron has crept ${(0.25 * (p.t - 3) * 3.3).toFixed(1)} cm (scaled up: really about ${((p.t - 3) * 0.1).toFixed(1)} mm)`),
+              },
+              after: r`Closing the switch sets up an electric field all round the circuit almost instantly (close to the speed of light), so **every** electron, including those already inside the bulb's filament, starts drifting at the same moment. The bulb lights straight away, even though each electron creeps along at only about a tenth of a millimetre per second, far slower than a snail. It's like a hosepipe that's already full of water: turn on the tap and water comes out the far end at once.`,
+            },
             {
               type: 'explain',
               title: 'Charge',

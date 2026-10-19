@@ -25,6 +25,19 @@ const meetP = (w) => 1 - (1 - w / 60) ** 2;
 // buses with alternating gaps g and 20 − g: average wait for a random arrival
 const avgWait = (g) => (g * g + (20 - g) ** 2) / 40;
 
+// Barbier's argument: drops of a hoop, a straight needle and a bent noodle, all of length π (lines 1 apart)
+const barbierRand = (k, j) => { let a = (k * 7919 + j * 104729 + 12345) | 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const NOODLE = (() => { const pts = [[0, 0]]; let ang = 0; for (let i = 0; i < 24; i++) { ang += [0.9, -0.5, 0.7, -1.1, 0.4, 0.8, -0.9, 0.3][i % 8] * 0.55; const [x, y] = pts[pts.length - 1]; pts.push([x + (Math.PI / 24) * Math.cos(ang), y + (Math.PI / 24) * Math.sin(ang)]); } const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length, cy = pts.reduce((a, q) => a + q[1], 0) / pts.length; return pts.map(([x, y]) => [x - cx, y - cy]); })();
+const barbierShape = (kind, k) => {
+  const th = 2 * Math.PI * barbierRand(k, kind * 3 + 1), y0 = barbierRand(k, kind * 3 + 2) + 1.5;
+  let pts;
+  if (kind === 0) pts = Array.from({ length: 49 }, (_, i) => [0.5 * Math.cos((2 * Math.PI * i) / 48), 0.5 * Math.sin((2 * Math.PI * i) / 48)]);
+  else if (kind === 1) pts = [[-Math.PI / 2, 0], [Math.PI / 2, 0]];
+  else pts = NOODLE;
+  return pts.map(([x, y]) => [x * Math.cos(th) - y * Math.sin(th), y0 + x * Math.sin(th) + y * Math.cos(th)]);
+};
+const barbierCross = (pts) => { let n = 0; for (let i = 1; i < pts.length; i++) n += Math.abs(Math.floor(pts[i][1]) - Math.floor(pts[i - 1][1])); return n; };
+
 export default {
   id: 'geoprob',
   subject: 'math',
@@ -211,6 +224,30 @@ So $\pi$ can be estimated by dropping needles: $\pi \approx \dfrac{2 \times \tex
               answer: 2,
               wrong: [{ v: 2 / Math.PI, tol: 0.001, why: r`The hoop's length is its circumference, $\pi t$.` }, { v: 1, why: r`$\ell = \pi t$, so $\frac{2\pi t}{\pi t} = 2$.` }],
               explain: r`$\ell = \pi t$, so $\frac{2\pi t}{\pi t} = 2$ ✓. This gives a slick proof of Buffon's result: average crossings are proportional to length (cut the noodle into tiny pieces), and the hoop fixes the constant at $\frac{2}{\pi t}$.`,
+            },
+            { /*anim:geoprob*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Why π shows up',
+              body: r`In 1860 Joseph-Émile Barbier explained Buffon's $\pi$ with a hoop. The lines are 1 apart. Drop three things, each of length $\pi$: a {teal:hoop of diameter 1}, a {coral:straight needle} and a {violet:bent noodle}. Count how many times each crosses a line.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2, xmax: 10, ymin: -0.25, ymax: 4.25, grid: false, axes: false,
+                animate: { param: 't', speed: 1.4, max: 400, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.floor(p.t), els = [];
+                  for (let y = 0; y <= 4; y++) els.push(s('line', { x1: plot.X(-2), x2: plot.X(10), y1: plot.Y(y), y2: plot.Y(y), stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  [['teal', 0, 0], ['coral', 1, 4], ['violet', 2, 8]].forEach(([col, kind, x0]) => {
+                    const pts = barbierShape(kind, k).map(([x, y]) => [x + x0, y]);
+                    els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                  });
+                  return els;
+                },
+                readout: (p) => {
+                  const k = Math.floor(p.t), n = k + 1, avg = (kind) => { let t = 0; for (let j = 0; j <= k; j++) t += barbierCross(barbierShape(kind, j)); return t / n; };
+                  return `${n} ${n === 1 ? 'drop' : 'drops'}: average crossings {teal:hoop ${fix(avg(0), 2)}} · {coral:needle ${fix(avg(1), 2)}} · {violet:noodle ${fix(avg(2), 2)}}`;
+                },
+              },
+              after: r`The hoop **always** crosses exactly twice (touching a line just once is infinitely unlikely). Barbier's insight: the average number of crossings is the same for **every** shape of the same length, because each little piece of a curve contributes its own share, wherever it sits. So a needle or noodle of length $\pi$ also crosses 2 times on average, and a needle of length 1 crosses $\frac{2}{\pi}$ times on average: that's where Buffon's $\pi$ comes from.`,
             },
           ],
           recap: [

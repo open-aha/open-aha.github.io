@@ -562,6 +562,43 @@ A **variable-length code** gives short codewords to common symbols and longer on
 
 Huffman codes are used inside ZIP files, JPEG images and MP3 audio.`,
             },
+            { /*anim:binary*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Building a Huffman tree',
+              body: r`Huffman's algorithm on the word **ABRACADABRA**, whose letters appear A ×5, B ×2, R ×2, C ×1, D ×1. Watch it repeatedly join the two rarest groups.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 8, ymin: -1.1, ymax: 3.5, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 0.55, max: 6.2, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const N = { A: [1, 0, 5], C: [3, 0, 1], D: [4.2, 0, 1], B: [5.6, 0, 2], R: [6.8, 0, 2], m1: [3.6, 1, 2], m2: [6.2, 1, 4], m3: [4.9, 2, 6], m4: [2.95, 3, 11] };
+                  const merges = [['m1', 'C', 'D'], ['m2', 'B', 'R'], ['m3', 'm1', 'm2'], ['m4', 'A', 'm3']];
+                  const step = Math.floor(p.t), half = p.t - step > 0.5, els = [];
+                  const made = merges.filter((_, i) => i < step || (i === step && half));
+                  const chosen = step < 4 ? merges[step].slice(1) : [];
+                  made.forEach(([par, a, b]) => {
+                    for (const [ch, bit] of [[a, '0'], [b, '1']]) {
+                      const [x1, y1] = N[par], [x2, y2] = N[ch];
+                      els.push(s('line', { x1: plot.X(x1), y1: plot.Y(y1), x2: plot.X(x2), y2: plot.Y(y2), stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                      els.push(s('text', { x: plot.X((x1 + x2) / 2) + (bit === '0' ? -10 : 10), y: plot.Y((y1 + y2) / 2) - 4, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;fill:var(--violet)', text: bit }));
+                    }
+                  });
+                  const show = ['A', 'C', 'D', 'B', 'R', ...made.map((m) => m[0])];
+                  show.forEach((k) => {
+                    const [x, y, w] = N[k], leaf = k.length === 1, hot = chosen.includes(k) && !half;
+                    els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 19, class: hot ? 'fl-amber' : leaf ? 'fl-blue' : 'fl-surface', stroke: hot ? 'var(--ink)' : 'var(--line-2)', 'stroke-width': 2 }));
+                    els.push(s('text', { x: plot.X(x), y: plot.Y(y) + 5, 'text-anchor': 'middle', style: `font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;${leaf && !hot ? 'fill:#fff' : hot ? 'fill:var(--night)' : ''}`, text: leaf ? `${k} ${w}` : String(w) }));
+                  });
+                  if (step >= 4) {
+                    const codes = { A: '0', C: '100', D: '101', B: '110', R: '111' };
+                    for (const [k, c] of Object.entries(codes)) els.push(s('text', { x: plot.X(N[k][0]), y: plot.Y(-0.75), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;fill:var(--violet);font-family:var(--font-mono)', text: c }));
+                  }
+                  return els;
+                },
+                readout: (p) => ['The two rarest are C (1) and D (1): join them into a group of 2.', 'Now the rarest are B (2) and R (2) (the CD group also has 2; any tie works): join them into 4.', 'The rarest are now the groups of 2 and 4: join them into 6.', 'Finally A (5) and the group of 6 join into 11, the whole word.', 'Read each code from the top: left is 0, right is 1. A gets 1 bit; the rare letters get 3.'][Math.min(4, Math.floor(p.t))],
+              },
+              after: r`The common letter A ends up near the top with a 1-bit code, and the rare letters sink deeper. ABRACADABRA now takes $5 \times 1 + 6 \times 3 = 23$ bits, instead of 33 with a fixed 3 bits per letter (or 88 in 8-bit ASCII). Because every letter sits at the end of a branch, no code is the start of another, so the bits can be decoded without any separators.`,
+            },
             {
               type: 'numeric',
               title: 'Build a Huffman code',

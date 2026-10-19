@@ -370,6 +370,39 @@ $$\begin{pmatrix} a & b \\ c & d \end{pmatrix}\begin{pmatrix} x \\ y \end{pmatri
               ],
               explain: r`Rotating 90° counterclockwise sends $\hat\imath = (1, 0)$ to $(0, 1)$ (first column) and $\hat\jmath = (0, 1)$ to $(-1, 0)$ (second column).`,
             },
+            { /*anim:vectors*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The whole grid moves',
+              body: r`A matrix moves **every** point of the plane at once. Watch the whole grid transform, with the {coral:first column} (where $(1, 0)$ lands) and the {blue:second column} (where $(0, 1)$ lands), and the {amber:unit square} they carry along.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4, xmax: 4, ymin: -3, ymax: 3, grid: false, axes: false, maxWidth: 520, clipExtra: true,
+                animate: { param: 't', speed: 0.45, max: 15, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const Ms = [[[2, 0], [0, 1]], [[1, 1], [0, 1]], [[0, -1], [1, 0]], [[2, 1], [1, 2]], [[1, 2], [2, 1]]];
+                  const k = Math.floor(p.t / 3) % 5, ph = p.t % 3, u = ph < 1.2 ? ph / 1.2 : ph < 2.2 ? 1 : Math.max(0, 1 - (ph - 2.2) / 0.8), e = u * u * (3 - 2 * u);
+                  const M = Ms[k], q = (e * Math.PI) / 2;
+                  // blend from the identity to M (the quarter turn turns smoothly instead)
+                  const A = k === 2 ? [[Math.cos(q), -Math.sin(q)], [Math.sin(q), Math.cos(q)]] : [[1 + (M[0][0] - 1) * e, M[0][1] * e], [M[1][0] * e, 1 + (M[1][1] - 1) * e]];
+                  const T = ([x, y]) => [plot.X(A[0][0] * x + A[0][1] * y), plot.Y(A[1][0] * x + A[1][1] * y)];
+                  const L = (a, b, o) => { const [x1, y1] = T(a), [x2, y2] = T(b); return s('line', { x1, y1, x2, y2, ...o }); };
+                  const els = [];
+                  els.push(s('path', { d: [[0, 0], [1, 0], [1, 1], [0, 1]].map((q, i) => `${i ? 'L' : 'M'}${T(q).map((v) => v.toFixed(1)).join(' ')}`).join('') + 'Z', class: 'fl-amber', opacity: 0.45 }));
+                  for (let i = -8; i <= 8; i++) {
+                    els.push(L([i, -8], [i, 8], { stroke: i ? 'var(--ink-3)' : 'var(--ink)', 'stroke-width': i ? 1 : 2, opacity: i ? 0.45 : 0.8 }));
+                    els.push(L([-8, i], [8, i], { stroke: i ? 'var(--ink-3)' : 'var(--ink)', 'stroke-width': i ? 1 : 2, opacity: i ? 0.45 : 0.8 }));
+                  }
+                  els.push(L([0, 0], [1, 0], { stroke: 'var(--coral)', 'stroke-width': 5, 'stroke-linecap': 'round' }), L([0, 0], [0, 1], { stroke: 'var(--blue)', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+                  return els;
+                },
+                readout: (p) => {
+                  const Ms = [[[2, 0], [0, 1]], [[1, 1], [0, 1]], [[0, -1], [1, 0]], [[2, 1], [1, 2]], [[1, 2], [2, 1]]], names = ['a stretch', 'a shear', 'a quarter turn', 'a stretch along the diagonals', 'a stretch with a flip'];
+                  const k = Math.floor(p.t / 3) % 5, M = Ms[k], det = M[0][0] * M[1][1] - M[0][1] * M[1][0];
+                  return r`$\begin{pmatrix} ${M[0][0]} & ${M[0][1]} \\ ${M[1][0]} & ${M[1][1]} \end{pmatrix}$: ${names[k]} · the unit square's area becomes **${fix(Math.abs(det), 0)}**${det < 0 ? ' (and it is flipped over)' : ''}`;
+                },
+              },
+              after: r`Grid lines stay straight, parallel and evenly spaced, and the origin stays put: that's what makes a transformation **linear**. So everything is decided by where the two basis arrows land, which is exactly what the matrix's columns record. Watch the amber square too: every shape's area is multiplied by the same factor, and that factor (with a sign for flips) is the **determinant**.`,
+            },
             {
               type: 'explain',
               title: 'The determinant',

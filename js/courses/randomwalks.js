@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 
 function rng(seed) {
@@ -59,6 +60,45 @@ const plateWalks = (px, py, count = 400) => {
   return { est: (100 * hot) / count, paths, snapped: [i0 / 20, j0 / 20] };
 };
 const COLS = ['blue', 'coral', 'teal', 'violet', 'amber', 'pink', 'blue', 'coral'];
+
+// a big grain (radius 0.9, mass 25) among 90 small molecules (mass 1) in a 10 × 10 box; only grain–molecule and wall collisions
+let BROWN_SIM = null;
+const brownSim = () => {
+  if (BROWN_SIM) return BROWN_SIM;
+  let seed = 3;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const L = 10, R = 0.9, M = 25, n = 90, dt = 0.004, sub = 5;
+  let X = 5, Y = 5, VX = 0, VY = 0;
+  const xs = [], ys = [], vx = [], vy = [];
+  for (let i = 0; i < n; i++) {
+    let x, y;
+    do { x = 0.2 + 9.6 * rnd(); y = 0.2 + 9.6 * rnd(); } while (Math.hypot(x - X, y - Y) < R + 0.2);
+    const a = 2 * Math.PI * rnd(), sp = 2 + 2 * rnd();
+    xs.push(x); ys.push(y); vx.push(sp * Math.cos(a)); vy.push(sp * Math.sin(a));
+  }
+  const frames = [];
+  for (let f = 0; f < 1500; f++) {
+    for (let k = 0; k < sub; k++) {
+      X += VX * dt; Y += VY * dt;
+      if (X < R) { X = R; VX = Math.abs(VX); } if (X > L - R) { X = L - R; VX = -Math.abs(VX); }
+      if (Y < R) { Y = R; VY = Math.abs(VY); } if (Y > L - R) { Y = L - R; VY = -Math.abs(VY); }
+      for (let i = 0; i < n; i++) {
+        xs[i] += vx[i] * dt; ys[i] += vy[i] * dt;
+        if (xs[i] < 0) { xs[i] = -xs[i]; vx[i] = -vx[i]; } if (xs[i] > L) { xs[i] = 2 * L - xs[i]; vx[i] = -vx[i]; }
+        if (ys[i] < 0) { ys[i] = -ys[i]; vy[i] = -vy[i]; } if (ys[i] > L) { ys[i] = 2 * L - ys[i]; vy[i] = -vy[i]; }
+        const dx = xs[i] - X, dy = ys[i] - Y, d = Math.hypot(dx, dy);
+        if (d < R) {
+          const nx = dx / d, ny = dy / d, rel = (vx[i] - VX) * nx + (vy[i] - VY) * ny;
+          if (rel < 0) { const J = ((2 * M) / (M + 1)) * rel; vx[i] -= J * nx; vy[i] -= J * ny; VX += (J / M) * nx; VY += (J / M) * ny; }
+          xs[i] = X + R * nx; ys[i] = Y + R * ny;
+        }
+      }
+    }
+    frames.push({ X, Y, m: xs.map((x, i) => [x, ys[i]]) });
+  }
+  return (BROWN_SIM = frames);
+};
+const brownFrame = (t) => Math.min(1499, Math.floor(t * 30));
 
 export default {
   id: 'randomwalks',
@@ -251,6 +291,29 @@ $$p = \frac{k}{N}$$`,
               body: r`In 1827, the botanist Robert Brown saw tiny particles from pollen grains jiggling restlessly in water. In 1905, Einstein explained it: the particles are being bombarded by invisible water molecules, so they perform a random walk. He predicted how far they'd wander:
 $$\text{typical distance} \propto \sqrt{t}$$
 In 1908, Jean Perrin confirmed the prediction and used it to estimate the size of molecules, convincing the remaining skeptics that atoms are real.`,
+            },
+            { /*anim:randomwalks*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Jostled by molecules',
+              body: r`A {amber:grain} sits in a box of fast-moving {blue:molecules}, each 25 times lighter. Every few moments a molecule hits it from one side or another. After a while the molecules fade out, leaving what a microscope would show: the grain and its {coral:trail}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 0, xmax: 10, ymin: 0, ymax: 10, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 1, max: 50, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const F = brownSim(), k = brownFrame(p.t), f = F[k], els = [], fade = Math.min(1, Math.max(0, (p.t - 18) / 3));
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(10), width: plot.X(10) - plot.X(0), height: plot.Y(0) - plot.Y(10), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 2 }));
+                  const tr = [];
+                  for (let j = 0; j <= k; j += 3) tr.push(`${j ? 'L' : 'M'}${plot.X(F[j].X).toFixed(1)} ${plot.Y(F[j].Y).toFixed(1)}`);
+                  tr.push(`L${plot.X(f.X).toFixed(1)} ${plot.Y(f.Y).toFixed(1)}`);
+                  els.push(s('path', { d: tr.join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+                  if (fade < 1) els.push(s('path', { d: f.m.map(([x, y]) => `M${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}h0`).join(''), stroke: 'var(--blue)', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 1 - fade }));
+                  els.push(s('circle', { cx: plot.X(f.X), cy: plot.Y(f.Y), r: plot.X(0.9) - plot.X(0), class: 'fl-amber', opacity: 0.85, stroke: 'var(--amber)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => { const F = brownSim(), k = brownFrame(p.t); return `the grain has wandered ${fix(Math.hypot(F[k].X - 5, F[k].Y - 5), 2)} units from where it started`; },
+              },
+              after: r`Each hit gives the heavy grain only a tiny kick, but the kicks never balance perfectly, so it wanders in a random walk. You never see the molecules, only their combined effect. Einstein worked out how far the grain should wander in a given time, and in 1908 Jean Perrin measured it under a microscope and used it to count molecules: the number he got settled the debate about whether atoms are real.`,
             },
             {
               type: 'explain',

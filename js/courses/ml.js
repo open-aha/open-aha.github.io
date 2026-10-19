@@ -154,6 +154,11 @@ function cosine(a, b) { let d = 0, na = 0, nb = 0; for (let i = 0; i < 4; i++) {
 function centred(v) { const m = v.slice(0, 4).reduce((a, b) => a + b, 0) / 4; return v.slice(0, 4).map((x) => x - m); }
 const corrSim = (a, b) => { const x = centred(a), y = centred(b), nx = Math.hypot(...x), ny = Math.hypot(...y); return nx && ny ? x.reduce((s, v, i) => s + v * y[i], 0) / (nx * ny) : 0; };
 
+// standard normal: density and cumulative (Abramowitz and Stegun 7.1.26, error below 1e-7)
+const rocPdf = (z) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+const rocCdf = (z) => { const x = Math.abs(z) / Math.SQRT2, t = 1 / (1 + 0.3275911 * x), e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return z >= 0 ? (1 + e) / 2 : (1 - e) / 2; };
+const rocTau = (t) => 4.6 - Math.min(7.2, Math.max(0, t - 0.5));
+
 export default {
   id: 'ml',
   subject: 'math',
@@ -489,6 +494,45 @@ Two key measures:
                 hint: 'Raise the threshold as far as you can while recall stays at 90% or more.',
               },
               explain: r`At 4.4, recall is just over 90%, and precision is only about 45%: more than half the people flagged are healthy. Catching rare things with an imperfect test always produces many false alarms, which is why positive screening results are followed by more accurate tests.`,
+            },
+            { /*anim:ml*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Tracing the ROC curve',
+              body: r`Scores of {blue:healthy} people (centred on 0) and {coral:sick} people (centred on 2). Everyone scoring above the threshold is flagged. As the threshold sweeps down, the right-hand plot records the **true positive rate** (sick people caught) against the **false positive rate** (healthy people wrongly flagged).`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.2, xmax: 9.8, ymin: -0.9, ymax: 4.3, grid: false, axes: false, maxWidth: 640,
+                animate: { param: 't', speed: 1, max: 10, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const tau = rocTau(p.t), H = 7, els = [];
+                  // left: the two score distributions on z from -3 to 5, squeezed into x from -3 to 4
+                  const X = (z) => plot.X(-3 + (7 * (z + 3)) / 8), Y = (d) => plot.Y(H * d);
+                  for (const [m, col] of [[0, 'blue'], [2, 'coral']]) {
+                    const shade = [`M${X(tau)} ${Y(0)}`], line = [];
+                    for (let i = 0; i <= 120; i++) { const z = -3 + (8 * i) / 120; line.push(`${i ? 'L' : 'M'}${X(z).toFixed(1)} ${Y(rocPdf(z - m)).toFixed(1)}`); if (z >= tau) shade.push(`L${X(z).toFixed(1)} ${Y(rocPdf(z - m)).toFixed(1)}`); }
+                    shade.push(`L${X(5)} ${Y(0)}Z`);
+                    if (tau < 5) els.push(s('path', { d: shade.join(''), class: `fl-${col}`, opacity: 0.35 }));
+                    els.push(s('path', { d: line.join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5 }));
+                  }
+                  els.push(s('line', { x1: X(-3), x2: X(5), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('line', { x1: X(tau), x2: X(tau), y1: Y(0) + 6, y2: Y(0.45), stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  els.push(s('text', { x: X(tau), y: Y(0.45) - 6, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-2)', text: 'threshold' }));
+                  // right: the ROC square, FPR across and TPR up, from (5.6, 0) to (9.6, 4)
+                  const RX = (f) => plot.X(5.6 + 4 * f), RY = (f) => plot.Y(4 * f);
+                  els.push(s('rect', { x: RX(0), y: RY(1), width: RX(1) - RX(0), height: RY(0) - RY(1), fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('line', { x1: RX(0), y1: RY(0), x2: RX(1), y2: RY(1), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '5 4' }));
+                  const roc = [];
+                  for (let q = 4.6; q >= tau - 1e-9; q -= 0.05) roc.push(`${roc.length ? 'L' : 'M'}${RX(1 - rocCdf(q)).toFixed(1)} ${RY(1 - rocCdf(q - 2)).toFixed(1)}`);
+                  roc.push(`L${RX(1 - rocCdf(tau)).toFixed(1)} ${RY(1 - rocCdf(tau - 2)).toFixed(1)}`);
+                  els.push(s('path', { d: roc.join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  els.push(s('circle', { cx: RX(1 - rocCdf(tau)), cy: RY(1 - rocCdf(tau - 2)), r: 5.5, class: 'fl-violet' }));
+                  els.push(s('text', { x: RX(0.5), y: RY(0) + 17, 'text-anchor': 'middle', class: 'tick', text: 'false positive rate' }));
+                  els.push(s('text', { x: RX(0) - 8, y: RY(0.5), 'text-anchor': 'middle', class: 'tick', transform: `rotate(-90 ${RX(0) - 8} ${RY(0.5)})`, text: 'true positive rate' }));
+                  return els;
+                },
+                readout: (p) => { const tau = rocTau(p.t); return `threshold ${fix(tau, 2)} · {coral:sick caught ${fix(100 * (1 - rocCdf(tau - 2)), 1)}%} · {blue:healthy flagged ${fix(100 * (1 - rocCdf(tau)), 1)}%}`; },
+              },
+              after: r`A strict threshold (far right) flags almost nobody: no false alarms, but few sick people caught. A lax one flags almost everybody. The **ROC curve** shows every trade-off at once. A useless test, scoring sick and healthy people alike, would trace the dashed diagonal; a perfect one would hug the top-left corner. The area under this curve is about 0.92: the chance that a randomly chosen sick person scores higher than a randomly chosen healthy one.`,
             },
             {
               type: 'numeric',

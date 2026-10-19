@@ -33,6 +33,27 @@ const bondType = (d) => (d < 0.4 ? 'nonpolar covalent' : d <= 1.7 ? 'polar coval
 // element symbols up to 118, for the heavy-element lesson
 const ALL = 'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
 
+const PT_SYM = 'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
+// where each element sits: [column 1–18 or f-block column, row, block, subshell]; the f-block is drawn as two separate rows underneath
+const PT_POS = (() => {
+  const ends = [2, 10, 18, 36, 54, 86, 118], out = [];
+  for (let Z = 1; Z <= 118; Z++) {
+    const p = ends.findIndex((e) => Z <= e) + 1, k = Z - (p > 1 ? ends[p - 2] : 0);
+    let col, row = p, block;
+    if (p === 1) { col = k === 1 ? 1 : 18; block = 's'; }
+    else if (p <= 3) { col = k <= 2 ? k : k + 10; block = k <= 2 ? 's' : 'p'; }
+    else if (p <= 5) { col = k; block = k <= 2 ? 's' : k <= 12 ? 'd' : 'p'; }
+    else if (k <= 2) { col = k; block = 's'; }
+    else if (k <= 16) { col = k + 1; row = p + 2.6; block = 'f'; }
+    else { col = k - 14; block = k <= 26 ? 'd' : 'p'; }
+    const n = block === 's' || block === 'p' ? p : block === 'd' ? p - 1 : p - 2;
+    out.push([col, row, block, `${n}${block}`]);
+  }
+  return out;
+})();
+const PT_COL = { s: 'coral', p: 'blue', d: 'amber', f: 'teal' };
+const ptZ = (t) => Math.min(118, Math.max(1, Math.floor(t * 9)));
+
 export default {
   id: 'periodic',
   subject: 'physics',
@@ -244,6 +265,28 @@ In 1925, Wolfgang Pauli stated the **exclusion principle**: no two electrons in 
               answer: 18,
               wrong: [{ v: 8, why: 'That’s 4s and 4p only. The 3d subshell (10 electrons) is filled in this row too.' }, { v: 32, why: 'That’s the length of rows 6 and 7, which also fill an f subshell.' }],
               explain: r`$2 + 10 + 6 = 18$: from potassium to krypton. The ten 3d elements (scandium to zinc) are the first row of **transition metals**. Rows have lengths 2, 8, 8, 18, 18, 32, 32: exactly what subshell filling predicts.`,
+            },
+            { /*anim:periodic*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The table builds itself',
+              body: r`Add electrons one at a time, in the filling order from before, and give each new element a square in the row being filled. Colour it by the subshell the filling order says its newest electron goes into: {coral:s}, {blue:p}, {amber:d} or {teal:f}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 0.4, xmax: 18.6, ymin: -10.2, ymax: -0.4, grid: false, axes: false, maxWidth: 680,
+                animate: { param: 't', speed: 1, max: 16, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const Zn = ptZ(p.t), w = plot.X(0.92) - plot.X(0), els = [];
+                  for (let Z = 1; Z <= 118; Z++) {
+                    const [c, r, b] = PT_POS[Z - 1], x = plot.X(c - 0.46), y = plot.Y(-r + 0.46);
+                    if (Z > Zn) { els.push(s('rect', { x, y, width: w, height: w, rx: 2, fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1 })); continue; }
+                    els.push(s('rect', { x, y, width: w, height: w, rx: 2, class: `fl-${PT_COL[b]}`, opacity: Z === Zn ? 1 : 0.55, stroke: Z === Zn ? 'var(--ink)' : 'none', 'stroke-width': 2 }));
+                    els.push(s('text', { x: x + w / 2, y: y + w / 2 + 3.5, 'text-anchor': 'middle', style: `font-size:max(${Math.max(7, w * 0.42).toFixed(1)}px, var(--fmin, 0px));font-weight:600;fill:var(--ink)`, text: PT_SYM[Z - 1] }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const Z = ptZ(p.t), [, , b, sub] = PT_POS[Z - 1]; return `$Z = ${Z}$, **${PT_SYM[Z - 1]}**: newest electron goes into {${PT_COL[b]}:${sub}} (by the filling order)`; },
+              },
+              after: r`The table's odd shape is just the filling order made visible. Each row starts a new $s$ subshell and ends when a $p$ subshell is full; the $d$ subshells (10 electrons) open up the middle from row 4, and the $f$ subshells (14 electrons) would make rows 6 and 7 far too wide, so they're usually printed separately underneath. The row lengths 2, 8, 8, 18, 18, 32, 32 all come from subshells holding 2, 6, 10 and 14 electrons. (A few elements, like chromium and lanthanum, bend the order slightly, but not the shape.)`,
             },
             {
               type: 'numeric',

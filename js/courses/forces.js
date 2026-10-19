@@ -50,6 +50,44 @@ export default {
               },
               after: r`During the push, the velocity rises. After the push, it stays at 5 m/s. The block doesn't need a force to **keep** moving, only to **change** how it moves.`,
             },
+            { /*anim:forces*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Galileo’s ramps',
+              body: r`Galileo found inertia with a thought experiment. A ball rolls down one smooth ramp and up another. Without friction, it always climbs back to the **height it started from**. Make the second ramp shallower and shallower. (Heights are stretched to make them easier to see.)`,
+              widget: {
+                kind: 'graph', xmin: -2.3, xmax: 15.3, ymin: -0.25, ymax: 1.55, grid: false, axes: false, height: 250,
+                animate: { param: 't', speed: 1, max: 16, autoplay: true },
+                params: { b: { min: 0, max: 4, step: 1, value: 0, label: 'second ramp', color: 'blue', format: (v) => ['steep (30°)', 'gentle (15°)', 'gentler (8°)', 'very gentle (4°)', 'flat'][v] } },
+                extra: ({ plot, p, s }) => {
+                  const g = 9.8, H = 1, al = Math.PI / 6, be = ([30, 15, 8, 4, 0][p.b] * Math.PI) / 180, v = Math.sqrt(2 * g * H);
+                  const t1 = Math.sqrt((2 * H) / Math.sin(al) / (g * Math.sin(al)));
+                  const t2 = be > 0 ? v / (g * Math.sin(be)) : Infinity;
+                  const T = 2 * (t1 + t2);
+                  const tm = be > 0 ? p.t % T : p.t % 5.5;
+                  // position along the track: s < 0 on the left ramp, s > 0 on the right
+                  let pos;
+                  if (tm < t1) pos = -(H / Math.sin(al)) + 0.5 * g * Math.sin(al) * tm * tm;
+                  else if (tm < t1 + t2) { const u = tm - t1; pos = v * u - 0.5 * g * Math.sin(be) * u * u; }
+                  else if (tm < t1 + 2 * t2) { const u = tm - t1 - t2; pos = (be > 0 ? H / Math.sin(be) : 0) - 0.5 * g * Math.sin(be) * u * u; }
+                  else { const u = tm - t1 - 2 * t2; pos = -v * u + 0.5 * g * Math.sin(al) * u * u; }
+                  const xy = pos < 0 ? [pos * Math.cos(al), -pos * Math.sin(al)] : [pos * Math.cos(be), pos * Math.sin(be)];
+                  const L2 = be > 0 ? Math.min(16, 1.25 / Math.sin(be)) : 16;
+                  const els = [];
+                  els.push(s('line', { x1: plot.X(-2.3), x2: plot.X(15.3), y1: plot.Y(H), y2: plot.Y(H), stroke: 'var(--amber)', 'stroke-width': 1.5, 'stroke-dasharray': '6 6' }));
+                  els.push(s('text', { x: plot.X(-0.2), y: plot.Y(H) - 8, class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--amber);font-weight:700', text: 'starting height' }));
+                  const track = `M${plot.X(-1.25 * Math.cos(al) / Math.sin(al))} ${plot.Y(1.25)} L${plot.X(0)} ${plot.Y(0)} L${plot.X(L2 * Math.cos(be))} ${plot.Y(L2 * Math.sin(be))}`;
+                  els.push(s('path', { d: track, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  // the ball sits on the track; drawn in pixels so it stays round
+                  const bx = plot.X(xy[0]), by = plot.Y(xy[1]), ang = Math.atan2(plot.Y(0) - plot.Y(pos < 0 ? Math.sin(al) : Math.sin(be)), Math.abs(plot.X(pos < 0 ? Math.cos(al) : Math.cos(be)) - plot.X(0)));
+                  const sx = pos < 0 ? Math.sin(ang) : -Math.sin(ang), rr = 10;
+                  els.push(s('circle', { cx: bx + rr * sx, cy: by - rr * Math.cos(ang), r: rr, class: 'fl-coral' }));
+                  return els;
+                },
+                readout: (p) => (p.b < 4 ? `start 1 m up: it rolls ${fix(1 / Math.tan(([30, 15, 8, 4][p.b] * Math.PI) / 180), 1)} m along the floor before it is back at that height` : '**flat**: it never gets back up to its starting height, so it **never stops**'),
+              },
+              after: r`The shallower the second ramp, the farther the ball must roll to climb back up. Make it perfectly flat and nothing ever slows it down: it rolls on forever. Galileo concluded that motion doesn't need a push to keep going; only **changes** in motion need a cause. Newton turned that into his first law.`,
+            },
             {
               type: 'explain',
               title: 'Newton’s first law',

@@ -195,6 +195,38 @@ The foci sit at $(\pm c, 0)$, where $c^2 = a^2 - b^2$, and the eccentricity is $
               ],
               explain: r`An ellipse's **reflection property**: any line from one focus bounces off the curve toward the other focus. And since $d_1 + d_2 = 2a$ for every path, all the reflections arrive **at the same moment** and reinforce each other. Statuary Hall in the US Capitol is a famous example. Doctors use the same idea to break kidney stones with focused shock waves.`,
             },
+            { /*anim:conics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A whisper at the focus',
+              body: r`A clap at the focus $F_1$ of an elliptical room sends sound out in every direction. Follow 36 bits of the sound as they bounce off the wall.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.25, xmax: 2.25, ymin: -1.4, ymax: 1.4, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.9, max: 5.2, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const a = 2, b = 1.2, c = 1.6, S = Math.min(2 * a, p.t), els = [];
+                  els.push(s('ellipse', { cx: plot.X(0), cy: plot.Y(0), rx: plot.X(a) - plot.X(0), ry: plot.Y(0) - plot.Y(b), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  const front = [];
+                  for (let k = 0; k < 36; k++) {
+                    const f = (2 * Math.PI * k) / 36, r = (b * b) / (a - c * Math.cos(f)), P = [-c + r * Math.cos(f), r * Math.sin(f)];
+                    const d2 = [c - P[0], -P[1]], l2 = Math.hypot(...d2);
+                    let q, trail;
+                    if (S < r) { q = [-c + S * Math.cos(f), S * Math.sin(f)]; trail = [[-c, 0], q]; }
+                    else { const u = Math.min(l2, S - r); q = [P[0] + (d2[0] * u) / l2, P[1] + (d2[1] * u) / l2]; trail = [[-c, 0], P, q]; }
+                    els.push(s('path', { d: trail.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 1, opacity: 0.35 }));
+                    front.push(q);
+                  }
+                  front.forEach(([x, y]) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 3.5, class: 'fl-coral' })));
+                  for (const [x, lab] of [[-c, 'F₁'], [c, 'F₂']]) {
+                    els.push(s('circle', { cx: plot.X(x), cy: plot.Y(0), r: 6, class: 'fl-ink' }));
+                    els.push(s('text', { x: plot.X(x), y: plot.Y(0) + 24, 'text-anchor': 'middle', class: 'lbl halo-text', text: lab }));
+                  }
+                  return els;
+                },
+                readout: (p) => `distance travelled: ${fix(Math.min(4, p.t), 2)} ${p.t >= 4 ? '= 2a: every bit arrives at F₂ **at the same moment**' : '(each bit, whichever way it went)'}`,
+              },
+              after: r`Every path from $F_1$ to the wall and on to $F_2$ has the **same length**, $2a$: that's the string-and-pins definition of the ellipse. So sound leaving $F_1$ in all directions reflects off the curved wall and arrives at $F_2$ all at once, adding up into a clear echo of the whisper. Doctors use the same trick in **lithotripsy**: shock waves made at one focus of an ellipsoidal reflector converge on a kidney stone placed at the other.`,
+            },
             {
               type: 'numeric',
               kicker: 'Challenge',

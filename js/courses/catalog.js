@@ -81,8 +81,8 @@ export const courses = [
       "title": "Interest & Compounding",
       "summary": "Money that grows on itself",
       "icon": "up",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "percent-traps",
@@ -122,8 +122,8 @@ export const courses = [
       "title": "The Power of Doubling",
       "summary": "Exponential beats everything",
       "icon": "up",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "roots",
@@ -232,8 +232,8 @@ export const courses = [
       "title": "The Square–Cube Law",
       "summary": "Why giants can’t exist",
       "icon": "layers",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "sigfigs",
@@ -312,8 +312,8 @@ export const courses = [
       "title": "Two Brackets",
       "summary": "Area models and special products",
       "icon": "grip",
-      "nSteps": 8,
-      "minutes": 7
+      "nSteps": 9,
+      "minutes": 8
      }
     ]
    },
@@ -405,8 +405,8 @@ export const courses = [
       "title": "Strange Solutions",
       "summary": "No solution, or infinitely many",
       "icon": "question",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -505,8 +505,8 @@ export const courses = [
       "title": "Free Fall",
       "summary": "Everything falls the same way",
       "icon": "down",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -596,8 +596,8 @@ export const courses = [
       "title": "Pythagoras",
       "summary": "The most famous proof",
       "icon": "sparkle",
-      "nSteps": 8,
-      "minutes": 7
+      "nSteps": 9,
+      "minutes": 8
      }
     ]
    },
@@ -674,8 +674,8 @@ export const courses = [
       "title": "Inertia",
       "summary": "Motion doesn’t need a push",
       "icon": "play",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "f-ma",
@@ -775,8 +775,8 @@ export const courses = [
       "title": "Levers",
       "summary": "Give me a place to stand",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "pulleys",
@@ -906,8 +906,8 @@ export const courses = [
       "title": "Clock Arithmetic",
       "summary": "Remainders that wrap around",
       "icon": "clock",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "fermat",
@@ -1001,8 +1001,8 @@ export const courses = [
       "title": "Proof by Contradiction",
       "summary": "√2 is irrational",
       "icon": "cross",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "induction",
@@ -1072,8 +1072,8 @@ export const courses = [
       "title": "Turtle Geometry",
       "summary": "Drawing shapes with loops",
       "icon": "star",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -1179,8 +1179,8 @@ export const courses = [
       "title": "Draw a Picture",
       "summary": "Turn words into diagrams",
       "icon": "pencil",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -1278,8 +1278,8 @@ export const courses = [
       "title": "Scatter Plots & Trend Lines",
       "summary": "Fitting a line to data",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "rates",
@@ -1380,8 +1380,8 @@ export const courses = [
       "title": "Exponential Growth",
       "summary": "Multiplying, not adding",
       "icon": "bolt",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "logarithms",
@@ -1452,8 +1452,8 @@ export const courses = [
       "title": "The Simplex Method",
       "summary": "Corner to corner, uphill",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "knapsack",
@@ -1502,8 +1502,8 @@ export const courses = [
       "title": "Completing the Square",
       "summary": "Find the vertex, every time",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "formula",
@@ -1582,8 +1582,8 @@ export const courses = [
       "title": "The AM–GM Inequality",
       "summary": "Averages and products",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "means",
@@ -1654,8 +1654,8 @@ export const courses = [
       "title": "The Inscribed Angle",
       "summary": "Half the angle at the centre",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "thales",
@@ -1772,8 +1772,8 @@ export const courses = [
       "title": "Hexagons & Pentagons",
       "summary": "Stepping around a circle",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "squares",
@@ -1882,8 +1882,8 @@ export const courses = [
       "title": "Origami Engineering",
       "summary": "Folding in space and medicine",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "parabola-fold",
@@ -1916,8 +1916,8 @@ export const courses = [
       "title": "The Pinhole Picture",
       "summary": "Size shrinks with distance",
       "icon": "eye",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "vanishing",
@@ -2010,8 +2010,8 @@ export const courses = [
       "title": "The Ellipse",
       "summary": "Two foci and a string",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -2112,8 +2112,8 @@ export const courses = [
       "title": "The Skate Park",
       "summary": "Kinetic ↔ potential",
       "icon": "reset",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "friction-heat",
@@ -2236,8 +2236,8 @@ export const courses = [
       "title": "Triangles & Trusses",
       "summary": "The only rigid polygon",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -2306,8 +2306,8 @@ export const courses = [
       "title": "The High Jump",
       "summary": "Clearing a bar your centre of mass doesn’t",
       "icon": "up",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "impacts",
@@ -2408,8 +2408,8 @@ export const courses = [
       "title": "Walking & Running",
       "summary": "Legs as pendulums",
       "icon": "clock",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "eye",
@@ -2464,8 +2464,8 @@ export const courses = [
       "title": "Around the Circle",
       "summary": "Sine and cosine for every angle",
       "icon": "reset",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "radians",
@@ -2596,8 +2596,8 @@ export const courses = [
       "title": "Adding Sine and Cosine",
       "summary": "Always another sine wave",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "products",
@@ -2654,8 +2654,8 @@ export const courses = [
       "title": "Lissajous Figures",
       "summary": "Two vibrations at once",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "spirograph",
@@ -2770,8 +2770,8 @@ export const courses = [
       "title": "Great-Circle Routes",
       "summary": "Distances and headings between cities",
       "icon": "clock",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "triangles",
@@ -2834,8 +2834,8 @@ export const courses = [
       "title": "The Longitude Problem",
       "summary": "A matter of time",
       "icon": "clock",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -2973,8 +2973,8 @@ export const courses = [
       "title": "The Birthday Problem",
       "summary": "Why coincidences are common",
       "icon": "star",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "streaks",
@@ -3015,8 +3015,8 @@ export const courses = [
       "title": "Buffon’s Needle",
       "summary": "π from falling needles",
       "icon": "pencil",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -3123,8 +3123,8 @@ export const courses = [
       "title": "The Kelly Criterion",
       "summary": "How much to bet",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "stopping",
@@ -3209,8 +3209,8 @@ export const courses = [
       "title": "Cooperation",
       "summary": "Repeated games and tit for tat",
       "icon": "hand",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -3295,8 +3295,8 @@ export const courses = [
       "title": "Cutting the Cake",
       "summary": "Fair division without a referee",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "rent",
@@ -3361,8 +3361,8 @@ export const courses = [
       "title": "Instant Runoff",
       "summary": "Ranked ballots and a strange paradox",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -3477,8 +3477,8 @@ export const courses = [
       "title": "Chance & Superspreading",
       "summary": "Why most sparks fizzle",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "base-rates",
@@ -3541,8 +3541,8 @@ export const courses = [
       "title": "Interference",
       "summary": "When waves add up, or cancel",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "standing-waves",
@@ -3657,8 +3657,8 @@ export const courses = [
       "title": "Swell from Distant Storms",
       "summary": "Group speed and forecasting",
       "icon": "clock",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "power",
@@ -3765,8 +3765,8 @@ export const courses = [
       "title": "Rooms & Echoes",
       "summary": "Reverberation and concert halls",
       "icon": "layers",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "ears",
@@ -3807,8 +3807,8 @@ export const courses = [
       "title": "The Resonance Curve",
       "summary": "Amplitude, damping and Q",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -3929,8 +3929,8 @@ export const courses = [
       "title": "Faults & Elastic Rebound",
       "summary": "The earthquake cycle",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "buildings",
@@ -4000,8 +4000,8 @@ export const courses = [
       "title": "Pascal’s Triangle",
       "summary": "A triangle full of patterns",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "stars-bars",
@@ -4116,8 +4116,8 @@ export const courses = [
       "title": "Compression Codes",
       "summary": "Short codes for common symbols",
       "icon": "layers",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    }
@@ -4164,8 +4164,8 @@ export const courses = [
       "title": "Adding Machines",
       "summary": "Half adders and full adders",
       "icon": "sigma",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "memory",
@@ -4236,8 +4236,8 @@ export const courses = [
       "title": "Sorting",
       "summary": "Bubble sort versus merge sort",
       "icon": "layers",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -4352,8 +4352,8 @@ export const courses = [
       "title": "Fingerprints for Data",
       "summary": "Hash functions and the birthday attack",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -4452,8 +4452,8 @@ export const courses = [
       "title": "Wythoff’s Queen",
       "summary": "Losing positions and the golden ratio",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "fibonacci-nim",
@@ -4508,8 +4508,8 @@ export const courses = [
       "title": "Conway’s Game of Life",
       "summary": "Birth, survival and gliders",
       "icon": "star",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -4638,8 +4638,8 @@ export const courses = [
       "title": "Sharp Points & Lightning Rods",
       "summary": "Where charge crowds together",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -4664,8 +4664,8 @@ export const courses = [
       "title": "Charge & Current",
       "summary": "What flows in a wire",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "ohms-law",
@@ -4772,8 +4772,8 @@ export const courses = [
       "title": "Filters",
       "summary": "Passing lows, blocking highs",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "uses",
@@ -4836,8 +4836,8 @@ export const courses = [
       "title": "Open and Closed Loops",
       "summary": "Why measure at all?",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "onoff",
@@ -5004,8 +5004,8 @@ export const courses = [
       "title": "Biased Samples",
       "summary": "When the data you see isn’t the whole story",
       "icon": "question",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -5030,8 +5030,8 @@ export const courses = [
       "title": "Benford’s Law",
       "summary": "The surprising first digit",
       "icon": "sigma",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "zipf",
@@ -5146,8 +5146,8 @@ export const courses = [
       "title": "Matrices as Machines",
       "summary": "Transforming the whole plane",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -5270,8 +5270,8 @@ export const courses = [
       "title": "Light and Shade",
       "summary": "Lighting with dot products",
       "icon": "sun",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    }
@@ -5334,8 +5334,8 @@ export const courses = [
       "title": "Artificial Gravity",
       "summary": "Spinning space stations",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -5434,8 +5434,8 @@ export const courses = [
       "title": "Satellite Orbits",
       "summary": "Low, medium and geostationary",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "weighing",
@@ -5468,8 +5468,8 @@ export const courses = [
       "title": "The Tidal Force",
       "summary": "Two bulges, not one",
       "icon": "moon",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "springneap",
@@ -5576,8 +5576,8 @@ export const courses = [
       "title": "Orbital Resonances",
       "summary": "Moons in step",
       "icon": "clock",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "impacts",
@@ -5670,8 +5670,8 @@ export const courses = [
       "title": "Bouncy Collisions",
       "summary": "Elastic collisions",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -5756,8 +5756,8 @@ export const courses = [
       "title": "Orbital Manoeuvres",
       "summary": "Slow down to speed up",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "gravity-assist",
@@ -5842,8 +5842,8 @@ export const courses = [
       "title": "Forever, Slowly",
       "summary": "The harmonic series",
       "icon": "clock",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -5972,8 +5972,8 @@ export const courses = [
       "title": "The Dragon Curve",
       "summary": "Folding paper, recursively",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -6006,8 +6006,8 @@ export const courses = [
       "title": "Refraction",
       "summary": "Snell’s law",
       "icon": "pencil",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "tir",
@@ -6092,8 +6092,8 @@ export const courses = [
       "title": "Diffraction Gratings",
       "summary": "Rainbows from a CD",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -6170,8 +6170,8 @@ export const courses = [
       "title": "The Rainbow Angle",
       "summary": "Why 42°?",
       "icon": "sun",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "double",
@@ -6264,8 +6264,8 @@ export const courses = [
       "title": "Telescopes",
       "summary": "Magnification and light gathering",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -6394,8 +6394,8 @@ export const courses = [
       "title": "Jets & Draining",
       "summary": "Torricelli’s law",
       "icon": "down",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "siphons",
@@ -6436,8 +6436,8 @@ export const courses = [
       "title": "Terminal Velocity",
       "summary": "Falling at a steady speed",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -6544,8 +6544,8 @@ export const courses = [
       "title": "Life at Low Reynolds Number",
       "summary": "A world without coasting",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "stokes",
@@ -6644,8 +6644,8 @@ export const courses = [
       "title": "Heat Engines",
       "summary": "The first law and the Carnot limit",
       "icon": "bolt",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "entropy",
@@ -6760,8 +6760,8 @@ export const courses = [
       "title": "Equilibrium",
       "summary": "Reactions that go both ways",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "ph",
@@ -6802,8 +6802,8 @@ export const courses = [
       "title": "Conduction",
       "summary": "Good and bad conductors",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "insulation",
@@ -6904,8 +6904,8 @@ export const courses = [
       "title": "What Makes the Wind",
       "summary": "Pressure, heat and spin",
       "icon": "right",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7020,8 +7020,8 @@ export const courses = [
       "title": "Carbon Budgets",
       "summary": "Total emissions set the warming",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -7083,8 +7083,8 @@ export const courses = [
       "title": "Trees",
       "summary": "Connected, with no loops",
       "icon": "layers",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -7147,8 +7147,8 @@ export const courses = [
       "title": "Best Approximations",
       "summary": "Why 355/113 is so good",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7247,8 +7247,8 @@ export const courses = [
       "title": "Cones, Cylinders, Spheres",
       "summary": "Archimedes’ favourite result",
       "icon": "layers",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -7339,8 +7339,8 @@ export const courses = [
       "title": "Symmetries of Patterns",
       "summary": "Why there is no five-fold symmetry",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "aperiodic",
@@ -7403,8 +7403,8 @@ export const courses = [
       "title": "Infinite Detail",
       "summary": "Sierpinski and Koch",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "dimension",
@@ -7563,8 +7563,8 @@ export const courses = [
       "title": "The Expanding Universe",
       "summary": "Hubble and the Big Bang",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -7597,8 +7597,8 @@ export const courses = [
       "title": "Wobbling Stars",
       "summary": "The radial-velocity method",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7683,8 +7683,8 @@ export const courses = [
       "title": "Famous Limits",
       "summary": "sin x / x and infinity",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7761,8 +7761,8 @@ export const courses = [
       "title": "Speed at an Instant",
       "summary": "Secants shrink into tangents",
       "icon": "clock",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "derivative",
@@ -7919,8 +7919,8 @@ export const courses = [
       "title": "Volumes by Slicing",
       "summary": "Stacks of thin disks",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "improper",
@@ -8013,8 +8013,8 @@ export const courses = [
       "title": "Stepping Through Time",
       "summary": "Solving differential equations numerically",
       "icon": "right",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -8039,8 +8039,8 @@ export const courses = [
       "title": "Slope Fields",
       "summary": "Following the arrows",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "exponential",
@@ -8199,8 +8199,8 @@ export const courses = [
       "title": "Patches & Extinction",
       "summary": "Levins’ metapopulation model",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -8269,8 +8269,8 @@ export const courses = [
       "title": "Lagrange Multipliers",
       "summary": "The best point on a path",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "double",
@@ -8379,8 +8379,8 @@ export const courses = [
       "title": "Green’s Theorem & Maxwell",
       "summary": "Inside and around",
       "icon": "bolt",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    }
@@ -8435,8 +8435,8 @@ export const courses = [
       "title": "Measuring Mistakes",
       "summary": "Precision and recall",
       "icon": "check",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "testing",
@@ -8529,8 +8529,8 @@ export const courses = [
       "title": "Gradient Descent",
       "summary": "Rolling downhill",
       "icon": "down",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "backprop",
@@ -8601,8 +8601,8 @@ export const courses = [
       "title": "The Rolling Wheel",
       "summary": "The cycloid and the tautochrone",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -8717,8 +8717,8 @@ export const courses = [
       "title": "Series at Work",
       "summary": "Relativity and Euler’s formula",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -8803,8 +8803,8 @@ export const courses = [
       "title": "Fourier Everywhere",
       "summary": "Heat, compression and more",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -8859,8 +8859,8 @@ export const courses = [
       "title": "Aliasing",
       "summary": "Phantom frequencies",
       "icon": "eye",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -8967,8 +8967,8 @@ export const courses = [
       "title": "Faraday’s Law",
       "summary": "Electricity from motion",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "generators",
@@ -9067,8 +9067,8 @@ export const courses = [
       "title": "Three-Phase Power",
       "summary": "Three waves that add to zero",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "frequency",
@@ -9131,8 +9131,8 @@ export const courses = [
       "title": "Polarisation",
       "summary": "Filters, sunglasses and a paradox",
       "icon": "eye",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "microwaves",
@@ -9217,8 +9217,8 @@ export const courses = [
       "title": "Diodes",
       "summary": "One-way streets for current",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "leds",
@@ -9333,8 +9333,8 @@ export const courses = [
       "title": "Rolling and Unrolling",
       "summary": "Energy split, yo-yos and bowling balls",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "ladder",
@@ -9375,8 +9375,8 @@ export const courses = [
       "title": "Defying Gravity",
       "summary": "Why tops precess",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -9513,8 +9513,8 @@ export const courses = [
       "title": "Complex Functions as Maps",
       "summary": "Squaring, inverting and designing wings",
       "icon": "pencil",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -9575,8 +9575,8 @@ export const courses = [
       "title": "Eigenvectors",
       "summary": "Directions a matrix only stretches",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "applications",
@@ -9631,8 +9631,8 @@ export const courses = [
       "title": "Symmetries of Shapes",
       "summary": "Rotations and flips",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "combining",
@@ -9761,8 +9761,8 @@ export const courses = [
       "title": "Prime Spirals",
       "summary": "Ulam’s doodle and Euler’s diagonal",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "squares",
@@ -9863,8 +9863,8 @@ export const courses = [
       "title": "Fixed Points",
       "summary": "Brouwer’s theorem and the park map",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -9919,8 +9919,8 @@ export const courses = [
       "title": "The Halting Problem",
       "summary": "A question no program can answer",
       "icon": "cross",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "beaver",
@@ -9997,8 +9997,8 @@ export const courses = [
       "title": "Rare Events",
       "summary": "The Poisson distribution",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "waiting",
@@ -10083,8 +10083,8 @@ export const courses = [
       "title": "Brownian Motion",
       "summary": "Jiggling pollen and diffusion",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "polya",
@@ -10201,8 +10201,8 @@ export const courses = [
       "title": "PageRank",
       "summary": "The random surfer",
       "icon": "star",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "text",
@@ -10265,8 +10265,8 @@ export const courses = [
       "title": "A/B Testing",
       "summary": "Experiments at scale",
       "icon": "check",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -10329,8 +10329,8 @@ export const courses = [
       "title": "The Boltzmann Factor",
       "summary": "Energy versus temperature",
       "icon": "flame",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -10437,8 +10437,8 @@ export const courses = [
       "title": "What Is “Now”?",
       "summary": "The relativity of simultaneity",
       "icon": "question",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "emc2",
@@ -10501,8 +10501,8 @@ export const courses = [
       "title": "The Invariant Interval",
       "summary": "What everyone agrees on",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "cones",
@@ -10631,8 +10631,8 @@ export const courses = [
       "title": "Orbits Near a Black Hole",
       "summary": "The innermost stable orbit",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "hawking",
@@ -10673,8 +10673,8 @@ export const courses = [
       "title": "Stretching Space",
       "summary": "Cosmological redshift",
       "icon": "right",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "cmb",
@@ -10803,8 +10803,8 @@ export const courses = [
       "title": "A Line Is a Square",
       "summary": "Same infinity, different dimensions",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "cantorset",
@@ -10889,8 +10889,8 @@ export const courses = [
       "title": "A Particle in a Box",
       "summary": "Where energy levels come from",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "atomsize",
@@ -10947,8 +10947,8 @@ export const courses = [
       "title": "Filling Order",
       "summary": "Building the table element by element",
       "icon": "up",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -11047,8 +11047,8 @@ export const courses = [
       "title": "Quantum Algorithms",
       "summary": "What quantum computers are good for",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -11111,8 +11111,8 @@ export const courses = [
       "title": "Stimulated Emission",
       "summary": "Light that clones itself",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -11197,8 +11197,8 @@ export const courses = [
       "title": "Radioactive Decay",
       "summary": "Alpha, beta, gamma",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "half-life",
@@ -11305,8 +11305,8 @@ export const courses = [
       "title": "Antimatter",
       "summary": "Mirror particles",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },

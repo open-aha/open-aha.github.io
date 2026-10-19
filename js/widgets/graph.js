@@ -161,6 +161,9 @@ export function graph(box, spec, api) {
       for (const k of keys) for (let j = 0; j <= 10; j++) cases.push({ [k]: at(defs[k], j / 10) });
       let seed = 7;
       for (let j = 0; j < 8; j++) cases.push(Object.fromEntries(keys.map((k) => [k, at(defs[k], (seed = (seed * 16807) % 2147483647) / 2147483647)])));
+      // an animated readout can change its wording as it plays: reserve room for every moment too
+      const an = spec.animate;
+      if (an && an.max != null) for (let j = 0; j <= 48; j++) cases.push({ [an.param]: (an.max * j) / 48 });
       readout.style.minHeight = '';
       let tallest = 0;
       for (const c of cases) {

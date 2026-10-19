@@ -339,6 +339,34 @@ Each group has twice as many terms as the last, and each adds up to more than $\
               ],
               explain: r`Half of the harmonic series is still unbounded. With 4 books, the top one already overhangs by more than a full book-length ($\tfrac12 \times 2.083 \approx 1.04$). To reach 3 book-lengths, you'd need 227 books.`,
             },
+            { /*anim:series*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The harmonic staircase',
+              body: r`Here is the best way to stack books (each one book-length long) over the edge of a table. Each book sticks out past the one below by $\frac12$, $\frac14$, $\frac16$, $\frac18$, … of a book. Watch the stack grow from the bottom.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 2.0, ymin: -0.15, ymax: 1.45, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.9, max: 13, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const N = Math.min(10, 1 + Math.floor(p.t)), f = Math.min(1, (p.t % 1) * 1.6), h = 0.12, els = [];
+                  // book k from the top (k = 1..N) sticks out to sum_{j=k..N} 1/(2j) past the table edge
+                  const right = (k, n) => { let r = 0; for (let j = k; j <= n; j++) r += 1 / (2 * j); return r; };
+                  els.push(s('rect', { x: plot.X(-1.6), y: plot.Y(0), width: plot.X(0) - plot.X(-1.6), height: plot.Y(-0.15) - plot.Y(0), class: 'fl-muted' }));
+                  for (let k = 1; k <= N; k++) {
+                    // ease each book from its place in the smaller stack (one book fewer underneath) to its new place
+                    const from = k < N ? right(k, N - 1) : right(N, N) - 0.4, x = from + (right(k, N) - from) * (p.t < 10 ? f * f * (3 - 2 * f) : 1), y = (N - k) * h;
+                    els.push(s('rect', { x: plot.X(x - 1), y: plot.Y(y + h), width: plot.X(1) - plot.X(0), height: plot.Y(0) - plot.Y(h) - 1, rx: 2, class: k % 2 ? 'fl-blue' : 'fl-coral', opacity: 0.85 }));
+                  }
+                  const over = right(1, N);
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(0), y2: plot.Y(1.4), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  els.push(s('line', { x1: plot.X(1), x2: plot.X(1), y1: plot.Y(0), y2: plot.Y(1.4), stroke: 'var(--amber)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  els.push(s('text', { x: plot.X(1) + 6, y: plot.Y(1.3), class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--amber);font-weight:700', text: 'one whole book past the edge' }));
+                  return els;
+                },
+                readout: (p) => { const N = Math.min(10, 1 + Math.floor(p.t)); let r = 0; for (let j = 1; j <= N; j++) r += 1 / (2 * j); return `${N} ${N === 1 ? 'book' : 'books'}: the top book reaches ${fix(r, 3)} book-lengths past the table`; },
+              },
+              after: r`The total overhang is half the harmonic sum: $\frac12\left(1 + \frac12 + \frac13 + \cdots + \frac1N\right)$. With 4 books the top one is entirely clear of the table ($\frac{25}{24}$ of a book). Because the harmonic series grows forever, so does the overhang: any distance is possible, but you need about 31 books to reach 2 book-lengths and over 200 for 3. The stack is always just balanced: the centre of mass of the books above each one sits exactly on its edge.`,
+            },
             {
               type: 'numeric',
               title: 'Passing three',

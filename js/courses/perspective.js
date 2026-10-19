@@ -104,6 +104,52 @@ Around 1415, Filippo Brunelleschi demonstrated this with a painted panel of the 
               ],
               explain: r`Image size goes like $\frac{1}{d}$. Two buildings at 10 m and 20 m differ in apparent size by a factor of 2, but at 500 m and 510 m by only 2%. The telephoto lens magnifies the distant view, so they fill the frame at almost equal size. Perspective depends only on the camera's position; the lens just crops it.`,
             },
+            { /*anim:perspective*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The dolly zoom',
+              body: r`Film-makers exploit this. In a **dolly zoom** (first used in Hitchcock's *Vertigo*, 1958), the camera backs away from the actor while zooming in, so the actor stays exactly the same size. Watch what happens to the trees behind. Below the picture is the view from above.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 10, grid: false, axes: false, height: 420, clipExtra: true,
+                animate: { param: 't', speed: 0.45, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const d = 2 + 13 * (1 - Math.cos(p.t)) / 2, K = 1.1, f = K * d; // focal length grows with distance: the actor's image stays fixed
+                  const els = [];
+                  // the photo frame (top part)
+                  const fx0 = plot.X(0.6), fx1 = plot.X(9.4), fy0 = plot.Y(9.8), fy1 = plot.Y(3.6), cx = (fx0 + fx1) / 2, hor = fy1 - 40;
+                  els.push(s('rect', { x: fx0, y: fy0, width: fx1 - fx0, height: fy1 - fy0, rx: 8, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  const scale = 52; // pixels per unit of image size
+                  // everything in the picture is clipped to the frame
+                  const pic = s('g', { 'clip-path': 'url(#dolly-frame)' });
+                  els.push(s('clipPath', { id: 'dolly-frame' }, s('rect', { x: fx0, y: fy0, width: fx1 - fx0, height: fy1 - fy0, rx: 8 })), pic);
+                  // trees: a row 12 m behind the actor, spaced 3 m apart sideways
+                  for (let X = -15; X <= 15; X += 3) {
+                    const D = d + 12, hx = cx + (scale * f * X) / D, hh = (scale * f * 4) / D, hw = (scale * f * 1.2) / D;
+                    pic.append(s('path', { d: `M${hx} ${hor - hh}L${hx + hw} ${hor - hh * 0.25}L${hx - hw} ${hor - hh * 0.25}Z`, class: 'fl-teal', opacity: 0.8 }));
+                    pic.append(s('rect', { x: hx - hw * 0.12, y: hor - hh * 0.25, width: hw * 0.24, height: hh * 0.25, class: 'fl-muted' }));
+                  }
+                  // the actor: 1.8 m tall, d metres away, always the same size in the picture
+                  const ah = (scale * f * 1.8) / d;
+                  pic.append(s('rect', { x: cx - ah * 0.14, y: hor + 25 - ah * 0.8, width: ah * 0.28, height: ah * 0.62, rx: 6, class: 'fl-coral' }));
+                  pic.append(s('circle', { cx, cy: hor + 25 - ah * 0.87, r: ah * 0.1, class: 'fl-coral' }));
+                  // top view strip: camera, actor, trees and the field of view
+                  const ty = plot.Y(1.6), mx = (m) => plot.X(0.6) + (m / 30) * (plot.X(9.4) - plot.X(0.6));
+                  const half = Math.atan((fx1 - fx0) / 2 / (scale * f));
+                  els.push(s('line', { x1: mx(0), x2: mx(30), y1: ty, y2: ty, stroke: 'var(--line-2)', 'stroke-width': 1 }));
+                  const camX = 17 - d;
+                  // sideways distances are squeezed to fit the strip
+                  const lat = (0.3 * (plot.X(9.4) - plot.X(0.6))) / 30, sp = Math.tan(half) * (30 - camX) * lat;
+                  els.push(s('path', { d: `M${mx(camX)} ${ty}L${mx(30)} ${ty - sp}L${mx(30)} ${ty + sp}Z`, class: 'fl-amber', opacity: 0.22 }));
+                  els.push(s('circle', { cx: mx(17), cy: ty, r: 6, class: 'fl-coral' }));
+                  for (let X = -15; X <= 15; X += 3) els.push(s('circle', { cx: mx(29), cy: ty + X * lat, r: 4, class: 'fl-teal' }));
+                  els.push(s('rect', { x: mx(camX) - 9, y: ty - 6, width: 12, height: 12, rx: 2, class: 'fl-ink' }));
+                  els.push(s('text', { x: mx(camX), y: ty + 30, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'camera' }));
+                  return els;
+                },
+                readout: (p) => { const d = 2 + 13 * (1 - Math.cos(p.t)) / 2; return `camera ${fix(d, 1)} m from the actor · lens ${fix(18 * d, 0)} mm · trees look ${fix(((d / (d + 12)) * 4) / 1.8, 2)}× the actor’s height`; },
+              },
+              after: r`The actor's image size is $f \times \frac{1.8}{d}$, so making the focal length $f$ grow in step with the distance $d$ keeps it fixed. But the trees are $d + 12$ metres away, and their size $f \times \frac{4}{d + 12}$ is **not** fixed: from close up with a wide lens they look small and far behind; from far away with a telephoto lens they loom right behind the actor. The lens only crops and magnifies; the perspective comes from where the camera stands.`,
+            },
           ],
           recap: [
             'Perspective projection sends every point through a single centre onto a flat picture.',

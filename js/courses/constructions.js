@@ -445,6 +445,54 @@ From a point $P$ **outside** the circle it's trickier: where does the tangent to
 $$\varphi = \frac{1 + \sqrt5}{2}$$
 And $\sqrt5$ is constructible: it's the diagonal of a $1 \times 2$ rectangle, by Pythagoras. So a compass and straightedge can produce the right proportions.`,
             },
+            { /*anim:constructions*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Ptolemy’s pentagon',
+              body: r`Here is a quick construction known to Ptolemy (around 150 AD). Watch the compass. Start with a circle, its centre $O$ and a vertical diameter through the top point $T$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.35, xmax: 1.35, ymin: -1.2, ymax: 1.3, grid: false, axes: false, maxWidth: 440,
+                animate: { param: 't', speed: 0.55, max: 9, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const t = p.t, cl = (u) => Math.max(0, Math.min(1, u));
+                  const X = ([x, y]) => [plot.X(x), plot.Y(y)], R = plot.X(1) - plot.X(0);
+                  const arc = (c, r, a0, a1, f, o) => {
+                    if (f <= 0) return null;
+                    const pts = [];
+                    for (let i = 0; i <= 40; i++) { const a = a0 + (a1 - a0) * f * (i / 40); pts.push(X([c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)])); }
+                    return s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), fill: 'none', ...o });
+                  };
+                  const dot = (pt, lab, col = 'ink', dx = 12, dy = -10) => { const [x, y] = X(pt); return [s('circle', { cx: x, cy: y, r: 5, class: `fl-${col}` }), lab ? s('text', { x: x + dx, y: y + dy, 'text-anchor': 'middle', class: 'lbl-math halo-text', style: 'font-size:max(calc(16px * var(--fs, 1)), var(--fmin, 0px))', text: lab }) : null]; };
+                  const seg = (a, b, o) => { const [x1, y1] = X(a), [x2, y2] = X(b); return s('line', { x1, y1, x2, y2, ...o }); };
+                  const O = [0, 0], T = [0, 1], M = [0.5, 0], Qx = 0.5 - Math.sqrt(5) / 2, Q = [Qx, 0], side = Math.hypot(Qx, 1);
+                  const els = [];
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  els.push(seg([-1.2, 0], [1.2, 0], { stroke: 'var(--ink-3)', 'stroke-width': 1.2 }), seg([0, -1.1], [0, 1.15], { stroke: 'var(--ink-3)', 'stroke-width': 1.2 }));
+                  els.push(dot(O, 'O', 'ink', -12, 20), dot(T, 'T', 'ink', 14, -8));
+                  // 1. M, the midpoint of the right-hand radius
+                  if (t > 0.6) els.push(dot(M, 'M', 'coral', 0, 22));
+                  // 2. arc centred at M through T, down to the axis at Q
+                  const rMT = Math.hypot(0.5, 1), a0 = Math.atan2(1, -0.5), a1 = Math.PI;
+                  els.push(arc(M, rMT, a0, a1, cl((t - 1.2) / 1.2), { stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '6 5' }));
+                  if (t > 2.4) els.push(dot(Q, 'Q', 'coral', 0, 22));
+                  // 3. TQ is the side: step it around the circle with the compass
+                  if (t > 3) els.push(seg(T, Q, { stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  const step = 2 * Math.asin(side / 2), V = (k) => [Math.cos(Math.PI / 2 - k * step), Math.sin(Math.PI / 2 - k * step)];
+                  for (let k = 0; k < 5; k++) {
+                    const f = cl((t - 3.6 - k * 0.8) / 0.7);
+                    const dir = Math.atan2(V(k + 1)[1] - V(k)[1], V(k + 1)[0] - V(k)[0]);
+                    if (k < 4) els.push(arc(V(k), side, dir - 0.3, dir + 0.3, f, { stroke: 'var(--violet)', 'stroke-width': 1.5, opacity: 0.6 }));
+                    if (f >= 1 || k === 0) {
+                      if (t > 3.6 + k * 0.8 + 0.7) els.push(seg(V(k), V(k + 1), { stroke: 'var(--blue)', 'stroke-width': 3.5 }));
+                      els.push(dot(V(k), null, 'blue'));
+                    }
+                  }
+                  return els;
+                },
+                readout: (p) => (p.t < 1.2 ? 'Mark M, the midpoint of a radius.' : p.t < 3 ? 'Swing an arc centred at M through T, down to the horizontal line at Q.' : p.t < 7.7 ? 'TQ is exactly one side of the pentagon: step it around the circle.' : 'Five equal sides: a regular pentagon.'),
+              },
+              after: r`Why does it work? With radius 1, $MT = \sqrt{1 + \tfrac14} = \tfrac{\sqrt5}{2}$, so $OQ = \tfrac{\sqrt5}{2} - \tfrac12 = \tfrac{\sqrt5 - 1}{2} \approx 0.618$, one over the golden ratio. Then $TQ = \sqrt{1 + 0.618^2} \approx 1.176$, which is exactly the side of a regular pentagon in a circle of radius 1 ($2 \sin 36°$). Only circles and lines were used, with $\sqrt5$ appearing as a compass length.`,
+            },
             {
               type: 'numeric',
               title: 'The golden diagonal',

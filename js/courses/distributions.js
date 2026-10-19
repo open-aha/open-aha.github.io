@@ -49,6 +49,10 @@ const uniforms = (seed, n) => { const u = rng(seed * 7919 + 13); return Array.fr
 const couponRun = (n, seed) => { const u = rng(seed * 104729 + n), seen = new Set(), draws = []; while (seen.size < n && draws.length < 2000) { const c = Math.floor(u() * n); draws.push([c, !seen.has(c)]); seen.add(c); } return draws; };
 const records = (vals) => { let best = -Infinity; return vals.map((v) => (v > best ? ((best = v), true) : false)); };
 
+const binPois = (t) => Math.max(4, Math.round(3 * 100 ** Math.min(1, Math.max(0, (t - 1) / 9)))); // n from 4 to 300
+const binomPmf = (n, p, k) => { if (k > n) return 0; let lg = 0; for (let i = 1; i <= k; i++) lg += Math.log((n - k + i) / i); return Math.exp(lg + k * Math.log(p) + (n - k) * Math.log(1 - p)); };
+const poisPmf = (lam, k) => { let v = Math.exp(-lam); for (let i = 1; i <= k; i++) v *= lam / i; return v; };
+
 export default {
   id: 'distributions',
   subject: 'math',
@@ -261,6 +265,27 @@ It's the limit of a binomial with huge $n$ and tiny $p$, keeping $np = \lambda$.
                 readout: (p) => r`$P(X = 0) = e^{-${f2(p.l, 1)}} = ${f3(Math.exp(-p.l))}$ (coral bar), $\;$ mean $= \lambda = ${f2(p.l, 1)}$`,
               },
               after: r`For small $\lambda$ the most likely count is 0 or 1. For larger $\lambda$ the distribution spreads out and looks more and more like a bell curve.`,
+            },
+            { /*anim:distributions*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'More chances, each rarer',
+              body: r`Split an hour into $n$ short slots and let a call arrive in each slot with probability $3/n$, so there are 3 calls an hour on average. The {blue:bars} show the chance of $k$ calls (a binomial distribution). The {coral:dots} are the Poisson distribution with $\lambda = 3$. Watch $n$ grow.`,
+              widget: {
+                kind: 'graph', xmin: -0.7, xmax: 10.7, ymin: -0.03, ymax: 0.44, grid: false, height: 320, axes: { xticks: 1, yticks: 0.1 },
+                animate: { param: 't', speed: 1, max: 13, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = binPois(p.t), els = [];
+                  for (let k = 0; k <= 10; k++) {
+                    const b = binomPmf(n, 3 / n, k);
+                    els.push(s('rect', { x: plot.X(k - 0.35), y: plot.Y(b), width: plot.X(0.7) - plot.X(0), height: plot.Y(0) - plot.Y(b), class: 'fl-blue', opacity: 0.7 }));
+                    els.push(s('circle', { cx: plot.X(k), cy: plot.Y(poisPmf(3, k)), r: 5.5, class: 'fl-coral' }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const n = binPois(p.t); let d = 0; for (let k = 0; k <= 12; k++) d = Math.max(d, Math.abs(binomPmf(n, 3 / n, k) - poisPmf(3, k))); return `$n = ${n}$ slots, each with chance ${fix(3 / n, 4)} · biggest gap from Poisson: ${fix(d, 4)}`; },
+              },
+              after: r`With few slots the binomial is too narrow: at most one call fits in each slot. As the slots get shorter and each chance rarer, the bars settle onto the Poisson dots, and the gap shrinks roughly like $1/n$. That's why the Poisson distribution turns up whenever there are very many independent chances, each very small: it's the limit of the binomial, with only the average $\lambda = np$ left to remember.`,
             },
             {
               type: 'numeric',

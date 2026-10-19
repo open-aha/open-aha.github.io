@@ -120,6 +120,19 @@ function stickPic(s, px, py, deg, cls = 'st-violet') {
   ];
 }
 
+// a steam engine with a flyball governor: when it speeds up, the balls swing out and close the steam valve
+const GOV = (() => {
+  const dt = 0.01, T = 16, out = [];
+  let w = 1 + 0.1 / 3; // steady speed for the light load
+  const load = (t) => (t < 4 ? 0.6 : t < 10 ? 0.9 : 0.6);
+  for (let i = 0; i <= T / dt; i++) {
+    const t = i * dt, valve = Math.max(0, Math.min(1, 0.5 - 3 * (w - 1)));
+    out.push({ t, w, valve, load: load(t) });
+    w += ((1.5 * valve - load(t)) / 1.5) * dt;
+  }
+  return { dt, out };
+})();
+
 export default {
   id: 'control',
   subject: 'physics',
@@ -199,6 +212,41 @@ A thermostat is different. It **measures** the temperature, **compares** it with
                 { t: 'A washing machine following its fixed programme', why: 'Most steps run on timers. (Some newer machines do measure the load or water level.)' },
               ],
               explain: r`Cruise control measures speed, the float measures the water level, and you watch the path: each compares a measurement with a goal and corrects. Feedback is so natural to living things that we rarely notice we're doing it.`,
+            },
+            { /*anim:control*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watt’s governor',
+              body: r`One of the first feedback controllers: James Watt's flyball governor (1788). Two heavy balls spin with the engine. The faster they spin, the further they fly out, and the linkage closes the steam valve. Watch what happens when the mill suddenly asks for more work at 4 s, and less at 10 s.`,
+              widget: {
+                kind: 'graph', xmin: -4.2, xmax: 16.3, ymin: -0.5, ymax: 5.3, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 1.2, max: 17, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(GOV.out.length - 1, Math.floor(Math.min(16, p.t) / GOV.dt)), st = GOV.out[k], els = [];
+                  // the governor: spindle, arms at an angle that grows with speed
+                  const th = (40 + 400 * (st.w - 1)) * (Math.PI / 180), top = [-2, 4.6], L = 2.2, spin = Math.cos(st.t * 9);
+                  els.push(s('line', { x1: plot.X(-2), y1: plot.Y(0.8), x2: plot.X(-2), y2: plot.Y(4.9), stroke: 'var(--ink)', 'stroke-width': 4 }));
+                  for (const side of [-1, 1]) {
+                    const bx = top[0] + side * L * Math.sin(th) * spin, by = top[1] - L * Math.cos(th);
+                    els.push(s('line', { x1: plot.X(top[0]), y1: plot.Y(top[1]), x2: plot.X(bx), y2: plot.Y(by), stroke: 'var(--ink-2)', 'stroke-width': 3 }));
+                    els.push(s('circle', { cx: plot.X(bx), cy: plot.Y(by), r: 13, class: 'fl-amber', stroke: 'var(--ink)', 'stroke-width': 1.5 }));
+                  }
+                  els.push(s('rect', { x: plot.X(-3.6), y: plot.Y(0.75), width: plot.X(3.2) - plot.X(0), height: plot.Y(0) - plot.Y(0.5), rx: 4, class: 'fl-surface', stroke: 'var(--ink-3)' }));
+                  els.push(s('rect', { x: plot.X(-3.6), y: plot.Y(0.75), width: (plot.X(3.2) - plot.X(0)) * st.valve, height: plot.Y(0) - plot.Y(0.5), rx: 4, class: 'fl-teal' }));
+                  els.push(s('text', { x: plot.X(-2), y: plot.Y(-0.25) + 4, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'steam valve' }));
+                  // chart: speed (and load) against time
+                  const X = (t) => plot.X(0.8 + (t / 16) * 15.2), Y = (v) => plot.Y(2.6 + (v - 1) * 25);
+                  els.push(s('line', { x1: X(0), x2: X(16), y1: Y(1), y2: Y(1), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '4 5' }));
+                  els.push(s('text', { x: X(16), y: Y(1) - 6, 'text-anchor': 'end', class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'target speed' }));
+                  const pts = GOV.out.filter((o, i) => o.t <= st.t && i % 4 === 0);
+                  els.push(s('path', { d: pts.map((o, i) => `${i ? 'L' : 'M'}${X(o.t).toFixed(1)} ${Y(o.w).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 3 }));
+                  els.push(s('path', { d: pts.map((o, i) => `${i ? 'L' : 'M'}${X(o.t).toFixed(1)} ${(plot.Y(0.6) - o.load * 60).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  els.push(s('text', { x: X(0.2), y: plot.Y(0.6) - 0.6 * 60 - 8, class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--coral)', text: 'load' }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(GOV.out.length - 1, Math.floor(Math.min(16, p.t) / GOV.dt)), st = GOV.out[k]; return `engine speed ${fix(100 * st.w, 1)}% of target · valve ${fix(100 * st.valve, 0)}% open · load ${st.load === 0.9 ? 'heavy' : 'light'}`; },
+              },
+              after: r`When the load jumps, the engine slows, the balls drop, the valve opens wider, and the speed recovers: no person needed. But look closely: the speed settles **slightly** below target under the heavy load and slightly above under the light one. The valve can only stay wider open if the balls stay lower, which needs a lower speed. That small permanent error is typical of purely proportional control.`,
             },
             {
               type: 'mcq',

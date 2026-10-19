@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const die = () => Math.floor(Math.random() * 6);
 const coin = () => Math.random() < 0.5;
@@ -745,6 +746,30 @@ Then $P(\text{a shared birthday}) = 1 - P(\text{all different})$.`,
               answer: 253,
               wrong: [{ v: 22, why: 'That’s the pairs involving one particular person.' }, { v: 506, why: r`Each pair is counted twice that way: divide by 2. $\frac{23 \times 22}{2}$.` }],
               explain: r`$\frac{23 \times 22}{2} = 253$ pairs, each with a $\frac{1}{365}$ chance of matching. With so many chances, a match becomes likely, even though any particular pair is unlikely.`,
+            },
+            { /*anim:probability*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Pairs pile up',
+              body: r`People walk into a room one at a time. Each line joins two people who might share a birthday. Watch the number of lines grow much faster than the number of people.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.2, xmax: 1.2, ymin: -1.2, ymax: 1.2, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 2.2, max: 46, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = Math.max(1, Math.min(40, Math.floor(p.t) + 1)), M = 40, pos = (i) => { const k = (i * 17) % M; return [Math.cos(Math.PI / 2 - (2 * Math.PI * k) / M), Math.sin(Math.PI / 2 - (2 * Math.PI * k) / M)]; }; // newcomers take seats spread around the table
+                  let d = '';
+                  for (let i = 0; i < n; i++) for (let j = 0; j < i; j++) { const [a, b] = pos(i), [c, e] = pos(j); d += `M${plot.X(a).toFixed(1)} ${plot.Y(b).toFixed(1)}L${plot.X(c).toFixed(1)} ${plot.Y(e).toFixed(1)}`; }
+                  const els = [s('path', { d, stroke: n >= 23 ? 'var(--coral)' : 'var(--blue)', 'stroke-width': 0.8, opacity: 0.45, fill: 'none' })];
+                  for (let i = 0; i < M; i++) { const [a, b] = pos(i); els.push(s('circle', { cx: plot.X(a), cy: plot.Y(b), r: 6, class: i < n ? 'fl-ink' : 'fl-surface', stroke: 'var(--line-2)', 'stroke-width': 1 })); }
+                  return els;
+                },
+                readout: (p) => {
+                  const n = Math.max(1, Math.min(40, Math.floor(p.t) + 1));
+                  let q = 1; for (let k = 0; k < n; k++) q *= (365 - k) / 365;
+                  return `${n} ${n === 1 ? 'person' : 'people'} · **${(n * (n - 1)) / 2} pairs** · chance of a shared birthday **${fix(100 * (1 - q), 1)}%**`;
+                },
+              },
+              after: r`Each new person brings a pair with **everyone** already there, so with $n$ people there are $\frac{n(n-1)}{2}$ pairs: the count grows like $n^2$. By 23 people (when the lines turn coral) there are 253 chances for a match, and the probability passes 50%. By 40 people there are 780 pairs and the chance is about 89%.`,
             },
             {
               type: 'mcq',

@@ -5,6 +5,10 @@ const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 const rot6 = (p, k) => ((p << k) | (p >> (6 - k))) & 63;
 const orbit6 = (p) => [...new Set([0, 1, 2, 3, 4, 5].map((k) => rot6(p, k)))];
 
+// the eight symmetries of a square: rotations by 0, 90, 180, 270 degrees, then flips in four mirror lines (given by their angle)
+const SQ_MOVES = [['do nothing', 'rot', 0], ['quarter turn', 'rot', 90], ['half turn', 'rot', 180], ['three-quarter turn', 'rot', 270], ['flip in the vertical line', 'flip', 90], ['flip in the horizontal line', 'flip', 0], ['flip in a diagonal', 'flip', 45], ['flip in the other diagonal', 'flip', 135]];
+const sqPhase = (t) => { const k = Math.floor(t / 4) % 8, u = Math.min(1, Math.max(0, ((t % 4) - 0.5) / 1.8)); return { k, e: u * u * (3 - 2 * u) }; };
+
 export default {
   id: 'groups',
   subject: 'math',
@@ -47,6 +51,39 @@ To keep track, we'll **number the corners**. The numbers let us see which symmet
               answer: 8,
               wrong: [{ v: 4, why: 'That counts the rotations (0°, 90°, 180°, 270°). Don’t forget the flips.' }, { v: 7, why: 'Include the identity, “do nothing”: it always counts.' }, { v: 6, why: 'There are four mirror lines: two through opposite corners and two through midpoints of opposite sides.' }],
               explain: r`**4 rotations** (0°, 90°, 180°, 270°) and **4 reflections** (two diagonal mirror lines, plus the horizontal and vertical ones): 8 in total. Another way to see it: corner 1 can go to any of 4 places, and then the shape is either flipped or not: $4 \times 2 = 8$.`,
+            },
+            { /*anim:groups*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'All eight moves',
+              body: r`Here are all the symmetries of a square, one after another. The faint outline is the square's slot, which never moves; the numbers show where each corner ends up.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.7, xmax: 1.7, ymin: -1.7, ymax: 1.7, grid: false, axes: false, maxWidth: 300,
+                animate: { param: 't', speed: 1, max: 32, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { k, e } = sqPhase(p.t), [, kind, ang] = SQ_MOVES[k], els = [], A = (ang * Math.PI) / 180;
+                  // corners 1 to 4, anticlockwise from the top right
+                  const C = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+                  const move = ([x, y]) => {
+                    if (kind === 'rot') { const a = A * e, c = Math.cos(a), sn = Math.sin(a); return [c * x - sn * y, sn * x + c * y]; }
+                    // flip in the line at angle A: the component across the line shrinks to zero and comes out the other side
+                    const ux = Math.cos(A), uy = Math.sin(A), along = x * ux + y * uy, across = -x * uy + y * ux, f = Math.cos(Math.PI * e);
+                    return [along * ux - f * across * uy, along * uy + f * across * ux];
+                  };
+                  els.push(s('rect', { x: plot.X(-1), y: plot.Y(1), width: plot.X(1) - plot.X(-1), height: plot.Y(-1) - plot.Y(1), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 2, 'stroke-dasharray': '5 4' }));
+                  if (kind === 'flip') { const ux = Math.cos(A), uy = Math.sin(A); els.push(s('line', { x1: plot.X(-1.6 * ux), y1: plot.Y(-1.6 * uy), x2: plot.X(1.6 * ux), y2: plot.Y(1.6 * uy), stroke: 'var(--ink-2)', 'stroke-width': 1.5, 'stroke-dasharray': '7 5' })); }
+                  if (kind === 'rot' && ang > 0) els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: 5, class: 'fl-ink' }));
+                  const M = C.map(move);
+                  els.push(s('path', { d: M.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+                  // a coloured corner flag makes flips visible even mid-move
+                  const [fx, fy] = move([0.55, 0.55]);
+                  els.push(s('circle', { cx: plot.X(fx), cy: plot.Y(fy), r: 7, class: 'fl-coral' }));
+                  M.forEach(([x, y], i) => els.push(s('text', { x: plot.X(x * 1.22), y: plot.Y(y * 1.22) + 5, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--ink)', text: String(i + 1) })));
+                  return els;
+                },
+                readout: (p) => { const { k } = sqPhase(p.t); return `move ${k + 1} of 8: **${SQ_MOVES[k][0]}**`; },
+              },
+              after: r`Four turns and four flips: eight symmetries in all, and no others. Any symmetry must send corner 1 to one of the 4 corners, and then corner 2 can only go to one of the 2 neighbours of that corner, so there are at most $4 \times 2 = 8$. Notice that every flip reverses the order of the numbers round the square (anticlockwise becomes clockwise), while every turn keeps it.`,
             },
             {
               type: 'numeric',

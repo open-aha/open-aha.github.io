@@ -517,6 +517,35 @@ Legend says the ancient Pythagoreans were so disturbed by this discovery that th
               ],
               explain: r`Assume, deduce, deduce, contradiction. That's the shape of every proof by contradiction.`,
             },
+            { /*anim:logic*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A proof you can see',
+              body: r`Here is a picture proof, found by Stanley Tennenbaum in the 1950s. Suppose √2 = $a/b$ with whole numbers, so $a^2 = b^2 + b^2$: one $a \times a$ square has the same area as **two** $b \times b$ squares. Put both small squares into opposite corners of the big one.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.62, xmax: 0.62, ymin: -0.62, ymax: 0.62, grid: false, axes: false, maxWidth: 400, clipExtra: true,
+                animate: { param: 't', speed: 0.5, max: 9, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const B = Math.SQRT1_2, ph = p.t % 3, sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+                  const slide = sm(ph / 0.9), zoom = sm((ph - 1.8) / 1.1), k = (1 / (Math.SQRT2 - 1)) ** zoom;
+                  const sq = (x0, y0, x1, y1, o) => s('rect', { x: plot.X(k * x0), y: plot.Y(k * y1), width: plot.X(k * x1) - plot.X(k * x0), height: plot.Y(k * y0) - plot.Y(k * y1), ...o });
+                  const els = [];
+                  els.push(sq(-0.5, -0.5, 0.5, 0.5, { class: 'fl-teal-soft', stroke: 'var(--teal)', 'stroke-width': 2 }));
+                  const off = (1 - slide) * 0.35;
+                  els.push(sq(-0.5 - off, -0.5 - off, -0.5 + B - off, -0.5 + B - off, { class: 'fl-coral', opacity: 0.45, stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  els.push(sq(0.5 - B + off, 0.5 - B + off, 0.5 + off, 0.5 + off, { class: 'fl-coral', opacity: 0.45, stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  const T = (x, y, text, fill) => s('text', { x: plot.X(k * x), y: plot.Y(k * y) + 6, 'text-anchor': 'middle', class: 'lbl-math halo-text', style: `font-size:max(calc(18px * var(--fs, 1)), var(--fmin, 0px));fill:${fill}`, text });
+                  if (zoom < 0.05 && slide > 0.95) {
+                    els.push(T(-0.5 + (1 - B) / 2, 0.5 - (1 - B) / 2, 'a − b', 'var(--teal)'));
+                    els.push(T(0, 0, '2b − a', 'var(--coral)'));
+                    els.push(T(-0.5 + B / 2, -0.5 + 0.08, 'b', 'var(--coral)'));
+                  }
+                  return els;
+                },
+                readout: (p) => { const ph = p.t % 3; return ph < 1.8 ? r`The squares overlap. Area counted twice (dark middle) = area missed (two pale corners).` : r`So $(2b - a)^2 = 2(a - b)^2$: a **smaller** whole-number pair. Zoom in, and it happens again.`; },
+              },
+              after: r`Because the two $b$-squares exactly make up the area of the $a$-square, the doubly covered middle must equal the two uncovered corners. The middle is a square of side $2b - a$; each corner is a square of side $a - b$. That is a **new, smaller** pair of whole numbers with the same property. Repeat, and you get smaller and smaller whole numbers forever, which is impossible: whole numbers can't keep shrinking. So the starting assumption was false, and √2 is irrational.`,
+            },
             {
               type: 'interactive',
               title: 'Close, but never equal',

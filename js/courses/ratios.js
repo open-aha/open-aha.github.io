@@ -686,6 +686,31 @@ $$\text{balance after } n \text{ years} = 1000 \times 1.05^n$$`,
               tol: 0.01,
               explain: r`$1.01^{12} - 1 \approx 12.68\%$. The more often interest compounds, the more it adds up; this "effective annual rate" (often called the AER or APY) is the true yearly cost.`,
             },
+            { /*anim:ratios*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Bernoulli’s question',
+              body: r`In 1683 Jacob Bernoulli asked a strange question. A bank pays **100%** interest a year. Is it better to get 100% once, 50% twice, or a tiny slice every day? Watch £1000 grow over one year as the interest is paid more and more often.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 1, ymin: 800, ymax: 2900, grid: 0.25, gridY: 250, height: 300, padL: 60,
+                axes: { xlabel: 'year', ylabel: 'balance (£)', yAt: 800, yticks: 500, xticks: 0.25 },
+                animate: { param: 't', speed: 0.6, max: 11, autoplay: true },
+                curves: [
+                  { f: (x) => 1000 * Math.exp(x), color: 'muted', dash: true, width: 1.5 },
+                  { f: (x, p) => { const n = [1, 2, 3, 4, 6, 12, 24, 52, 365][Math.min(8, Math.floor(p.t))]; return 1000 * (1 + 1 / n) ** Math.floor(n * x + 1e-9); }, color: 'violet', width: 3, n: 1500 },
+                ],
+                extra: ({ plot, p, s }) => {
+                  const n = [1, 2, 3, 4, 6, 12, 24, 52, 365][Math.min(8, Math.floor(p.t))], v = 1000 * (1 + 1 / n) ** n;
+                  return [
+                    s('circle', { cx: plot.X(1), cy: plot.Y(v), r: 6, class: 'fl-violet' }),
+                    s('text', { x: plot.X(0.97), y: plot.Y(1000 * Math.E) - 12, 'text-anchor': 'end', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'limit: £2718.28' }),
+                  ];
+                },
+                readout: (p) => { const k = Math.min(8, Math.floor(p.t)), n = [1, 2, 3, 4, 6, 12, 24, 52, 365][k]; return `paid ${['once a year', 'twice a year', '3 times a year', 'quarterly', 'every 2 months', 'monthly', 'twice a month', 'weekly', 'daily'][k]} (${n}×, each at ${fix(100 / n, 2)}%): **£${fix(1000 * (1 + 1 / n) ** n, 2)}** after a year`; },
+              },
+              after: r`Paying more often helps, but less and less: once a year gives £2000, monthly £2613.04, daily £2714.57. Even paying every instant can't beat **£2718.28**, the dashed curve. That ceiling is $1000 \times e$, where $e = 2.71828\ldots$ is the number Bernoulli found hiding inside compound interest:
+            $$\left(1 + \tfrac1n\right)^n \to e \quad\text{as } n \to \infty.$$`,
+            },
             {
               type: 'numeric',
               kicker: 'Challenge',

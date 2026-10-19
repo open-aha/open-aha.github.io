@@ -480,6 +480,40 @@ Losing positions, as always, are those from which every move reaches a winning p
               },
               explain: r`Move diagonally to **(7, 4)**, the mirror image of the losing position (4, 7). From there, every queen move leads to a winning position for you.`,
             },
+            { /*anim:nim*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Sieving out the losing squares',
+              body: r`Find every losing square on a 21 × 21 board at once. Start from the corner $(0, 0)$, which is losing. Every square that can reach a losing square in one queen move (along its row, its column or its diagonal) is **winning**: shade it. Then the nearest square still unshaded must be losing too. Repeat.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.7, xmax: 21.2, ymin: -0.7, ymax: 21.2, grid: false, axes: false, maxWidth: 440,
+                animate: { param: 't', speed: 0.8, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const P = [[0, 0], [1, 2], [3, 5], [4, 7], [6, 10], [8, 13], [9, 15], [11, 18], [12, 20]], N = 21, els = [];
+                  const k = Math.min(P.length, Math.floor(p.t) + 1), f = Math.min(1, p.t - Math.floor(p.t));
+                  const lost = new Set(), win = new Set();
+                  const cell = (x, y, cls, o = {}) => s('rect', { x: plot.X(x - 0.45), y: plot.Y(y + 0.45), width: plot.X(0.9) - plot.X(0), height: plot.Y(0) - plot.Y(0.9), rx: 2, class: cls, ...o });
+                  for (let i = 0; i < k; i++) {
+                    for (const [a, b] of i ? [P[i], [P[i][1], P[i][0]]] : [P[0]]) {
+                      lost.add(`${a},${b}`);
+                      const reach = i === k - 1 ? f * N : N;
+                      for (let d = 1; d <= reach; d++) for (const [x, y] of [[a + d, b], [a, b + d], [a + d, b + d]]) if (x < N && y < N) win.add(`${x},${y}`);
+                    }
+                  }
+                  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+                    const key = `${x},${y}`;
+                    els.push(cell(x, y, lost.has(key) ? 'fl-coral' : win.has(key) ? 'fl-blue-soft' : 'fl-surface'));
+                  }
+                  if (p.t >= P.length) {
+                    const phi = (1 + Math.sqrt(5)) / 2;
+                    for (const m of [phi, 1 / phi]) els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(m > 1 ? 21 / m : 21), y2: plot.Y(m > 1 ? 21 : 21 * m), stroke: 'var(--ink)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const P = ['(0, 0)', '(1, 2)', '(3, 5)', '(4, 7)', '(6, 10)', '(8, 13)', '(9, 15)', '(11, 18)', '(12, 20)'], k = Math.min(P.length, Math.floor(p.t) + 1); return `losing squares so far: ${P.slice(0, k).join(', ')}${p.t >= P.length ? ' (and their mirror images)' : ''}`; },
+              },
+              after: r`Each losing square knocks out its whole row, column and diagonal, so the next losing square must sit in a fresh row and a fresh column, and on a fresh diagonal. That forces the gaps $b - a$ to go $0, 1, 2, 3, \dots$, while $a$ takes the smallest number not used yet. The losing squares end up hugging two straight lines through the corner, with slopes $\varphi$ and $1/\varphi$ (dashed).`,
+            },
             {
               type: 'explain',
               title: 'The golden ratio appears',

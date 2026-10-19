@@ -1,4 +1,4 @@
-import { sig } from '../lib/svg.js';
+import { sig, fix } from '../lib/svg.js';
 
 const r = String.raw;
 const MU_AIR = 1.8e-5;
@@ -8,6 +8,14 @@ const fmtTime = (s) => (s < 120 ? `${s.toFixed(0)} seconds` : s < 7200 ? `${(s /
 const pipeRe = (v) => (1000 * v * 0.02) / 0.001; // water in a 2 cm pipe
 const ketchupMu = (g) => 20 * g ** (0.3 - 1); // power-law fluid, K = 20 Pa·sⁿ, n = 0.3
 const shearForce = (v) => (0.08 * 0.5 * v) / 0.001; // oil 0.08 Pa·s, plate 0.5 m², gap 1 mm
+
+// a blob of dye in thick syrup between two cylinders (seen from above); the inner one turns, the outer one stays still
+const COUETTE_DYE = (() => {
+  let a = 99;
+  const rnd = () => (a = (a * 16807) % 2147483647) / 2147483647, pts = [];
+  while (pts.length < 220) { const x = 2 * rnd() - 1, y = 2 * rnd() - 1; if (x * x + y * y < 1) pts.push([0.66 + 0.12 * x, 0.12 * y]); }
+  return pts.map(([x, y]) => [Math.hypot(x, y), Math.atan2(y, x)]);
+})();
 
 export default {
   id: 'viscous',
@@ -304,6 +312,31 @@ where $\rho$ is density, $v$ speed, $L$ a typical size and $\mu$ viscosity. It c
               body: r`In a famous 1976 lecture, physicist Edward Purcell described life for a bacterium. At $Re \approx 10^{-5}$, inertia is irrelevant: if a bacterium stops swimming, it coasts for a distance smaller than the width of an atom, in a few microseconds. Motion stops the instant the pushing stops.
 
 In this world, flows are also **reversible**: run the motion backwards and everything retraces its path. Stir dye into syrup slowly, then un-stir it, and the dye blob reassembles.`,
+            },
+            { /*anim:viscous*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Unmixing',
+              body: r`A famous demonstration by G. I. Taylor. Thick syrup fills the gap between two cylinders, seen from above, with a blob of {coral:dye} in it. The inner cylinder turns four times, smearing the dye into a thin spiral. Then it turns back four times.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.1, xmax: 1.1, ymin: -1.1, ymax: 1.1, grid: false, axes: false, maxWidth: 400,
+                animate: { param: 't', speed: 1, max: 11, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const r1 = 0.35, r2 = 1, turns = 4, sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+                  const Th = 2 * Math.PI * turns * (sm(p.t / 4) - sm((p.t - 5.5) / 4)), els = [];
+                  // the syrup turns most near the inner cylinder: angle ∝ 1/r² − 1/r2² (steady flow between cylinders)
+                  const share = (r) => (1 / (r * r) - 1 / (r2 * r2)) / (1 / (r1 * r1) - 1 / (r2 * r2));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(r2) - plot.X(0), class: 'fl-amber-soft', stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(r1) - plot.X(0), class: 'fl-surface', stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(r1 * Math.cos(Th)), y2: plot.Y(r1 * Math.sin(Th)), stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  let d = '';
+                  for (const [r, a] of COUETTE_DYE) { const b = a + share(r) * Th; d += `M${plot.X(r * Math.cos(b)).toFixed(1)} ${plot.Y(r * Math.sin(b)).toFixed(1)}h0.1`; }
+                  els.push(s('path', { d, stroke: 'var(--coral)', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+                  return els;
+                },
+                readout: (p) => { const sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u)), n = 4 * (sm(p.t / 4) - sm((p.t - 5.5) / 4)); return `inner cylinder: ${fix(n, 2)} turns from the start${p.t > 9.5 ? ' · the blob is back!' : ''}`; },
+              },
+              after: r`The dye looks hopelessly mixed, yet turning back brings the blob back together. In thick syrup, inertia is negligible (the Reynolds number is tiny): each bit of fluid moves only while it is pushed, exactly in proportion to how far the cylinder turns, so reversing the motion retraces every path. (A real experiment comes back very slightly blurred by the dye's own slow diffusion.) This is why a scallop can't swim by opening and closing its shell: at low Reynolds number, any back-and-forth stroke just undoes itself.`,
             },
             {
               type: 'mcq',

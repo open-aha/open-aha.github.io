@@ -8,6 +8,18 @@ const E_AIR = 14; // vapour pressure of our air parcel, hPa
 const updraft = (cape) => Math.sqrt(2 * cape); // m/s, ideal
 const hurricaneWind = (dp) => 7 * Math.sqrt(dp); // rough rule of thumb, dp in hPa
 
+// a parcel of air starting at rest, pushed towards low pressure (north) and turned by the Coriolis effect
+const GEO = (() => {
+  const f = 1, G = 1, lam = 0.15, dt = 0.01, out = [];
+  let x = 0, y = 0, u = 0, w = 0;
+  for (let i = 0; i <= 2600; i++) {
+    out.push([x, y, u, w]);
+    const du = f * w - lam * (u - G / f), dw = G - f * u - lam * w; // the loops slowly die away
+    u += du * dt; w += dw * dt; x += u * dt; y += w * dt;
+  }
+  return out;
+})();
+
 export default {
   id: 'weather',
   subject: 'physics',
@@ -314,6 +326,36 @@ This is the **dry adiabatic lapse rate**. Sinking air warms up at the same rate.
                 { t: 'Weather maps are drawn incorrectly', why: 'The maps are right: above the ground, winds really do follow the isobars.' },
               ],
               explain: r`Air starts flowing towards low pressure, but the Coriolis effect deflects it (to the right in the northern hemisphere) until the two forces balance. The result, called the **geostrophic wind**, flows along the isobars. That's Buys Ballot's law (1857): in the northern hemisphere, stand with your back to the wind and low pressure is on your **left**. Near the ground, friction lets the wind cross the isobars slightly towards the low.`,
+            },
+            { /*anim:weather*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'How the wind turns',
+              body: r`A parcel of air starts at rest between a {blue:high} (south) and a {coral:low} (north) in the northern hemisphere. The pressure difference pushes it north; the Earth's spin deflects any moving air to the **right**. Follow its path.`,
+              widget: {
+                kind: 'graph', xmin: -1, xmax: 30, ymin: -0.9, ymax: 3.1, grid: false, axes: false, height: 260,
+                animate: { param: 't', speed: 2.2, max: 27, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(GEO.length - 1, Math.round(p.t / 0.01)), [x, y, u, w] = GEO[k], els = [];
+                  [[-0.6, '1008 hPa'], [0.6, '1004 hPa'], [1.8, '1000 hPa'], [3.0, '996 hPa']].forEach(([yy, lab]) => {
+                    els.push(s('line', { x1: plot.X(-1), x2: plot.X(30), y1: plot.Y(yy), y2: plot.Y(yy), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '6 6' }));
+                    els.push(s('text', { x: plot.X(29.8), y: plot.Y(yy) - 4, 'text-anchor': 'end', class: 'tick', text: lab }));
+                  });
+                  els.push(s('text', { x: plot.X(-0.6), y: plot.Y(2.75), class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;fill:var(--coral)', text: 'LOW' }));
+                  els.push(s('text', { x: plot.X(-0.6), y: plot.Y(-0.75), class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;fill:var(--blue)', text: 'HIGH' }));
+                  const pts = GEO.filter((q, i) => i <= k && i % 5 === 0);
+                  els.push(s('path', { d: pts.map(([a, b], i) => `${i ? 'L' : 'M'}${plot.X(a).toFixed(1)} ${plot.Y(b).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 2.5 }));
+                  // forces on the parcel (drawn in pixels): pressure pushes north, Coriolis pushes at right angles to the right of the motion
+                  const cx = plot.X(x), cy = plot.Y(y), sc = 32, sp = Math.hypot(u, w);
+                  const arr = (dx, dy, col) => { const x2 = cx + dx * sc, y2 = cy - dy * sc, a = Math.atan2(y2 - cy, x2 - cx); return [s('line', { x1: cx, y1: cy, x2, y2, stroke: `var(--${col})`, 'stroke-width': 3 }), s('path', { d: `M${x2} ${y2}L${x2 - 9 * Math.cos(a - 0.4)} ${y2 - 9 * Math.sin(a - 0.4)}M${x2} ${y2}L${x2 - 9 * Math.cos(a + 0.4)} ${y2 - 9 * Math.sin(a + 0.4)}`, stroke: `var(--${col})`, 'stroke-width': 3 })]; };
+                  els.push(arr(0, 1, 'blue'));
+                  if (sp > 0.05) els.push(arr(w, -u, 'coral'));
+                  els.push(s('circle', { cx, cy, r: 7, class: 'fl-violet', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(GEO.length - 1, Math.round(p.t / 0.01)), [, , u, w] = GEO[k], ang = (Math.atan2(w, u) * 180) / Math.PI; return `{blue:pressure push} · {coral:Coriolis push} · wind direction: ${fix(Math.abs(ang), 0)}° ${ang >= 0 ? 'towards' : 'away from'} the low, measured from the isobars`; },
+              },
+              after: r`The parcel sets off towards the low, but as it picks up speed the Coriolis push grows and swings it to the right, until the two pushes balance: pressure pulling north, Coriolis pushing south. Then the wind blows **along** the isobars, with low pressure on its left: the **geostrophic** wind. (Left alone it would keep looping around that balance for ever; here the loops are allowed to fade away.) That's Buys Ballot's law: in the northern hemisphere, stand with your back to the wind and low pressure is on your left.`,
             },
             {
               type: 'numeric',

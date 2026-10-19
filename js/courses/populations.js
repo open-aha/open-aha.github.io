@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const AL = 1, BE = 0.1, DE = 0.02, GA = 0.5; // prey growth, predation, predator gain, predator death
 const T_END = 40, DT = 0.02;
@@ -36,6 +37,22 @@ const alleeRun = (N0, H = 0, T = 30, dt = 0.02) => { const out = [[0, N0]]; let 
 // Levins metapopulation with habitat destruction D: dp/dt = c p (1 − D − p) − e p
 const levinsRun = (D, c = 0.5, e = 0.1, p0 = 0.8, T = 100, dt = 0.05) => { const out = [[0, p0]]; let p = p0; for (let t = dt; t <= T + 1e-9; t += dt) { p = Math.max(0, p + dt * (c * p * (1 - D - p) - e * p)); out.push([t, p]); } return out; };
 const PATCH_ORDER = (() => { let a = 31; const u = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; const idx = Array.from({ length: 100 }, (_, i) => i); for (let i = 99; i > 0; i--) { const j = (u() * (i + 1)) | 0; [idx[i], idx[j]] = [idx[j], idx[i]]; } return idx; })();
+
+// 100 patches, c = 0.5 and e = 0.1 per year, in quarter-year steps from 5 occupied patches (seeded, so the run is always the same)
+let PATCH_SIM = null;
+const patchSim = () => {
+  if (PATCH_SIM) return PATCH_SIM;
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  let occ = Array.from({ length: 100 }, (_, i) => [7, 23, 48, 62, 85].includes(i));
+  const frames = [occ];
+  for (let k = 0; k < 160; k++) {
+    const p = occ.filter(Boolean).length / 100;
+    occ = occ.map((o) => (o ? rnd() > 0.1 * 0.25 : rnd() < 0.5 * p * 0.25));
+    frames.push(occ);
+  }
+  return (PATCH_SIM = frames);
+};
 
 export default {
   id: 'populations',
@@ -608,6 +625,34 @@ Colonisation needs both occupied patches (to send migrants) and empty ones (to r
               tol: 0.001,
               wrong: [{ v: 0.2, why: r`That’s $\frac{e}{c}$. The occupied fraction is $1 - \frac{e}{c}$.` }],
               explain: r`$p^* = 1 - \frac{0.1}{0.5} = 0.8$. Even with patches winking out all the time, 80% stay occupied: extinctions are balanced by recolonisation.`,
+            },
+            { /*anim:populations*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Patches winking on and off',
+              body: r`A hundred habitat patches with $c = 0.5$ and $e = 0.1$ per year, starting with just five occupied. Each occupied patch has a 10% chance a year of dying out; each empty one gets colonised at a rate set by how many patches are occupied. On the right, the {teal:fraction occupied} over 40 years.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.2, xmax: 22.4, ymin: -1.4, ymax: 10.3, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 4, max: 172, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const F = patchSim(), k = Math.min(160, Math.floor(p.t)), occ = F[k], w = plot.X(1) - plot.X(0) - 3, els = [];
+                  occ.forEach((o, i) => els.push(s('rect', { x: plot.X(i % 10) + 1.5, y: plot.Y(((i / 10) | 0) + 1) + 1.5, width: w, height: w, rx: 3, class: o ? 'fl-teal' : 'fl-card', stroke: 'var(--line-2)' })));
+                  // the chart: years 0 to 40 across x = 11.5 to 22, fraction 0 to 1 up y = 0 to 10
+                  const cx = (yr) => plot.X(11.5 + (10.5 * yr) / 40), cy = (f) => plot.Y(10 * f);
+                  els.push(s('line', { x1: cx(0), x2: cx(40), y1: cy(0), y2: cy(0), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('line', { x1: cx(0), x2: cx(0), y1: cy(0), y2: cy(1), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('line', { x1: cx(0), x2: cx(40), y1: cy(0.8), y2: cy(0.8), stroke: 'var(--ink-3)', 'stroke-width': 1.3, 'stroke-dasharray': '5 4' }));
+                  els.push(s('text', { x: cx(0) - 6, y: cy(0.8) + 4, 'text-anchor': 'end', class: 'tick', text: '0.8' }));
+                  els.push(s('text', { x: cx(0) - 6, y: cy(0) + 4, 'text-anchor': 'end', class: 'tick', text: '0' }));
+                  els.push(s('text', { x: cx(40), y: cy(0) + 16, 'text-anchor': 'end', class: 'tick', text: '40 years' }));
+                  const pts = [];
+                  for (let j = 0; j <= k; j++) pts.push(`${j ? 'L' : 'M'}${cx(j / 4).toFixed(1)} ${cy(F[j].filter(Boolean).length / 100).toFixed(1)}`);
+                  els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--teal)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(160, Math.floor(p.t)); return `year ${fix(k / 4, 1)} · ${patchSim()[k].filter(Boolean).length} of 100 patches occupied`; },
+              },
+              after: r`No single patch is safe: every one keeps winking out and being recolonised. Yet the total climbs and then hovers around the balance $p^* = 0.8$, jiggling a little because the patches are few. The species persists as a **network**, not in any one place, which is why cutting the links between patches can doom it.`,
             },
             {
               type: 'interactive',

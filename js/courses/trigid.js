@@ -437,6 +437,34 @@ When $m_1 m_2 = -1$, the denominator is zero, $\tan\theta$ is undefined, and the
               },
               after: r`The dashed curve lies exactly on top of the sum. Adding a sine and a cosine of the **same frequency** always gives a single sine wave with amplitude $\sqrt{a^2 + b^2}$, shifted by an angle $\alpha$ with $\tan\alpha = b/a$. It's the addition formula read backwards: $R\sin(x + \alpha) = R\cos\alpha\sin x + R\sin\alpha\cos x$.`,
             },
+            { /*anim:trigid*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Spinning arrows',
+              body: r`Think of {blue:$3\sin x$} as the height of an arrow of length 3 spinning round, and {teal:$4\cos x$} as the height of an arrow of length 4 that is always a quarter turn ahead. Put the arrows tip to tail and let them spin together.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -5.6, xmax: 13, ymin: -5.4, ymax: 5.4, grid: false, axes: false,
+                animate: { param: 't', speed: 0.8, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const x = p.t, A = [3 * Math.cos(x), 3 * Math.sin(x)], B = [A[0] + 4 * Math.cos(x + Math.PI / 2), A[1] + 4 * Math.sin(x + Math.PI / 2)];
+                  const gx = (u) => 6.4 + (u / (2 * Math.PI)) * 6.4, els = [];
+                  const L = (x1, y1, x2, y2, o) => s('line', { x1: plot.X(x1), y1: plot.Y(y1), x2: plot.X(x2), y2: plot.Y(y2), 'stroke-linecap': 'round', ...o });
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(5) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  els.push(L(6.2, 0, 13, 0, { stroke: 'var(--axis)', 'stroke-width': 1.2 }), L(6.4, -5.2, 6.4, 5.2, { stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  // traces so far
+                  const tr = (f, col, w, dash) => { const pts = []; for (let i = 0; i <= 120; i++) { const u = (x * i) / 120; pts.push([plot.X(gx(u)), plot.Y(f(u))]); } return s('path', { d: pts.map(([a, b], i) => `${i ? 'L' : 'M'}${a.toFixed(1)} ${b.toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': w, 'stroke-dasharray': dash ? '5 5' : null }); };
+                  els.push(tr((u) => 3 * Math.sin(u), 'blue', 2, true), tr((u) => 4 * Math.cos(u), 'teal', 2, true), tr((u) => 3 * Math.sin(u) + 4 * Math.cos(u), 'violet', 3.5));
+                  // the arrows
+                  els.push(L(0, 0, B[0], B[1], { stroke: 'var(--violet)', 'stroke-width': 4 }));
+                  els.push(L(0, 0, A[0], A[1], { stroke: 'var(--blue)', 'stroke-width': 3.5 }), L(A[0], A[1], B[0], B[1], { stroke: 'var(--teal)', 'stroke-width': 3.5 }));
+                  els.push(L(B[0], B[1], gx(x), B[1], { stroke: 'var(--violet)', 'stroke-width': 1.2, 'stroke-dasharray': '3 4' }));
+                  els.push(s('circle', { cx: plot.X(B[0]), cy: plot.Y(B[1]), r: 5, class: 'fl-violet' }), s('circle', { cx: plot.X(gx(x)), cy: plot.Y(B[1]), r: 5, class: 'fl-violet' }));
+                  return els;
+                },
+                readout: (p) => r`$x = ${fix((p.t * 180) / Math.PI, 0)}°$: $\;\blue{3\sin x} + \teal{4\cos x} = \violet{${fix(3 * Math.sin(p.t) + 4 * Math.cos(p.t), 2)}}$`,
+              },
+              after: r`The two arrows are locked at a right angle, so together they form a rigid triangle with sides 3 and 4, and the {violet:arrow from the centre to the tip} has length $\sqrt{3^2 + 4^2} = 5$. It spins at the same rate, just $\alpha = 53.1°$ ahead of the blue one. Its height is therefore $5\sin(x + 53.1°)$: adding waves of the same frequency is adding arrows. Engineers call these spinning arrows **phasors** and use them for every AC circuit.`,
+            },
             {
               type: 'numeric',
               title: 'Maximum value',

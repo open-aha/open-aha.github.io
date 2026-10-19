@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 
 // ---- stable matching instance
@@ -32,6 +33,31 @@ const KID_PLANS = [
   { name: 'swap 4 ⇄ 5 only', cycles: [[4, 5]] },
 ];
 const kidCount = (k) => KID_PLANS[k].cycles.reduce((a, c) => a + c.length, 0);
+
+// the moving-knife procedure for three: each person's share of the cake to the left of x
+const KNIFE = [
+  { name: 'Alice', col: 'blue', F: (x) => x, dens: () => 1 },
+  { name: 'Bob', col: 'coral', F: (x) => 2 * x - x * x, dens: (x) => 2 * (1 - x) },
+  { name: 'Carol', col: 'teal', F: (x) => x * x * x, dens: (x) => 3 * x * x },
+];
+// cuts: Bob shouts at 1 − √(2/3), then Alice a third later; Carol keeps the rest
+const KNIFE_CUTS = (() => {
+  const cuts = [];
+  let a = 0, left = [0, 1, 2];
+  while (left.length > 1) {
+    let best = null;
+    for (const i of left) {
+      let lo = a, hi = 1;
+      for (let it = 0; it < 60; it++) { const m = (lo + hi) / 2; if (KNIFE[i].F(m) - KNIFE[i].F(a) >= 1 / 3) hi = m; else lo = m; }
+      if (KNIFE[i].F(1) - KNIFE[i].F(a) >= 1 / 3 && (!best || hi < best.x)) best = { i, x: hi };
+    }
+    cuts.push({ from: a, to: best.x, who: best.i });
+    a = best.x;
+    left = left.filter((i) => i !== best.i);
+  }
+  cuts.push({ from: a, to: 1, who: left[0] });
+  return cuts;
+})();
 
 export default {
   id: 'matching',
@@ -370,6 +396,42 @@ Each gets at least half **by their own measure**, and neither envies the other: 
                 { t: 'Yes, because Alice’s pieces are equal', why: 'They’re equal to Alice, not necessarily to Carol.' },
               ],
               explain: r`Envy-free division for three people is surprisingly tricky. John Selfridge and John Conway independently found an elegant protocol around 1960, involving trimming a piece and dividing the trimmings. For any number of people, a procedure with a guaranteed finite (if astronomically large) number of steps was only found in 2016, by Haris Aziz and Simon Mackenzie.`,
+            },
+            { /*anim:matching*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The moving knife',
+              body: r`A procedure that **is** fair to three, invented by Lester Dubins and Edwin Spanier in 1961. A knife slides slowly along the cake. The moment the piece to its left is worth a third of the whole cake **to someone**, they shout "stop!", take it, and leave. Repeat with whoever is left. The curves show how much each person likes each part of the cake.`,
+              widget: {
+                kind: 'graph', xmin: -0.02, xmax: 1.02, ymin: -1.5, ymax: 3.2, grid: false, axes: false, height: 330,
+                animate: { param: 't', speed: 0.1, max: 0.85, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const end = KNIFE_CUTS[KNIFE_CUTS.length - 2].to, x = Math.min(end, p.t), over = p.t >= end + 0.12, els = [];
+                  // taste curves (density of value along the cake)
+                  KNIFE.forEach((k) => {
+                    const pts = Array.from({ length: 61 }, (_, i) => [i / 60, k.dens(i / 60)]);
+                    els.push(s('path', { d: pts.map(([u, v], i) => `${i ? 'L' : 'M'}${plot.X(u).toFixed(1)} ${plot.Y(v * 0.85 + 0.3).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${k.col})`, 'stroke-width': 2.5 }));
+                  });
+                  // the cake: pieces already handed out take their owner's colour
+                  const y0 = plot.Y(0), y1 = plot.Y(-0.7);
+                  els.push(s('rect', { x: plot.X(0), y: y0, width: plot.X(1) - plot.X(0), height: y1 - y0, rx: 6, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  KNIFE_CUTS.forEach((c, n) => {
+                    const done = n < KNIFE_CUTS.length - 1 ? x >= c.to : over;
+                    if (done) els.push(s('rect', { x: plot.X(c.from), y: y0, width: plot.X(c.to) - plot.X(c.from), height: y1 - y0, class: `fl-${KNIFE[c.who].col}`, opacity: 0.75 }));
+                    if (done) els.push(s('text', { x: plot.X((c.from + c.to) / 2), y: (y0 + y1) / 2 + 5, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700', text: KNIFE[c.who].name }));
+                  });
+                  if (!over) els.push(s('line', { x1: plot.X(x), x2: plot.X(x), y1: plot.Y(-1.0), y2: plot.Y(0.15), stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  for (const [k, u, v, a] of [[0, 1, 1, 'end'], [1, 0.03, 2, 'start'], [2, 0.97, 3, 'end']]) els.push(s('text', { x: plot.X(u), y: plot.Y(v * 0.85 + 0.3) - 8, 'text-anchor': a, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${KNIFE[k].col})`, text: KNIFE[k].name }));
+                  return els;
+                },
+                readout: (p) => {
+                  const end = KNIFE_CUTS[KNIFE_CUTS.length - 2].to, x = Math.min(end, p.t), cur = KNIFE_CUTS.find((c) => x < c.to) || KNIFE_CUTS[KNIFE_CUTS.length - 2];
+                  const left = KNIFE_CUTS.slice(KNIFE_CUTS.indexOf(cur)).map((c) => c.who);
+                  const vals = left.map((i) => `{${KNIFE[i].col}:${KNIFE[i].name} ${fix(Math.max(0, KNIFE[i].F(x) - KNIFE[i].F(cur.from)) * 100, 0)}%}`).join(' · ');
+                  return p.t >= end ? 'Alice shouts; Carol, the last one left, takes the rest. Everyone has a piece worth at least a third, in their own eyes.' : `value of the piece left of the knife: ${vals} (a third is 33%)`;
+                },
+              },
+              after: r`Bob loves the left end, so he shouts first and leaves with a short piece he values at exactly $\tfrac13$. Alice shouts next. Carol never shouted, so she thinks each piece taken was worth **less** than a third: what's left is worth at least a third to her (in fact about 86%). Everyone gets a fair share by their own measure, though the procedure doesn't prevent envy.`,
             },
             {
               type: 'mcq',

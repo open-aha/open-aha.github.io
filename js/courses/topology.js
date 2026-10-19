@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 
 // ── trefoil knot diagram: find crossings numerically, alternate over/under, split into 3 arcs ──
@@ -203,6 +204,11 @@ const parkDraw = ({ plot, s }, T, strong) => {
   for (const t of PARK.trees) { const [x, y] = T(t); els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: strong ? 4 : 9, class: 'fl-green' })); }
   return els;
 };
+
+// a park 4 by 3; the map is the park shrunk by k, turned by θ, and laid with its centre at m
+const parkMap = (t) => { const th = 0.5 + 0.9 * Math.sin(0.31 * t), k = 0.36, mx = 2 + 0.9 * Math.cos(0.23 * t), my = 1.5 + 0.6 * Math.sin(0.41 * t); return { th, k, mx, my }; };
+const parkT = ({ th, k, mx, my }, [x, y]) => { const dx = x - 2, dy = y - 1.5, c = k * Math.cos(th), s = k * Math.sin(th); return [mx + c * dx - s * dy, my + s * dx + c * dy]; };
+const parkFixed = (m) => { let z = [2, 1.5]; for (let i = 0; i < 60; i++) z = parkT(m, z); return z; };
 
 export default {
   id: 'topology',
@@ -811,6 +817,35 @@ More precisely: any continuous map from a disc (or a ball, or a square) to itsel
                 readout: (p) => { const [fx, fy] = mapFixed(p); return `The map point at $(${fx.toFixed(2)}, ${fy.toFixed(2)})$ lies right on top of the real spot $(${fx.toFixed(2)}, ${fy.toFixed(2)})$`; },
               },
               after: r`There is always exactly one such point here, because the map shrinks distances: each step "map of the map of the map…" closes in on it. Shopping-centre "You are here" maps are a fixed point you can stand on. Crumple the map instead of laying it flat, and Brouwer still promises a fixed point, though now there could be several.`,
+            },
+            { /*anim:topology*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Maps within maps',
+              body: r`The park has a {blue:pond} and a {coral:path}. The map, a shrunken copy of the park, lies somewhere inside it. But then the map shows itself too, so there's a smaller map on the map, and a smaller one on that, and so on. As the map is moved around, follow the {ink:black dot}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.15, xmax: 4.15, ymin: -0.15, ymax: 3.15, grid: false, axes: false, maxWidth: 480,
+                animate: { param: 't', speed: 1, max: 1000, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const m = parkMap(p.t), els = [];
+                  const draw = (f, level) => {
+                    const P = (pts) => pts.map((q, i) => { const [x, y] = f(q); return `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`; }).join('');
+                    const pond = []; for (let i = 0; i <= 24; i++) { const a = (2 * Math.PI * i) / 24; pond.push([2.9 + 0.55 * Math.cos(a), 2.1 + 0.4 * Math.sin(a)]); }
+                    const path = []; for (let i = 0; i <= 24; i++) { const x = (4 * i) / 24; path.push([x, 0.8 + 0.45 * Math.sin(1.6 * x)]); }
+                    const w = Math.max(0.6, 2.4 - 0.5 * level);
+                    els.push(s('path', { d: P([[0, 0], [4, 0], [4, 3], [0, 3]]) + 'Z', class: level ? 'fl-card' : 'fl-teal-soft', stroke: 'var(--ink-2)', 'stroke-width': w }));
+                    els.push(s('path', { d: P(pond) + 'Z', class: 'fl-blue', opacity: 0.6 }));
+                    els.push(s('path', { d: P(path), fill: 'none', stroke: 'var(--coral)', 'stroke-width': w + 0.6 }));
+                  };
+                  let f = (q) => q;
+                  for (let level = 0; level < 6; level++) { draw(f, level); const g = f; f = (q) => g(parkT(m, q)); }
+                  const [zx, zy] = parkFixed(m);
+                  els.push(s('circle', { cx: plot.X(zx), cy: plot.Y(zy), r: 5, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => { const [zx, zy] = parkFixed(parkMap(p.t)); return `the one spot that is exactly where the map says it is: (${fix(zx, 2)}, ${fix(zy, 2)})`; },
+              },
+              after: r`Each map sits inside the previous one, shrinking towards a single point. That point is in every map, and on each map it marks its own location, so it's the "you are here" point, the fixed point of the map. Wherever you lay the map, the nested copies close in on one: for shrinking maps like this one, there's exactly one, and repeating the map from any starting point homes in on it.`,
             },
             {
               type: 'numeric',

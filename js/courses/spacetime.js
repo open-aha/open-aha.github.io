@@ -1,4 +1,4 @@
-import { sig } from '../lib/svg.js';
+import { sig, fix } from '../lib/svg.js';
 
 const r = String.raw;
 const STAR = 4; // light-years
@@ -151,6 +151,38 @@ It's like Pythagoras, but with a **minus** sign. For a clock moving directly fro
                 readout: (p) => { const [x2, t2] = boost(2, 4, p.b); return `$t' = ${t2.toFixed(2)}$, $x' = ${x2.toFixed(2)}$ · $t'^2 - x'^2 = ${(t2 * t2 - x2 * x2).toFixed(2)}$`; },
               },
               after: r`Time and distance both change, but always along the same **hyperbola**. In ordinary geometry, rotating a point keeps it on a circle $x^2 + y^2 = r^2$; in spacetime, changing speed (a **boost**) keeps it on a hyperbola. The lowest point of the hyperbola, $t = \sqrt{12}$, is the proper time.`,
+            },
+            { /*anim:spacetime*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Boosting the whole diagram',
+              body: r`A grid of events, drawn as Earth sees them (time up, space across, light rays at 45°). Now redraw the same events as a rocket sees them, while the rocket's speed changes. The {coral:coral event} is the one 4 years and 2 light-years from the origin; the dashed curves are its hyperbola and its mirror images.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -6.5, xmax: 6.5, ymin: -6.5, ymax: 6.5, grid: false, axes: false, maxWidth: 400, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 4 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const b = 0.55 * Math.sin(p.t / 2), g = 1 / Math.sqrt(1 - b * b), els = [];
+                  const boost = (x, t) => [g * (x - b * t), g * (t - b * x)];
+                  const P = (pts) => pts.map(([x, t], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(t).toFixed(1)}`).join('');
+                  // Earth's grid lines (constant x and constant t), as the rocket sees them
+                  for (let c = -10; c <= 10; c++) {
+                    els.push(s('path', { d: P([boost(c, -16), boost(c, 16)]), fill: 'none', stroke: 'var(--blue)', 'stroke-width': c === 0 ? 2 : 1, opacity: c === 0 ? 0.9 : 0.35 }));
+                    els.push(s('path', { d: P([boost(-16, c), boost(16, c)]), fill: 'none', stroke: 'var(--teal)', 'stroke-width': c === 0 ? 2 : 1, opacity: c === 0 ? 0.9 : 0.35 }));
+                  }
+                  // light rays and the hyperbolas t² − x² = 12 (and x² − t² = 12)
+                  els.push(s('path', { d: P([[-7, -7], [7, 7]]) + P([[-7, 7], [7, -7]]), fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2.5 }));
+                  for (const [sx, st, swap] of [[1, 1, 0], [1, -1, 0], [1, 1, 1], [-1, 1, 1]]) {
+                    const pts = [];
+                    for (let i = -40; i <= 40; i++) { const u = i / 16, a = Math.sqrt(12) * Math.sinh(u), c = Math.sqrt(12) * Math.cosh(u); pts.push(swap ? [sx * c, a] : [a, st * c]); }
+                    els.push(s('path', { d: P(pts), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  }
+                  const [ex, et] = boost(2, 4);
+                  els.push(s('circle', { cx: plot.X(ex), cy: plot.Y(et), r: 7, class: 'fl-coral' }));
+                  return els;
+                },
+                readout: (p) => { const b = 0.55 * Math.sin(p.t / 2), g = 1 / Math.sqrt(1 - b * b), x = g * (2 - 4 * b), t = g * (4 - 2 * b); return `rocket at ${fix(b, 2)}$c$ · event at $t' = ${fix(t, 2)}$, $x' = ${fix(x, 2)}$ · $t'^2 - x'^2 = ${fix(t * t - x * x, 2)}$`; },
+              },
+              after: r`A change of speed doesn't rotate the diagram; it **squeezes** it along one light ray and stretches it along the other. The light rays themselves never move (every observer measures the same speed of light), and every event slides along its own hyperbola, so $t^2 - x^2$ never changes. The {blue:blue lines} (Earth's "here") and {teal:teal lines} (Earth's "now") tilt towards the light rays: one observer's "now" is a slanted line to another.`,
             },
             {
               type: 'numeric',

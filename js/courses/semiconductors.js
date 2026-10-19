@@ -29,6 +29,10 @@ const PMAX = (() => { let m = 0; for (let v = 0; v <= 0.62; v += 0.0005) m = Mat
 // transistor counts of landmark chips
 const CHIPS = [[1971, 2300, '4004'], [1978, 29000, '8086'], [1985, 275000, '386'], [1993, 3.1e6, 'Pentium'], [2000, 42e6, 'Pentium 4'], [2006, 291e6, 'Core 2'], [2010, 1.17e9, 'Core i7'], [2015, 1.75e9, 'Skylake'], [2020, 16e9, 'M1'], [2023, 134e9, 'M2 Ultra']];
 
+// carriers on a jittered grid: holes on the p side (x < 0), electrons on the n side (x > 0); each sits on a fixed ion
+const PN_SITES = (() => { const out = []; for (let i = 0; i < 16; i++) for (let j = 0; j < 6; j++) out.push([-3.75 + 0.5 * i, 0.4 + 0.5 * j, (i * 7 + j * 13) % 10]); return out; })();
+const pnWidth = (t) => 1.4 * (1 - Math.exp(-Math.max(0, t - 0.8) / 1.6));
+
 export default {
   id: 'semiconductors',
   subject: 'physics',
@@ -233,6 +237,40 @@ Even one dopant atom per million silicon atoms can raise conductivity enormously
 - **Reverse bias:** the barrier grows wider. Almost no current flows.
 
 A **diode** is a one-way valve for current.`,
+            },
+            { /*anim:semiconductors*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Building the barrier',
+              body: r`Left: p-type silicon, full of {blue:holes} (open circles), each balanced by a fixed negative ion (−). Right: n-type, full of free {coral:electrons} (dots), each balanced by a fixed positive ion (+). Watch the two sides meet.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4.1, xmax: 4.1, ymin: -0.85, ymax: 3.35, grid: false, axes: false, maxWidth: 600,
+                animate: { param: 't', speed: 1, max: 9, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const w = pnWidth(p.t), els = [];
+                  els.push(s('rect', { x: plot.X(-4), y: plot.Y(3.2), width: plot.X(4) - plot.X(-4), height: plot.Y(0.15) - plot.Y(3.2), class: 'fl-surface', stroke: 'var(--line-2)' }));
+                  if (w > 0.02) els.push(s('rect', { x: plot.X(-w), y: plot.Y(3.2), width: plot.X(w) - plot.X(-w), height: plot.Y(0.15) - plot.Y(3.2), class: 'fl-amber-soft' }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(3.2), y2: plot.Y(0.15), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' }));
+                  for (const [x, y, ph] of PN_SITES) {
+                    const pSide = x < 0, gone = Math.abs(x) < w;
+                    // the fixed ion: a small minus on the p side, a small plus on the n side
+                    els.push(s('path', { d: pSide ? `M${plot.X(x) - 4} ${plot.Y(y)}h8` : `M${plot.X(x) - 4} ${plot.Y(y)}h8M${plot.X(x)} ${plot.Y(y) - 4}v8`, stroke: gone ? 'var(--ink)' : 'var(--ink-3)', 'stroke-width': gone ? 2.5 : 1.3 }));
+                    if (gone) continue;
+                    const jx = 0.09 * Math.sin(3.1 * p.t + ph), jy = 0.09 * Math.cos(2.3 * p.t + 1.7 * ph);
+                    els.push(s('circle', pSide ? { cx: plot.X(x + jx), cy: plot.Y(y + jy) - 9, r: 4.5, fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2 } : { cx: plot.X(x + jx), cy: plot.Y(y + jy) - 9, r: 4.5, class: 'fl-coral' }));
+                  }
+                  // the built-in field points from the + ions to the − ions: right to left
+                  if (w > 0.15) {
+                    const y0 = -0.35, X0 = plot.X(w), X1 = plot.X(-w), Y = plot.Y(y0);
+                    els.push(s('path', { d: `M${X0} ${Y}L${X1} ${Y}M${X1 + 9} ${Y - 5}L${X1} ${Y}L${X1 + 9} ${Y + 5}`, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                  }
+                  els.push(s('text', { x: plot.X(-2.4), y: plot.Y(-0.35) + 5, 'text-anchor': 'middle', class: 'tick', text: 'p-type' }));
+                  els.push(s('text', { x: plot.X(2.4), y: plot.Y(-0.35) + 5, 'text-anchor': 'middle', class: 'tick', text: 'n-type' }));
+                  return els;
+                },
+                readout: (p) => { const w = pnWidth(p.t), n = PN_SITES.filter(([x]) => Math.abs(x) < w).length; return w < 0.05 ? 'just joined' : `{amber:depletion zone}: ${n / 2} electrons have filled ${n / 2} holes · {violet:built-in field} ${fix((100 * w) / 1.4, 0)}% of its final strength`; },
+              },
+              after: r`Electrons near the boundary wander across and fill holes on the other side, and both carriers vanish. What they leave behind is a zone with no free carriers, only the fixed ions: negative on the p side, positive on the n side. Those charges set up an electric field that pushes back on any more electrons trying to cross, so the zone stops growing. This **depletion zone** is the diode's one-way barrier. A forward voltage squashes it so current flows; a reverse voltage widens it, and almost nothing gets through.`,
             },
             {
               type: 'explain',

@@ -302,6 +302,40 @@ $$v = \sqrt{\frac{GM}{r}}$$
               title: 'Hohmann transfers',
               body: r`To move from a low orbit to a higher one, the most fuel-efficient two-burn route is the **Hohmann transfer** (1925): one burn forward to stretch the orbit into an ellipse that just touches the higher orbit, then a second burn at the top to circularise. Missions to Mars use the same idea between the orbits of Earth and Mars, which is why launch windows come only about every 26 months, when the planets line up.`,
             },
+            { /*anim:rockets*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two burns to a higher orbit',
+              body: r`A Hohmann transfer from a circular orbit to one twice as wide. Watch for the two {amber:engine burns}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.25, xmax: 2.25, ymin: -2.25, ymax: 2.25, grid: false, axes: false, maxWidth: 420,
+                animate: { param: 't', speed: 1.2, max: 20, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const r1 = 1, r2 = 2, a = 1.5, e = 1 / 3, tb = 2, half = Math.PI * a ** 1.5, t = p.t, els = [];
+                  let pos, phase;
+                  if (t < tb) { pos = [Math.cos(t), Math.sin(t)]; phase = 0; }
+                  else if (t < tb + half) {
+                    const M = (Math.PI * (t - tb)) / half;
+                    let E = M;
+                    for (let i = 0; i < 25; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+                    const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2)), r = a * (1 - e * Math.cos(E));
+                    pos = [r * Math.cos(tb + nu), r * Math.sin(tb + nu)]; phase = 1;
+                  } else { const th = tb + Math.PI + (t - tb - half) * r2 ** -1.5; pos = [r2 * Math.cos(th), r2 * Math.sin(th)]; phase = 2; }
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(0.35) - plot.X(0), class: 'fl-teal', opacity: 0.8 }));
+                  for (const r of [r1, r2]) els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(r) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 2 }));
+                  // the transfer ellipse: perigee at the first burn, apogee opposite
+                  const pts = [];
+                  for (let i = 0; i <= 100; i++) { const nu = (Math.PI * i) / 100, r = (a * (1 - e * e)) / (1 + e * Math.cos(nu)); pts.push([plot.X(r * Math.cos(tb + nu)), plot.Y(r * Math.sin(tb + nu))]); }
+                  els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '6 5' }));
+                  const burn1 = t >= tb && t < tb + 0.35, burn2 = t >= tb + half && t < tb + half + 0.35;
+                  if (burn1 || burn2) els.push(s('circle', { cx: plot.X(pos[0]), cy: plot.Y(pos[1]), r: 18, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 4 }));
+                  els.push(s('circle', { cx: plot.X(pos[0]), cy: plot.Y(pos[1]), r: 7, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => { const half = Math.PI * 1.5 ** 1.5; return p.t < 2 ? 'low circular orbit, speed 1.00' : p.t < 2 + half ? 'burn 1: speed up by 0.15 → a long ellipse that coasts up to the higher orbit' : 'burn 2 at the top: speed up by 0.13 to stay on the high circle (final speed 0.71)'; },
+              },
+              after: r`The first burn speeds the craft up, stretching its orbit into an ellipse whose far end just touches the target orbit. Half an orbit later it arrives there, but too slowly to stay, so a second burn rounds the orbit off. The odd result: the craft ends up **slower** than it started (0.71 instead of 1, in units of the low orbit's speed) even though both burns sped it up, because climbing away from the planet costs speed. Walter Hohmann worked this out in 1925, and it's still the cheapest two-burn way between circular orbits.`,
+            },
             {
               type: 'numeric',
               title: 'Around in 90 minutes',

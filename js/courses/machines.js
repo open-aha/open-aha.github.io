@@ -69,6 +69,40 @@ The catch: your end moves **farther**. With an MA of 5, you push 5 times less ha
               wrong: [{ v: 3600, why: 'The long side gives you an advantage, so you need *less* force than 600 N.' }, { v: 120, why: r`$\text{MA} = 1.2 / 0.2 = 6$, so the effort is $600 / 6$.` }],
               explain: r`$\text{MA} = \frac{1.2}{0.2} = 6$, so the effort is $\frac{600}{6} = 100$ N. Your hand moves 6 times as far as the rock does.`,
             },
+            { /*anim:machines*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'No free lunch',
+              body: r`The same crowbar in motion: the rock sits 0.2 m from the pivot and your hand 1.2 m away, so the lever multiplies your force by 6. Watch how far each end **moves**.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.42, xmax: 1.34, ymin: -0.32, ymax: 0.42, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.9, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const A0 = 0.2, phi0 = 0.25, phi = phi0 * Math.cos(p.t), a = 0.2, b = 1.2;
+                  const P = (r, f) => [r * Math.cos(f), r * Math.sin(f)];
+                  const L = P(-a, phi), R = P(b, phi);
+                  const els = [];
+                  const arc = (r, f0, f1, col) => {
+                    const pts = [];
+                    for (let i = 0; i <= 30; i++) { const f = f0 + ((f1 - f0) * i) / 30; pts.push(P(r, f)); }
+                    return s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.55 });
+                  };
+                  els.push(s('path', { d: `M${plot.X(-0.42)} ${plot.Y(-0.13)} H${plot.X(0.16)} V${plot.Y(-0.32)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  els.push(arc(-a, phi0, phi, 'coral'), arc(b, phi0, phi, 'blue'));
+                  // pivot, bar, rock and hand
+                  els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(0)} L${plot.X(-0.06)} ${plot.Y(-0.13)} L${plot.X(0.06)} ${plot.Y(-0.13)} Z`, class: 'fl-muted' }));
+                  els.push(s('line', { x1: plot.X(L[0] * 1.15), y1: plot.Y(L[1] * 1.15), x2: plot.X(R[0]), y2: plot.Y(R[1]), stroke: 'var(--ink)', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+                  const rs = plot.X(0.14) - plot.X(0);
+                  els.push(s('rect', { x: plot.X(L[0]) - rs / 2, y: plot.Y(L[1]) - rs - 3, width: rs, height: rs, rx: 6, class: 'fl-coral' }));
+                  els.push(s('text', { x: plot.X(L[0]), y: plot.Y(L[1]) - rs / 2 + 2, 'text-anchor': 'middle', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));font-weight:800;fill:#fff', text: '600 N' }));
+                  els.push(s('circle', { cx: plot.X(R[0]), cy: plot.Y(R[1]) - 11, r: 9, class: 'fl-blue' }));
+                  els.push(s('text', { x: plot.X(R[0]), y: plot.Y(R[1]) - 28, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--blue)', text: '100 N' }));
+                  return els;
+                },
+                readout: (p) => { const phi = 0.25 * Math.cos(p.t), h = 0.2 * (Math.sin(0.25) - Math.sin(phi)) * 100; return r`rock rises $\coral{${fix(h, 1)}}$ cm, your hand moves $\blue{${fix(6 * h, 1)}}$ cm · work: $600 \times ${fix(h / 100, 3)} = 100 \times ${fix((6 * h) / 100, 3)}$ J`; },
+              },
+              after: r`Your hand travels **six times as far** as the rock rises. The lever multiplies force by 6 but divides distance by 6, so force × distance, the **work**, is the same on both ends. Every simple machine makes this trade: you never get more work out than you put in. Archimedes boasted that with a long enough lever he could move the Earth; he would also have needed to push it an astronomically long way.`,
+            },
             {
               type: 'interactive',
               kicker: 'Try it',

@@ -564,6 +564,44 @@ Moving along a circle at speed $v$ needs a centripetal acceleration $\frac{v^2}{
 $$\frac{v^2}{L} \le g \quad\Longrightarrow\quad v \le \sqrt{gL}$$
 Faster than that, you'd lift off the ground: you have to **run**.`,
             },
+            { /*anim:bodyphysics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Vaulting over a stiff leg',
+              body: r`Watch a walker's hips vault over each planted leg (leg length 0.9 m). Speed up and compare the two arrows at the top of each arc: the {coral:acceleration needed to follow the arc}, $v^2/L$, and the {blue:most gravity can provide}, $g$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.2, xmax: 3.8, ymin: -0.15, ymax: 1.85, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 1, max: 1000, autoplay: true },
+                params: { v: { min: 0.5, max: 4, step: 0.5, value: 1.5, label: 'walking speed', color: 'coral', format: (v) => `${fix(v, 1)} m/s` } },
+                clipExtra: true,
+                extra: ({ plot, p, s }) => {
+                  const L = 0.9, half = 0.32, step = 2 * half, run = p.v * p.t, n = Math.floor(run / step), u = run / step - n;
+                  const shift = (n * step) % (4 * step), foot = shift + step / 2 + 0.2, hx = foot - half + u * step, hy = Math.sqrt(L * L - (hx - foot) ** 2);
+                  const X = (x) => plot.X(x), Y = (y) => plot.Y(y), els = [];
+                  const lift = p.v * p.v / L > 9.8;
+                  els.push(s('line', { x1: X(-0.2), x2: X(3.8), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 2 }));
+                  // the arc the hip follows over this foot
+                  const arc = [];
+                  for (let i = 0; i <= 30; i++) { const x = foot - half + (step * i) / 30; arc.push([X(x), Y(Math.sqrt(L * L - (x - foot) ** 2))]); }
+                  els.push(s('path', { d: arc.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 5' }));
+                  // swing leg: swings from the previous footprint to the next one
+                  const prev = foot - step, next = foot + step, sw = prev + (next - prev) * u, swy = 0.06 * Math.sin(Math.PI * u);
+                  els.push(s('line', { x1: X(hx), y1: Y(hy), x2: X(sw), y2: Y(swy), stroke: 'var(--ink-3)', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+                  els.push(s('line', { x1: X(hx), y1: Y(hy), x2: X(foot), y2: Y(0), stroke: lift ? 'var(--coral)' : 'var(--ink)', 'stroke-width': 7, 'stroke-linecap': 'round' }));
+                  els.push(s('line', { x1: X(hx), y1: Y(hy), x2: X(hx + 0.05), y2: Y(hy + 0.6), stroke: 'var(--ink)', 'stroke-width': 8, 'stroke-linecap': 'round' }));
+                  els.push(s('circle', { cx: X(hx + 0.07), cy: Y(hy + 0.75), r: X(0.11) - X(0), class: 'fl-ink' }));
+                  // arrows at the top of the arc, scaled 1 m/s² = 0.03 m
+                  const ax = 3.35, top = 1.55, k = 0.03, need = (p.v * p.v) / L;
+                  const arr = (x, len, col) => { const y2 = top - len; return [s('line', { x1: X(x), y1: Y(top), x2: X(x), y2: Y(y2) - 6, stroke: `var(--${col})`, 'stroke-width': 4 }), s('path', { d: `M${X(x) - 7} ${Y(y2) - 8}L${X(x) + 7} ${Y(y2) - 8}L${X(x)} ${Y(y2) + 2}Z`, fill: `var(--${col})` })]; };
+                  els.push(arr(ax - 0.15, Math.min(1.5, need * k), 'coral'), arr(ax + 0.15, 9.8 * k, 'blue'));
+                  const lab = (x, text, col) => s('text', { x: X(x), y: Y(top) - 10, 'text-anchor': 'middle', class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text });
+                  els.push(lab(ax - 0.17, 'v²/L', 'coral'), lab(ax + 0.17, 'g', 'blue'));
+                  return els;
+                },
+                readout: (p) => { const need = (p.v * p.v) / 0.9; return `needed $v^2/L$ = ${fix(need, 1)} m/s² · gravity $g$ = 9.8 m/s² · ${need > 9.8 ? '**not enough gravity: the walker would take off, so this has to be a run**' : 'gravity can hold the hips on the arc'}`; },
+              },
+              after: r`To move along a circle of radius $L$ at speed $v$, the hips need a downward acceleration of $v^2/L$ at the top, and only gravity supplies it: the leg can push but never pull. So walking only works while $v^2/L \le g$, that is $v \le \sqrt{gL} \approx 3$ m/s for a 0.9 m leg. In practice people switch to running well before that, at around half of the limit, but the limit explains why children break into a run sooner than adults, and why astronauts on the Moon, with a sixth of the gravity, bounded instead of walking.`,
+            },
             {
               type: 'numeric',
               title: 'Top walking speed',

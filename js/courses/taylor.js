@@ -19,6 +19,9 @@ const sinT3 = (x, a) => Math.sin(a) + Math.cos(a) * (x - a) - (Math.sin(a) * (x 
 const agm = (a, b) => { for (let i = 0; i < 30; i++) [a, b] = [(a + b) / 2, Math.sqrt(a * b)]; return a; };
 const periodRatio = (deg) => 1 / agm(1, Math.cos((deg * Math.PI) / 360));
 
+const EULER_THETAS = [Math.PI, 1, 2.5];
+const eulerState = (t) => { const k = Math.floor(t / 9) % 3, n = Math.min(14, Math.floor(Math.max(0, (t % 9) - 0.5) / 0.45)); return { th: EULER_THETAS[k], n }; };
+
 export default {
   id: 'taylor',
   subject: 'math',
@@ -388,6 +391,33 @@ $$e^{i\theta} = 1 + i\theta - \frac{\theta^2}{2!} - i\frac{\theta^3}{3!} + \frac
 Collect the real and imaginary parts:
 $$e^{i\theta} = \underbrace{\left(1 - \frac{\theta^2}{2!} + \frac{\theta^4}{4!} - \dots\right)}_{\cos\theta} + i\underbrace{\left(\theta - \frac{\theta^3}{3!} + \dots\right)}_{\sin\theta}$$
 That's **Euler's formula**, $e^{i\theta} = \cos\theta + i\sin\theta$, falling straight out of the series.`,
+            },
+            { /*anim:taylor*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The series as a walk',
+              body: r`Draw each term of $e^{i\theta} = 1 + i\theta + \frac{(i\theta)^2}{2!} + \cdots$ as an arrow, nose to tail. Multiplying by $i$ turns an arrow a quarter turn anticlockwise, so each arrow turns $90°$ from the last, and the lengths are $1, \theta, \frac{\theta^2}{2!}, \frac{\theta^3}{3!}, \ldots$ The {coral:coral arrows} are real terms and the {blue:blue arrows} imaginary ones.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4.6, xmax: 2.2, ymin: -2.6, ymax: 3.6, grid: true, axes: false, maxWidth: 420,
+                animate: { param: 't', speed: 1, max: 27, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { th, n } = eulerState(p.t), els = [];
+                  els.push(s('line', { x1: plot.X(-4.6), x2: plot.X(2.2), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.3 }), s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(-2.6), y2: plot.Y(3.6), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+                  els.push(s('circle', { cx: plot.X(Math.cos(th)), cy: plot.Y(Math.sin(th)), r: 7, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  let x = 0, y = 0, len = 1;
+                  for (let k = 0; k <= n; k++) {
+                    if (k > 0) len *= th / k;
+                    const d = [[1, 0], [0, 1], [-1, 0], [0, -1]][k % 4], x1 = x + len * d[0], y1 = y + len * d[1];
+                    const X0 = plot.X(x), Y0 = plot.Y(y), X1 = plot.X(x1), Y1 = plot.Y(y1), a = Math.atan2(Y1 - Y0, X1 - X0), hd = Math.min(9, 0.5 * Math.hypot(X1 - X0, Y1 - Y0));
+                    els.push(s('path', { d: `M${X0} ${Y0}L${X1} ${Y1}M${X1 - hd * Math.cos(a - 0.45)} ${Y1 - hd * Math.sin(a - 0.45)}L${X1} ${Y1}L${X1 - hd * Math.cos(a + 0.45)} ${Y1 - hd * Math.sin(a + 0.45)}`, fill: 'none', stroke: `var(--${k % 2 ? 'blue' : 'coral'})`, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                    x = x1; y = y1;
+                  }
+                  return els;
+                },
+                readout: (p) => { const { th, n } = eulerState(p.t); let x = 0, y = 0, len = 1; for (let k = 0; k <= n; k++) { if (k > 0) len *= th / k; const d = [[1, 0], [0, 1], [-1, 0], [0, -1]][k % 4]; x += len * d[0]; y += len * d[1]; } return `$\\theta = ${th === Math.PI ? '\\pi' : fix(th, 1)}$ · ${n + 1} terms: $${fix(x, 3)} ${y < 0 ? '-' : '+'} ${fix(Math.abs(y), 3)}\\,i$ · target $\\cos\\theta + i\\sin\\theta = ${fix(Math.cos(th), 3)} ${Math.sin(th) < 0 ? '-' : '+'} ${fix(Math.abs(Math.sin(th)), 3)}\\,i$`; },
+              },
+              after: r`The walk spirals in on a point of the **unit circle**: the one at angle $\theta$, exactly $\cos\theta + i\sin\theta$. For $\theta = \pi$ it overshoots wildly at first (the third arrow is almost 5 long), then the factorials take over and it homes in on $-1$. The horizontal arrows add up to the cosine series and the vertical ones to the sine series.`,
             },
             {
               type: 'numeric',

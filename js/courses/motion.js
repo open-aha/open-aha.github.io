@@ -617,6 +617,39 @@ Every second, it falls 9.8 m/s faster. Here is a falling ball photographed every
 
 Check: the speed rose steadily from 0 to 29.4 m/s, so the average speed was 14.7 m/s, and $14.7 \times 3 = 44.1$. ✓`,
             },
+            { /*anim:motion*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Galileo’s odd numbers',
+              body: r`Galileo timed balls rolling down ramps and found a beautiful pattern. Here a ball falls from rest, with a flash every "tick" of time. Compare the gaps between the flashes, and the tiles on the right.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: -26.5, ymax: 1, grid: false, axes: false, height: 400,
+                animate: { param: 't', speed: 0.8, max: 7, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const tt = Math.min(5, p.t), n = Math.floor(tt + 1e-9), cols = ['blue', 'coral', 'teal', 'amber', 'violet'];
+                  const T = (x, y, text, o = {}) => s('text', { x, y, 'text-anchor': o.a || 'middle', class: 'halo-text', style: `font-size:max(calc(${o.fs || 13}px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;${o.fill ? 'fill:' + o.fill : ''}`, text });
+                  const els = [s('line', { x1: plot.X(1.5), x2: plot.X(1.5), y1: plot.Y(0), y2: plot.Y(-25), stroke: 'var(--line-2)', 'stroke-width': 2 })];
+                  for (let k = 1; k <= n; k++) {
+                    const y0 = -((k - 1) ** 2), y1 = -(k ** 2), c = cols[k - 1];
+                    els.push(s('circle', { cx: plot.X(1.5), cy: plot.Y(y1), r: 7, fill: 'none', stroke: `var(--${c})`, 'stroke-width': 2 }));
+                    els.push(s('path', { d: `M${plot.X(2.1)} ${plot.Y(y0) + 2} h6 V${plot.Y(y1) - 2} h-6`, fill: 'none', stroke: `var(--${c})`, 'stroke-width': 2 }));
+                    els.push(T(plot.X(2.1) + 12, (plot.Y(y0) + plot.Y(y1)) / 2 + 5, String(2 * k - 1), { a: 'start', fill: `var(--${c})` }));
+                  }
+                  els.push(s('circle', { cx: plot.X(1.5), cy: plot.Y(-tt * tt), r: 10, class: 'fl-ink' }));
+                  // tiles: the k-th gap is an L-shaped layer that turns a (k-1)-square into a k-square
+                  const size = Math.min(44, (plot.X(9.6) - plot.X(4.4)) / 5), x0 = plot.X(4.4), y0 = plot.Y(-1) - 20;
+                  for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+                    const k = Math.max(i, j) + 1;
+                    const show = k <= n ? 1 : k === n + 1 ? Math.max(0, (tt - n) * 1.2 - 0.2) : 0;
+                    els.push(s('rect', { x: x0 + i * size + 1.5, y: y0 + j * size + 1.5, width: size - 3, height: size - 3, rx: 4, class: show > 0 ? `fl-${cols[k - 1]}` : 'fl-surface', opacity: show > 0 ? 0.25 + 0.6 * Math.min(1, show) : 1 }));
+                  }
+                  if (n) els.push(T(x0 + 2.5 * size, y0 + 5 * size + 30, n === 1 ? '1 = 1²' : `${Array.from({ length: n }, (_, k) => 2 * k + 1).join(' + ')} = ${n * n} = ${n}²`, { fs: 15 }));
+                  return els;
+                },
+                readout: (p) => { const tt = Math.min(5, p.t); return `time ${fix(tt, 2)} ticks · fallen ${fix(tt * tt, 2)} units`; },
+              },
+              after: r`In equal times, a falling body covers distances in the ratio $1 : 3 : 5 : 7 : 9 : \dots$, the odd numbers. Add them up and you always get a square: $1 + 3 + 5 + 7 = 16 = 4^2$. Each odd number is the L-shaped layer that grows one square into the next. So the total distance grows as the **square of the time**, which is exactly $d = \tfrac12 g t^2$.`,
+            },
             {
               type: 'numeric',
               title: 'How deep is the well?',

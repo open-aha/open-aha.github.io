@@ -9,6 +9,49 @@ const spot = (D, L = 100, lam = 650e-9) => D + ((lam * L) / (D / 1000)) * 1000;
 // mode-locked laser: intensity of N equal modes in phase, normalised to the peak
 const modeLock = (t, N) => { const x = Math.PI * t; const sn = Math.sin(x); return Math.abs(sn) < 1e-9 ? 1 : (Math.sin(N * x) / (N * sn)) ** 2; };
 
+// a toy laser: 36 atoms in a tube (0 < y < 1) between a full mirror (x = 0) and a 10% output mirror (x = 10). Photons move 0.25 per tick
+// in their own direction and are lost if they leave the tube sideways. Passing an excited atom, a photon makes a copy of itself with
+// chance 0.3; passing a ground atom, it's absorbed with chance 0.25. The pump re-excites ground atoms (chance 0.05 per tick), and
+// excited atoms occasionally emit on their own (0.005 per tick), in a random direction.
+let LASER_RUN = null;
+const laserRun = () => {
+  if (LASER_RUN) return LASER_RUN;
+  let seed = 17;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const atoms = Array.from({ length: 36 }, (_, i) => ({ x: 0.3 + (9.4 * (i + rnd())) / 36, y: 0.15 + 0.7 * rnd(), up: rnd() < 0.5 }));
+  let ph = [];
+  const frames = [];
+  let out = [];
+  for (let f = 0; f < 700; f++) {
+    for (const a of atoms) {
+      if (!a.up && rnd() < 0.05) a.up = true;
+      else if (a.up && rnd() < 0.005 && ph.length < 160) { const th = 2 * Math.PI * rnd(); a.up = false; ph.push({ x: a.x, y: a.y, d: Math.cos(th), e: Math.sin(th) }); }
+    }
+    const next = [];
+    for (const q of ph) {
+      const x0 = q.x;
+      q.x += 0.25 * q.d; q.y += 0.25 * q.e;
+      if (q.y < 0 || q.y > 1) continue; // escaped through the side of the tube
+      // the mirrors are slightly curved, so a reflection steers a photon back towards the tube's axis
+      if (q.x < 0) { q.x = -q.x; q.d = -q.d; q.e *= 0.3; }
+      if (q.x > 10) { if (rnd() < 0.1) { out.push({ x: 10, y: q.y, d: q.d, e: q.e }); continue; } q.x = 20 - q.x; q.d = -q.d; q.e *= 0.3; }
+      let alive = true;
+      for (const a of atoms) {
+        if (Math.min(x0, q.x) <= a.x && a.x < Math.max(x0, q.x) && Math.abs(a.y - q.y) < 0.5) {
+          if (a.up && rnd() < 0.3 && ph.length + next.length < 160) { a.up = false; next.push({ x: Math.min(9.95, Math.max(0.05, q.x + 0.6 * (rnd() - 0.5))), y: Math.min(0.95, Math.max(0.05, q.y + 0.16 * (rnd() - 0.5))), d: q.d, e: q.e }); } // the copy appears beside its parent (spread out here so it can be seen)
+          else if (!a.up && rnd() < 0.25) { a.up = true; alive = false; break; }
+        }
+      }
+      if (alive) next.push(q);
+    }
+    ph = next;
+    out = out.map((o) => ({ ...o, x: o.x + 0.25 * o.d, y: o.y + 0.25 * o.e })).filter((o) => o.x < 12.5);
+    frames.push({ atoms: atoms.map((a) => a.up), ph: ph.map((q) => [q.x, q.y, q.d, q.e]), out: out.map((o) => [o.x, o.y, o.d, o.e]) });
+  }
+  return (LASER_RUN = { atoms, frames });
+};
+const laserFrame = (t) => Math.min(699, Math.floor(t * 22));
+
 export default {
   id: 'lasers',
   subject: 'physics',
@@ -169,6 +212,27 @@ This **stimulated emission** is the "SE" in LASER: **L**ight **A**mplification b
                 { t: 'They filter out the wrong colours', why: 'The colour is mainly set by the energy levels. The mirrors provide repeated amplification.' },
               ],
               explain: r`Light travelling along the axis passes through the inverted medium again and again, triggering more and more stimulated emission. Only light aligned with the mirrors keeps being amplified, which is why the output beam is so straight. Theodore Maiman built the first working laser, using a ruby crystal, in 1960.`,
+            },
+            { /*anim:lasers*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'An avalanche between mirrors',
+              body: r`A toy laser. {coral:Excited atoms} are kept topped up by a pump. Now and then one emits a photon on its own, in a random direction. A photon passing an excited atom can trigger a perfect copy of itself; passing an unexcited atom, it can be absorbed. The left mirror reflects everything; the right one lets 10% through. Both are slightly curved, steering reflected light back along the tube.`,
+              widget: {
+                kind: 'graph', xmin: -0.4, xmax: 12.6, ymin: -0.25, ymax: 1.25, grid: false, axes: false, height: 230, maxWidth: 680, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 32, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { atoms, frames } = laserRun(), f = frames[laserFrame(p.t)], els = [];
+                  els.push(s('rect', { x: plot.X(-0.3), y: plot.Y(1.1), width: plot.X(0.3) - plot.X(0), height: plot.Y(-0.1) - plot.Y(1.1), class: 'fl-ink' }));
+                  els.push(s('rect', { x: plot.X(10), y: plot.Y(1.1), width: plot.X(0.25) - plot.X(0), height: plot.Y(-0.1) - plot.Y(1.1), class: 'fl-ink', opacity: 0.45 }));
+                  atoms.forEach((a, i) => els.push(s('circle', { cx: plot.X(a.x), cy: plot.Y(a.y), r: 6, class: f.atoms[i] ? 'fl-coral' : 'fl-muted', opacity: f.atoms[i] ? 0.85 : 0.5 })));
+                  const seg = ([x, y, d, e]) => `M${plot.X(x - 0.12 * d).toFixed(1)} ${plot.Y(y - 0.12 * e).toFixed(1)}L${plot.X(x + 0.12 * d).toFixed(1)} ${plot.Y(y + 0.12 * e).toFixed(1)}`;
+                  els.push(s('path', { d: f.ph.map(seg).join('') + f.out.map(seg).join(''), stroke: 'var(--amber)', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+                  return els;
+                },
+                readout: (p) => { const f = laserRun().frames[laserFrame(p.t)]; return `${f.ph.length} photons between the mirrors · ${f.atoms.filter(Boolean).length} of 36 atoms excited · ${f.out.length} on their way out`; },
+              },
+              after: r`At first there are only a few stray photons, flying every which way. But the ones travelling along the tube keep passing excited atoms and get copied, while the others soon leave the picture, so a single direction wins: an avalanche of identical photons bouncing back and forth. The photon count grows until copying just balances the losses, and a steady beam leaks out through the right-hand mirror, with the pump replacing the energy it carries away.`,
             },
           ],
           recap: [

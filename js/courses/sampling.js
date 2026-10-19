@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const FS = 10; // sample rate (Hz) in the aliasing demo
 const alias = (f) => Math.abs(f - FS * Math.round(f / FS));
@@ -23,6 +24,11 @@ const BEST_W = (() => { let best = 1; for (let w = 1; w <= 61; w += 2) if (maErr
 const N64 = 64;
 const HID = Array.from({ length: N64 }, (_, n) => Math.sin((2 * Math.PI * 5 * n) / N64) + 0.5 * Math.sin((2 * Math.PI * 12 * n) / N64 + 1));
 const dftMag = (k) => { let re = 0, im = 0; HID.forEach((x, n) => { re += x * Math.cos((2 * Math.PI * k * n) / N64); im -= x * Math.sin((2 * Math.PI * k * n) / N64); }); return (2 * Math.hypot(re, im)) / N64; };
+
+// wheel speed ramps up; the film (24 frames/s, 8 identical spokes) shows each spoke's smallest move, f - 3·round(f/3) rev/s
+const wagonF = (t) => 0.3 * Math.min(t, 12.5);
+const wagonSeen = (f) => f - 3 * Math.round(f / 3);
+const wagonAngle = (t) => { let a = 0; for (let s = 0.01; s < t; s += 0.02) a += 2 * Math.PI * wagonSeen(wagonF(s)) * 0.02; return a; };
 
 export default {
   id: 'sampling',
@@ -151,6 +157,35 @@ A music CD uses 44,100 samples per second for each of its two stereo channels. P
                 { t: 'The wheel really briefly turns backwards', why: 'It doesn’t. It’s an illusion created by sampling: aliasing in time.' },
               ],
               explain: r`If a spoke advances by slightly less than the gap between spokes during each frame, the nearest spoke in the next frame appears slightly **behind**: the eye sees slow backwards motion. This "wagon-wheel effect" is aliasing: the camera samples too slowly for the wheel's true rotation.`,
+            },
+            { /*anim:sampling*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Filming a spinning wheel',
+              body: r`A wheel with 8 identical spokes speeds up, and a camera films it at 24 frames a second. On the left are four frames in a row, with one spoke secretly marked in {coral:coral}. On the right is the wheel as it looks on the film, where you can't tell the spokes apart.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 0, xmax: 12.4, ymin: 0.2, ymax: 5.3, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 15, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const f = wagonF(p.t), els = [];
+                  const wheel = (cx, cy, r, ang, mark) => {
+                    const out = [s('circle', { cx: plot.X(cx), cy: plot.Y(cy), r: plot.X(r) - plot.X(0), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 2.5 })];
+                    for (let k = 0; k < 8; k++) { const a = ang + (k * Math.PI) / 4; out.push(s('line', { x1: plot.X(cx), y1: plot.Y(cy), x2: plot.X(cx + r * Math.cos(a)), y2: plot.Y(cy + r * Math.sin(a)), stroke: mark && k === 0 ? 'var(--coral)' : 'var(--ink-2)', 'stroke-width': mark && k === 0 ? 3.5 : 2 })); }
+                    return out;
+                  };
+                  // four consecutive frames: the wheel turns 360f/24 degrees between them (clockwise, so the angle falls)
+                  for (let j = 0; j < 4; j++) {
+                    const cx = 1.0 + 1.75 * j;
+                    els.push(...wheel(cx, 3.1, 0.75, Math.PI / 2 - (2 * Math.PI * f * j) / 24, true));
+                    els.push(s('text', { x: plot.X(cx), y: plot.Y(1.95), 'text-anchor': 'middle', class: 'tick', text: `frame ${j + 1}` }));
+                  }
+                  els.push(...wheel(10.0, 2.75, 2.1, Math.PI / 2 - wagonAngle(p.t), false));
+                  els.push(s('text', { x: plot.X(10.0), y: plot.Y(0.35), 'text-anchor': 'middle', class: 'tick', text: 'on film' }));
+                  return els;
+                },
+                readout: (p) => { const f = wagonF(p.t), fa = wagonSeen(f); return `wheel: ${fix(f, 2)} turns/s · a spoke moves ${fix(15 * f, 1)}° per frame (spokes are 45° apart) · film shows ${Math.abs(fa) < 0.005 ? 'it standing still' : `${fix(Math.abs(fa), 2)} turns/s ${fa < 0 ? '**backwards**' : 'forwards'}`}`; },
+              },
+              after: r`Between frames, the coral spoke moves $15°$ for every turn per second. Our eyes match each spoke to the **nearest** spoke in the next frame. Once the move passes $22.5°$, half the gap between spokes, the nearest one is behind, and the wheel seems to turn backwards. At exactly 3 turns per second each spoke lands where the next one was, and the wheel freezes. It's aliasing: a fast rotation, sampled too slowly, masquerading as a slow one.`,
             },
             {
               type: 'numeric',

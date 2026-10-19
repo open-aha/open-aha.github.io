@@ -314,6 +314,33 @@ $$\sin^2\theta + \cos^2\theta = 1$$
 $$\cos\theta = x\text{-coordinate}, \qquad \sin\theta = y\text{-coordinate}$$
 For angles between 0° and 90°, this agrees with the triangle definitions. Beyond that, it extends sine and cosine to angles no triangle could hold, including negative ones and angles of more than 360°.`,
             },
+            { /*anim:trig*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Where the tangent lives',
+              body: r`On the unit circle, $\coral{\sin\theta}$ is the height and $\blue{\cos\theta}$ is the run. The tangent has a picture too. Draw the line that touches the circle at $(1, 0)$ and extend the radius until it hits that line: the {violet:height where it hits} is $\tan\theta$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 2.3, ymin: -2.3, ymax: 2.3, grid: false, axes: false, maxWidth: 420, clipExtra: true,
+                animate: { param: 't', speed: 0.35, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const th = p.t, c = Math.cos(th), sn = Math.sin(th), tn = sn / c, els = [];
+                  const L = (x1, y1, x2, y2, o) => s('line', { x1: plot.X(x1), y1: plot.Y(y1), x2: plot.X(x2), y2: plot.Y(y2), 'stroke-linecap': 'round', ...o });
+                  els.push(L(-1.6, 0, 2.3, 0, { stroke: 'var(--axis)', 'stroke-width': 1.2 }), L(0, -2.3, 0, 2.3, { stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  els.push(L(1, -2.3, 1, 2.3, { stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  // the radius, extended through the circle to the tangent line
+                  if (Math.abs(c) > 0.02) els.push(L(0, 0, 1, tn, { stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  if (Math.abs(c) > 0.02) els.push(L(1, 0, 1, tn, { stroke: 'var(--violet)', 'stroke-width': 5 }));
+                  els.push(L(0, 0, c, sn, { stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  els.push(L(c, 0, c, sn, { stroke: 'var(--coral)', 'stroke-width': 4 }), L(0, 0, c, 0, { stroke: 'var(--blue)', 'stroke-width': 4 }));
+                  els.push(s('circle', { cx: plot.X(c), cy: plot.Y(sn), r: 6, class: 'fl-ink' }));
+                  if (Math.abs(c) > 0.02 && Math.abs(tn) < 2.3) els.push(s('circle', { cx: plot.X(1), cy: plot.Y(tn), r: 6, class: 'fl-violet' }));
+                  return els;
+                },
+                readout: (p) => { const th = p.t, c = Math.cos(th), tn = Math.tan(th), deg = (th * 180) / Math.PI; return r`$\theta = ${fix(deg, 0)}°$: $\;\coral{\sin\theta = ${fix(Math.sin(th), 2)}}$, $\;\blue{\cos\theta = ${fix(c, 2)}}$, $\;\violet{\tan\theta = ${Math.abs(c) < 0.02 ? '\\text{undefined}' : fix(tn, 2)}}$`; },
+              },
+              after: r`The extended radius and the tangent line make a triangle similar to the small one inside the circle, so the height where they meet is $\frac{\sin\theta}{\cos\theta} = \tan\theta$. That's where the name comes from: it's a length along a **tangent** line (from the Latin *tangere*, to touch). As $\theta$ approaches $90°$, the radius becomes parallel to the tangent line and never meets it: $\tan\theta$ shoots off to infinity, and $\tan 90°$ is undefined.`,
+            },
             {
               type: 'mcq',
               title: 'Signs',

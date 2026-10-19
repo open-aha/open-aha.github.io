@@ -408,6 +408,46 @@ $$W = Q_h - Q_c, \qquad \text{efficiency} = \frac{W}{Q_h}$$`,
 $$\eta_\text{max} = 1 - \frac{T_c}{T_h}$$
 To make engines more efficient, run them hotter, or dump the heat somewhere colder.`,
             },
+            { /*anim:thermo*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Running a Carnot cycle',
+              body: r`A gas in a cylinder runs between a {coral:hot reservoir at 500 K} and a {blue:cold one at 300 K}. Watch the piston, and the cycle traced on a pressure–volume diagram.`,
+              widget: {
+                kind: 'graph', xmin: -0.6, xmax: 9.4, ymin: -60, ymax: 560, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 0.5, max: 4.6, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const g = 5 / 3, Th = 500, Tc = 300, r = (Th / Tc) ** (1 / (g - 1)), VA = 1, VB = 2, VC = VB * r, VD = VA * r;
+                  const P = (V, T) => T / V, els = [];
+                  // state at fraction u of stage k
+                  const st = (k, u) => {
+                    if (k === 0) { const V = VA * (VB / VA) ** u; return [V, P(V, Th), Th]; }
+                    if (k === 1) { const V = VB * (VC / VB) ** u, T = Th * (VB / V) ** (g - 1); return [V, P(V, T), T]; }
+                    if (k === 2) { const V = VC * (VD / VC) ** u; return [V, P(V, Tc), Tc]; }
+                    const V = VD * (VA / VD) ** u, T = Tc * (VD / V) ** (g - 1); return [V, P(V, T), T];
+                  };
+                  const k = Math.min(3, Math.floor(p.t)), u = Math.min(1, p.t - k), [V, Pr, T] = st(k, u);
+                  const X = (v) => plot.X(0.2 + v * 1.0), Y = (pp) => plot.Y(pp);
+                  els.push(s('line', { x1: X(0), x2: X(4.6), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.4 }), s('line', { x1: X(0), x2: X(0), y1: Y(0), y2: Y(540), stroke: 'var(--axis)', 'stroke-width': 1.4 }));
+                  els.push(s('text', { x: X(4.6), y: Y(0) + 18, 'text-anchor': 'end', class: 'axis-label', text: 'volume' }), s('text', { x: X(0) + 6, y: Y(530), class: 'axis-label', text: 'pressure' }));
+                  // the whole cycle faintly, the part done so far boldly, and the enclosed work once it closes
+                  const path = (k0, k1, uEnd) => { const pts = []; for (let kk = k0; kk <= k1; kk++) for (let i = 0; i <= 30; i++) { const uu = (i / 30) * (kk === k1 ? uEnd : 1); const [v, pr] = st(kk, uu); pts.push(`${X(v).toFixed(1)} ${Y(pr).toFixed(1)}`); } return 'M' + pts.join('L'); };
+                  if (p.t >= 4) els.push(s('path', { d: path(0, 3, 1) + 'Z', class: 'fl-violet', opacity: 0.25 }));
+                  els.push(s('path', { d: path(0, 3, 1), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 2 }));
+                  els.push(s('path', { d: path(0, k, u), fill: 'none', stroke: k % 2 ? 'var(--ink)' : k === 0 ? 'var(--coral)' : 'var(--blue)', 'stroke-width': 3.5 }));
+                  els.push(s('circle', { cx: X(V), cy: Y(Pr), r: 6, class: 'fl-ink' }));
+                  // the cylinder, drawn on the right: piston position ∝ volume
+                  const cx = plot.X(6.4), cw = plot.X(8.6) - cx, top = plot.Y(520), bot = plot.Y(40), py = bot - (bot - top) * (V / 4.6);
+                  els.push(s('rect', { x: cx, y: py, width: cw, height: bot - py, class: T > 400 ? 'fl-coral' : T < 400 ? 'fl-blue' : 'fl-violet', opacity: 0.2 + 0.4 * ((T - Tc) / (Th - Tc)) }));
+                  if (k === 0 || k === 2) els.push(s('rect', { x: cx - 6, y: bot, width: cw + 12, height: 14, rx: 3, class: k === 0 ? 'fl-coral' : 'fl-blue' }));
+                  els.push(s('path', { d: `M${cx} ${top}V${bot}H${cx + cw}V${top}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  els.push(s('rect', { x: cx + 2, y: py - 10, width: cw - 4, height: 10, class: 'fl-ink' }), s('line', { x1: cx + cw / 2, x2: cx + cw / 2, y1: py - 10, y2: top - 20, stroke: 'var(--ink)', 'stroke-width': 4 }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(3, Math.floor(p.t)); return ['1. Touching the hot reservoir, the gas expands at 500 K, taking in heat and pushing the piston out.', '2. Insulated, it keeps expanding, cooling from 500 K to 300 K as it does work.', '3. Touching the cold reservoir, it is squeezed at 300 K, giving out heat.', '4. Insulated, it is squeezed back up to 500 K, ready to start again.'][k] + (p.t >= 4 ? ' The shaded area is the net work done.' : ''); },
+              },
+              after: r`The expansion strokes happen at higher pressure than the compression strokes, so the gas does more work pushing out than is needed to push it back in: the difference is the shaded area. Heat goes in at 500 K and some must come out at 300 K, and Carnot's limit says at most $1 - \frac{300}{500} = 40\%$ of the heat taken in can become work. No real engine does better than this idealised cycle.`,
+            },
             {
               type: 'numeric',
               title: 'Power station',

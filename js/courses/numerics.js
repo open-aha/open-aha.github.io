@@ -39,6 +39,18 @@ const nodes = (n, cheb) => Array.from({ length: n }, (_, i) => (cheb ? Math.cos(
 const lagrange = (xs, x) => xs.reduce((sum, xi, i) => sum + runge(xi) * xs.reduce((L, xj, j) => (j === i ? L : (L * (x - xj)) / (xi - xj)), 1), 0);
 const maxErr = (n, cheb) => { const xs = nodes(n, cheb); let m = 0; for (let k = 0; k <= 400; k++) { const x = -1 + k / 200; m = Math.max(m, Math.abs(lagrange(xs, x) - runge(x))); } return m; };
 
+// x'' = -x as x' = v, v' = -x, from (1, 0), steps of h = 0.2: Euler and midpoint
+const SPRING_STEPS = (() => {
+  const h = 0.2, E = [[1, 0]], M = [[1, 0]];
+  for (let n = 0; n < 48; n++) {
+    const [x, v] = E[n];
+    E.push([x + h * v, v - h * x]);
+    const [a, b] = M[n], am = a + (h / 2) * b, bm = b - (h / 2) * a;
+    M.push([a + h * bm, b - h * am]);
+  }
+  return { h, E, M };
+})();
+
 export default {
   id: 'numerics',
   subject: 'math',
@@ -638,6 +650,32 @@ The **midpoint method** is smarter: it takes a half step to estimate the slope i
                 solution: { N: 50 },
               },
               explain: r`It takes **50** Euler steps to get within 1% ($(1 + \frac{1}{50})^{50} \approx 2.692$). The midpoint method is within 1% with only 4 steps, and within 0.01% with 50. Better methods aren’t just a bit better: their errors shrink much faster as $h$ shrinks.`,
+            },
+            { /*anim:numerics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Euler spirals out',
+              body: r`A mass on a spring, $x'' = -x$, drawn in the **phase plane**: position across, velocity up. The true motion goes round the {ink:dashed circle} for ever. Here are {coral:Euler's method} and the {violet:midpoint method}, both with steps of $h = 0.2$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.7, xmax: 2.7, ymin: -2.7, ymax: 2.7, grid: false, axes: false, maxWidth: 420, clipExtra: true,
+                animate: { param: 't', speed: 4, max: 52, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { E, M } = SPRING_STEPS, n = Math.min(48, Math.floor(p.t)), els = [];
+                  const P = (pts) => pts.map(([x, v], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(v).toFixed(1)}`).join('');
+                  els.push(s('line', { x1: plot.X(-2.7), x2: plot.X(2.7), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(-2.7), y2: plot.Y(2.7), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('text', { x: plot.X(2.65), y: plot.Y(0) - 8, 'text-anchor': 'end', class: 'axis-label', text: 'position x' }));
+                  els.push(s('text', { x: plot.X(0) + 8, y: plot.Y(2.55), class: 'axis-label', text: 'velocity v' }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  for (const [pts, col] of [[E, 'coral'], [M, 'violet']]) {
+                    els.push(s('path', { d: P(pts.slice(0, n + 1)), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+                    for (let i = 0; i <= n; i++) els.push(s('circle', { cx: plot.X(pts[i][0]), cy: plot.Y(pts[i][1]), r: i === n ? 5.5 : 2.5, class: `fl-${col}` }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const { h, E, M } = SPRING_STEPS, n = Math.min(48, Math.floor(p.t)), e = (q) => q[0] * q[0] + q[1] * q[1]; return `${n} steps (time ${fix(n * h, 1)}) · energy compared with the start: {coral:Euler ×${fix(e(E[n]), 3)}} · {violet:midpoint ×${fix(e(M[n]), 3)}}`; },
+              },
+              after: r`Each Euler step moves along the tangent of the circle, and a tangent always leads slightly **outwards**, so every step multiplies the energy by exactly $1 + h^2 = 1.04$. After 48 steps the swing is more than twice as wide: the simulated spring has gained energy from nowhere. The midpoint method's error per step is far smaller ($1 + h^4/4$), so it stays on the circle much longer. For long simulations (planets, molecules) people use special methods built to conserve energy.`,
             },
             {
               type: 'mcq',

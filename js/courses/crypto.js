@@ -29,6 +29,38 @@ const pie = (s, cx, cy, rad, colors) => {
 // modular exponentiation for small numbers
 const powmod = (b, e, m) => { let r = 1; b %= m; while (e > 0) { if (e & 1) r = (r * b) % m; b = (b * b) % m; e >>= 1; } return r; };
 
+// a compact SHA-256 (for the avalanche demo), returning the 32 bytes of the hash
+function sha256(text) {
+  const K = [];
+  const isPrime = (n) => { for (let d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; };
+  for (let n = 2, c = 0; c < 64; n++) if (isPrime(n)) { K.push((Math.cbrt(n) % 1) * 2 ** 32 | 0); c++; }
+  const H = [];
+  for (let n = 2, c = 0; c < 8; n++) if (isPrime(n)) { H.push((Math.sqrt(n) % 1) * 2 ** 32 | 0); c++; }
+  const bytes = [...new TextEncoder().encode(text)], L = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  for (let i = 7; i >= 0; i--) bytes.push(i >= 4 ? 0 : (L >>> (i * 8)) & 255);
+  const r = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let o = 0; o < bytes.length; o += 64) {
+    const w = [];
+    for (let i = 0; i < 16; i++) w[i] = (bytes[o + 4 * i] << 24) | (bytes[o + 4 * i + 1] << 16) | (bytes[o + 4 * i + 2] << 8) | bytes[o + 4 * i + 3];
+    for (let i = 16; i < 64; i++) {
+      const s0 = r(w[i - 15], 7) ^ r(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = r(w[i - 2], 17) ^ r(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
+      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      [h, g, f, e, d, c, b, a] = [g, f, e, (d + t1) | 0, c, b, a, (t1 + t2) | 0];
+    }
+    H.forEach((v, i) => (H[i] = (v + [a, b, c, d, e, f, g, h][i]) | 0));
+  }
+  return H.flatMap((v) => [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]);
+}
+const AVALANCHE = ['Pay Bob £100', 'Pay Bob £900', 'Pay Bob £100.', 'pay Bob £100', 'Pay Rob £100', 'Pay Bob £100'];
+const avalancheBits = (m) => sha256(m).flatMap((b) => Array.from({ length: 8 }, (_, i) => (b >> (7 - i)) & 1));
+
 export default {
   id: 'crypto',
   subject: 'math',
@@ -386,6 +418,33 @@ Both equal $g^{ab} \bmod p$. Computing $g^a \bmod p$ is fast. Going backwards, f
 - **Chaotic**: change one letter of the input and about half of the output bits flip.
 
 Websites store hashes of passwords rather than the passwords themselves; when you log in, they hash what you type and compare.`,
+            },
+            { /*anim:crypto*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The avalanche',
+              body: r`Here is the real SHA-256 hash of a short message, drawn as a 16 × 16 grid of its 256 bits ({blue:blue} = 1). Each message differs from the one before by a single character. {coral:Coral outlines} mark the bits that flipped.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.3, xmax: 16.3, ymin: -0.3, ymax: 16.3, grid: false, axes: false, maxWidth: 360,
+                animate: { param: 't', speed: 0.5, max: 6, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(5, Math.floor(p.t)), cur = avalancheBits(AVALANCHE[k]), prev = avalancheBits(AVALANCHE[Math.max(0, k - 1)]);
+                  let on = '', flip = '';
+                  const w = plot.X(0.86) - plot.X(0);
+                  cur.forEach((b, i) => {
+                    const x = plot.X(i % 16 + 0.07), y = plot.Y(16 - Math.floor(i / 16) - 0.07);
+                    if (b) on += `M${x.toFixed(1)} ${y.toFixed(1)}h${w.toFixed(1)}v${w.toFixed(1)}h${(-w).toFixed(1)}z`;
+                    if (k > 0 && b !== prev[i]) flip += `M${x.toFixed(1)} ${y.toFixed(1)}h${w.toFixed(1)}v${w.toFixed(1)}h${(-w).toFixed(1)}z`;
+                  });
+                  return [s('rect', { x: plot.X(0), y: plot.Y(16), width: plot.X(16) - plot.X(0), height: plot.Y(0) - plot.Y(16), class: 'fl-surface' }), s('path', { d: on, class: 'fl-blue' }), s('path', { d: flip, fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.5 })];
+                },
+                readout: (p) => {
+                  const k = Math.min(5, Math.floor(p.t)), cur = avalancheBits(AVALANCHE[k]), prev = avalancheBits(AVALANCHE[Math.max(0, k - 1)]);
+                  const n = cur.reduce((a, b, i) => a + (b !== prev[i] ? 1 : 0), 0);
+                  return `message: “${AVALANCHE[k]}”${k ? ` · bits flipped: **${n} of 256**` : ''}`;
+                },
+              },
+              after: r`Change one character, even just a full stop or a capital letter, and about **half** of the 256 bits flip, in a pattern that looks completely random. This **avalanche effect** is deliberate: if similar messages had similar hashes, an attacker could home in on a forgery bit by bit. And changing the message back restores exactly the same hash, so the fingerprint is still perfectly reliable.`,
             },
             {
               type: 'mcq',

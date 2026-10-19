@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 
 // chords between n points on a circle (irregular spacing, so no three chords meet at one point)
@@ -5,6 +6,13 @@ const ANG = [90, 152, 207, 268, 333, 25];
 const regions = (n) => {
   const c = (a, b) => { let x = 1; for (let i = 1; i <= b; i++) x = (x * (a - b + i)) / i; return b > a ? 0 : x; };
   return c(n, 4) + c(n, 2) + 1;
+};
+
+// the fly between the trains: legs shrink by 1/5 each time; returns its position at time t (hours)
+const flyAt = (t) => {
+  let t0 = 0, x = 0, dur = 0.8, dir = 1;
+  while (t > t0 + dur && dur > 1e-9) { x += dir * 75 * dur; t0 += dur; dur *= 0.2; dir = -dir; }
+  return x + dir * 75 * Math.min(dur, Math.max(0, t - t0));
 };
 
 export default {
@@ -300,6 +308,43 @@ A pattern that fits the first few cases is a **guess**, not a proof. To be sure,
               answer: 75,
               wrong: [{ v: 100, why: 'The fly flies for as long as the trains take to meet, at 75 km/h.' }, { v: 150, why: 'The trains meet after 1 hour, so the fly flies for 1 hour.' }],
               explain: r`Don't sum the infinite zigzags! The trains close the gap at $50 + 50 = 100$ km/h, so they meet after **1 hour**. The fly flies the whole time at 75 km/h: **75 km**. (The legend says John von Neumann answered instantly, and when asked if he knew the trick, said he had summed the infinite series.)`,
+            },
+            { /*anim:puzzles*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The zigzag, drawn',
+              body: r`Here is the fly's journey. Top: the trains and the fly. Below: a time chart, with time running **down**. The trains' paths close in like a V, and the fly zigzags inside it.`,
+              widget: {
+                kind: 'graph', xmin: -6, xmax: 106, ymin: -1.12, ymax: 0.34, grid: false, axes: false, height: 380,
+                animate: { param: 't', speed: 0.09, max: 1.3, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const t = Math.min(1, p.t), L = 50 * t, R = 100 - 50 * t;
+                  const els = [];
+                  const T = (x, y, text, o = {}) => s('text', { x, y, 'text-anchor': o.a || 'middle', class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));${o.fill ? 'fill:' + o.fill : 'fill:var(--ink-3)'}`, text });
+                  // track with trains
+                  els.push(s('line', { x1: plot.X(-5), x2: plot.X(105), y1: plot.Y(0.15), y2: plot.Y(0.15), stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  const tw = plot.X(9) - plot.X(0);
+                  els.push(s('rect', { x: plot.X(L) - tw, y: plot.Y(0.15) - 22, width: tw, height: 20, rx: 5, class: 'fl-blue' }));
+                  els.push(s('rect', { x: plot.X(R), y: plot.Y(0.15) - 22, width: tw, height: 20, rx: 5, class: 'fl-coral' }));
+                  els.push(s('circle', { cx: plot.X(flyAt(t)), cy: plot.Y(0.15) - 34, r: 5, class: 'fl-ink' }));
+                  // time chart: x across, time down (0 at the top)
+                  const Y = (tt) => plot.Y(-tt);
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: Y(0), y2: Y(1.04), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(T(plot.X(0) - 8, Y(0) + 4, '0 h', { a: 'end' }), T(plot.X(0) - 8, Y(1) + 4, '1 h', { a: 'end' }));
+                  els.push(s('line', { x1: plot.X(0), y1: Y(0), x2: plot.X(L), y2: Y(t), stroke: 'var(--blue)', 'stroke-width': 3 }));
+                  els.push(s('line', { x1: plot.X(100), y1: Y(0), x2: plot.X(R), y2: Y(t), stroke: 'var(--coral)', 'stroke-width': 3 }));
+                  const pts = [];
+                  for (let i = 0; i <= 400; i++) { const tt = (t * i) / 400; pts.push([plot.X(flyAt(tt)), Y(tt)]); }
+                  // add the exact corners of the zigzag so they stay sharp
+                  let t0 = 0, dur = 0.8;
+                  while (t0 + dur < t && dur > 1e-6) { t0 += dur; dur *= 0.2; pts.push([plot.X(flyAt(t0)), Y(t0)]); }
+                  pts.sort((a, b) => a[1] - b[1]);
+                  els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+                  return els;
+                },
+                readout: (p) => { const t = Math.min(1, p.t); return `time ${fix(t, 3)} h · gap ${fix(100 - 100 * t, 1)} km · the fly has flown **${fix(75 * t, 1)} km**`; },
+              },
+              after: r`The legs last $0.8$ h, then $0.16$ h, then $0.032$ h: each one a fifth of the last. There are infinitely many, but their times add up to $0.8 \times (1 + \tfrac15 + \tfrac1{25} + \cdots) = 0.8 \times \tfrac54 = 1$ hour, and the distances to $75$ km. The chart shows the shortcut too: the fly is always somewhere inside the V, and the V closes after exactly 1 hour.`,
             },
             {
               type: 'numeric',

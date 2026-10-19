@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const D = Math.PI / 180;
 const P = (deg) => [Math.cos(deg * D), Math.sin(deg * D)];
@@ -96,6 +97,47 @@ $$\angle AOB = 2x + 2y = 2(x + y) = 2\,\angle APB$$`,
                 solution: { b: 280 },
               },
               explain: r`You need $\angle AOB = 80°$: $B$ is $80°$ round the circle from $A$. Wherever $P$ sits on the major arc, the inscribed angle is then $40°$.`,
+            },
+            { /*anim:circles*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Sliding into a tangent',
+              body: r`Keep the chord $AB$ fixed and slide $P$ around the circle towards $A$. The inscribed angle $\angle APB$ never changes. Watch what the line $PA$ turns into when $P$ arrives at $A$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.9, xmax: 1.9, ymin: -1.25, ymax: 1.45, grid: false, axes: false, maxWidth: 480, clipExtra: true,
+                animate: { param: 't', speed: 0.45, max: 4, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const aA = (-110 * Math.PI) / 180, aB = (-10 * Math.PI) / 180, u = Math.min(1, p.t / 3), e = u * u * (3 - 2 * u);
+                  const aP = (120 * Math.PI) / 180 + ((250 - 120) * Math.PI / 180) * e;
+                  const Q = (a) => [Math.cos(a), Math.sin(a)], A = Q(aA), B = Q(aB), P = Q(aP);
+                  const X = ([x, y]) => [plot.X(x), plot.Y(y)];
+                  const els = [s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 })];
+                  // the line through P and A, extended both ways (it becomes the tangent at A)
+                  let d = [A[0] - P[0], A[1] - P[1]], L = Math.hypot(...d);
+                  if (L < 1e-3) d = [-Math.sin(aA), Math.cos(aA)]; else d = [d[0] / L, d[1] / L];
+                  const far = (pt, k) => X([pt[0] + d[0] * k, pt[1] + d[1] * k]);
+                  const [lx1, ly1] = far(A, -3), [lx2, ly2] = far(A, 1.2);
+                  els.push(s('line', { x1: lx1, y1: ly1, x2: lx2, y2: ly2, stroke: 'var(--blue)', 'stroke-width': 2.5, opacity: 0.8 }));
+                  const [Ax, Ay] = X(A), [Bx, By] = X(B), [Px, Py] = X(P);
+                  els.push(s('line', { x1: Px, y1: Py, x2: Bx, y2: By, stroke: 'var(--teal)', 'stroke-width': 2.5 }));
+                  els.push(s('line', { x1: Ax, y1: Ay, x2: Bx, y2: By, stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  // angle mark at P between PA and PB
+                  const toA = L < 1e-3 ? d : [A[0] - P[0], A[1] - P[1]];
+                  const a1 = Math.atan2(toA[1], toA[0]), a2 = Math.atan2(B[1] - P[1], B[0] - P[0]);
+                  let da = a2 - a1; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+                  const rr = 0.28, pts = [];
+                  for (let i = 0; i <= 20; i++) { const a = a1 + (da * i) / 20; pts.push(X([P[0] + rr * Math.cos(a), P[1] + rr * Math.sin(a)])); }
+                  els.push(s('path', { d: `M${Px} ${Py}L` + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L') + 'Z', class: 'fl-amber', opacity: 0.85 }));
+                  for (const [pt, lab, dx, dy] of [[A, 'A', -18, 20], [B, 'B', 14, 18], [P, 'P', 0, -14]]) {
+                    const [x, y] = X(pt);
+                    els.push(s('circle', { cx: x, cy: y, r: 6, class: lab === 'P' ? 'fl-coral' : 'fl-ink' }));
+                    els.push(s('text', { x: x + dx, y: y + dy, 'text-anchor': 'middle', class: 'lbl-math halo-text', text: lab }));
+                  }
+                  return els;
+                },
+                readout: (p) => (p.t < 3 ? r`$\angle APB = 50°$, wherever $P$ is on this arc` : r`$P$ has reached $A$: line $PA$ is now the **tangent** at $A$, and the angle between it and the chord is still **50°**`),
+              },
+              after: r`As $P$ closes in on $A$, the line $PA$ swings round until it just touches the circle: it becomes the **tangent** at $A$. The angle never changed on the way, so the angle between a tangent and a chord equals the inscribed angle on the other side of the chord, half the central angle. Here the chord subtends $100°$ at the centre, so both angles are $50°$.`,
             },
             {
               type: 'numeric',

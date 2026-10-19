@@ -82,6 +82,10 @@ function pendulumPath(th0, w0, T = 14, h = 0.02) {
 }
 const pendE = (th, w) => (w * w) / 2 - Math.cos(th);
 
+// exact solutions of y' = y(3 - y): y = 3y0 e^{3t} / (3 - y0 + y0 e^{3t})
+const LOGI_START = [-0.06, 0.04, 0.3, 0.9, 1.6, 2.3, 2.8, 3.4, 4.1, 4.8];
+const logiY = (y0, t) => { const g = Math.exp(3 * t), d = 3 - y0 + y0 * g; return d <= 0 ? -Infinity : (3 * y0 * g) / d; };
+
 export default {
   id: 'diffeq',
   subject: 'math',
@@ -161,6 +165,35 @@ So there's a whole **family** of solutions. Picking a starting point picks one m
               prompt: r`For $\frac{dy}{dt} = y(3 - y)$, the slope is zero along horizontal lines where solutions stay constant. Apart from $y = 0$, at what value of $y$ is there such an equilibrium?`,
               answer: 3,
               explain: r`$y(3 - y) = 0$ when $y = 0$ or $y = 3$. In the slope field these lines are flat; solutions between them rise towards 3, which is a stable equilibrium (a carrying capacity).`,
+            },
+            { /*anim:diffeq*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Flowing along the field',
+              body: r`The slope field of $\dfrac{dy}{dt} = y(3 - y)$, with ten solutions released at once from different starting values. Watch where they go.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 3, ymin: -1, ymax: 5.2, grid: false, height: 320, clipExtra: true, axes: { xlabel: 't', ylabel: 'y' },
+                animate: { param: 't', speed: 0.6, max: 3.8, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const T = Math.min(3, p.t), els = [];
+                  for (let t = 0.15; t < 3; t += 0.3) for (let y = -0.75; y < 5.2; y += 0.5) {
+                    const dx = plot.X(t + 0.01) - plot.X(t), dy = plot.Y(y + 0.01 * y * (3 - y)) - plot.Y(y), L = Math.hypot(dx, dy) / 8;
+                    els.push(s('line', { x1: plot.X(t) - dx / L, y1: plot.Y(y) - dy / L, x2: plot.X(t) + dx / L, y2: plot.Y(y) + dy / L, stroke: 'var(--line-2)', 'stroke-width': 1.6, 'stroke-linecap': 'round' }));
+                  }
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(3), y1: plot.Y(3), y2: plot.Y(3), stroke: 'var(--teal)', 'stroke-width': 2, 'stroke-dasharray': '7 5' }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(3), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '7 5' }));
+                  for (const y0 of LOGI_START) {
+                    const pts = [];
+                    for (let i = 0; i <= 120; i++) { const t = (T * i) / 120, y = logiY(y0, t); if (y < -1.5) break; pts.push(`${i ? 'L' : 'M'}${plot.X(t).toFixed(1)} ${plot.Y(y).toFixed(1)}`); }
+                    els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                    const y = logiY(y0, T);
+                    if (y > -1.5) els.push(s('circle', { cx: plot.X(T), cy: plot.Y(y), r: 5, class: 'fl-blue' }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const T = Math.min(3, p.t), k = LOGI_START.filter((y0) => Math.abs(logiY(y0, T) - 3) < 0.05).length; return `$t = ${fix(T, 2)}$ · ${k} of 10 solutions within 0.05 of {teal:y = 3}`; },
+              },
+              after: r`Every solution that starts above 0, even a tiny bit above, is drawn to the {teal:line $y = 3$}, from below and from above: a **stable** equilibrium. The {coral:line $y = 0$} is also an equilibrium, but an **unstable** one: solutions starting near it are pushed away, upwards or (below it) down and off the bottom of the picture. You can read all this from the field's arrows without solving anything.`,
             },
             {
               type: 'mcq',

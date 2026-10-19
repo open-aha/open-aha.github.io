@@ -12,6 +12,19 @@ const orbitHours = (hkm) => (2 * Math.PI * Math.sqrt(((RE + hkm * 1e3) ** 3) / (
 // Io's period (days) around a planet of mass M × 10^27 kg, at 421,700 km
 const ioDays = (M) => (2 * Math.PI * Math.sqrt((4.217e8) ** 3 / (GN * M * 1e27))) / 86400;
 
+// phasing: the chaser (40° behind) brakes into a lower, faster ellipse and meets the target one lap later
+const PHASE = (() => {
+  const gap = (40 * Math.PI) / 180, Tp = 2 * Math.PI - gap, a = (Tp / (2 * Math.PI)) ** (2 / 3), rp = 2 * a - 1, e = (1 - rp) / (1 + rp);
+  const ellipse = (tt) => {
+    const M = Math.PI + (2 * Math.PI * tt) / Tp;
+    let E = M;
+    for (let i = 0; i < 30; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2)), r = a * (1 - e * Math.cos(E));
+    return [r * Math.cos(Math.PI + nu), r * Math.sin(Math.PI + nu)];
+  };
+  return { gap, Tp, a, rp, ellipse, t0: 1.5 };
+})();
+
 export default {
   id: 'gravity',
   subject: 'physics',
@@ -528,6 +541,42 @@ Higher orbits are **slower** and take **longer**. Remember $r$ is measured from 
                 { t: 'Straight towards the station', why: 'Orbital mechanics isn’t that simple: thrust changes the orbit’s shape.' },
               ],
               explain: r`Slowing down drops you to a lower orbit with a shorter period, so you gain on the target; then you speed up to rise back to its altitude. Gemini 4's astronauts discovered this the hard way in 1965 when they tried to fly straight at their target and kept drifting away.`,
+            },
+            { /*anim:gravity*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Slow down to catch up',
+              body: r`The {coral:chaser} is 40° behind the {blue:target} in the same circular orbit. Watch what happens when it fires its engine **backwards**.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.25, xmax: 1.25, ymin: -1.25, ymax: 1.25, grid: false, axes: false, maxWidth: 420,
+                animate: { param: 't', speed: 1.1, max: 10, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { gap, Tp, ellipse, t0 } = PHASE, t = p.t, els = [];
+                  const target = [Math.cos(gap + t), Math.sin(gap + t)];
+                  let chaser, burn = false;
+                  if (t < t0) chaser = [Math.cos(t), Math.sin(t)];
+                  else if (t < t0 + Tp) { const q = ellipse(t - t0); const a0 = t0; chaser = [q[0] * Math.cos(a0) - q[1] * Math.sin(a0), q[0] * Math.sin(a0) + q[1] * Math.cos(a0)]; burn = t - t0 < 0.25; }
+                  else chaser = [Math.cos(t - Tp), Math.sin(t - Tp)];
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(0.3) - plot.X(0), class: 'fl-teal', opacity: 0.8 }));
+                  // the phasing ellipse
+                  const pts = [];
+                  for (let i = 0; i <= 120; i++) { const q = ellipse((Tp * i) / 120); pts.push([q[0] * Math.cos(t0) - q[1] * Math.sin(t0), q[0] * Math.sin(t0) + q[1] * Math.cos(t0)]); }
+                  if (t >= t0) els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  els.push(s('circle', { cx: plot.X(target[0]), cy: plot.Y(target[1]), r: 9, class: 'fl-blue', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(chaser[0]), cy: plot.Y(chaser[1]), r: 7, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  if (burn) els.push(s('circle', { cx: plot.X(chaser[0]), cy: plot.Y(chaser[1]), r: 16, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 3 }));
+                  return els;
+                },
+                readout: (p) => {
+                  const { gap, Tp, ellipse, t0 } = PHASE, t = p.t;
+                  if (t < t0) return 'same orbit, same speed: the gap stays at 40°';
+                  if (t >= t0 + Tp) return '**rendezvous!** A forward burn puts the chaser back on the circle, right beside the target';
+                  const q = ellipse(t - t0), ang = Math.atan2(q[1], q[0]) + t0, d = ((((gap + t - ang) * 180) / Math.PI) % 360 + 360) % 360;
+                  return `braked into a lower orbit: it's falling inwards and speeding up · gap ${fix(d > 180 ? d - 360 : d, 0)}°`;
+                },
+              },
+              after: r`Braking at one point of the orbit lowers the **opposite** side of the orbit. The chaser drops inwards, speeds up as it falls, and its new, smaller orbit takes less time to go round. One lap later it arrives back at the burn point exactly when the target does. Speeding up would have done the opposite: a bigger, slower orbit, and the target would pull further ahead.`,
             },
           ],
           recap: [

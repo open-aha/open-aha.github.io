@@ -12,6 +12,44 @@ const keep = (x) => (10 - x) * Math.min(1, x / 4);
 // first-price auction: your value £80, rival's bid uniform on £0–100
 const auctionProfit = (b) => (80 - b) * (b / 100);
 
+// Nowak & May's spatial prisoner's dilemma (1992): everyone plays their 8 neighbours and themselves,
+// then copies the best scorer nearby. Temptation b = 1.85; one defector starts in the middle.
+const PD_N = 69, PD_B = 1.85;
+// computed on first use (and the drawing of each round is kept too)
+let PD_CACHE = null;
+const PD_DRAW = new Map();
+const pdGens = () => PD_CACHE || (PD_CACHE = (() => {
+  const N = PD_N, gens = [];
+  let g = new Uint8Array(N * N); // 1 = defector
+  g[((N - 1) / 2) * N + (N - 1) / 2] = 1;
+  gens.push(g);
+  for (let step = 0; step < 90; step++) {
+    const score = new Float64Array(N * N);
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+      let sc = 0;
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        const a = i + di, b = j + dj;
+        if (a < 0 || b < 0 || a >= N || b >= N || g[a * N + b]) continue; // only cooperating partners pay out
+        sc += g[i * N + j] ? PD_B : 1;
+      }
+      score[i * N + j] = sc;
+    }
+    const next = new Uint8Array(N * N);
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+      let best = score[i * N + j], st = g[i * N + j];
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        const a = i + di, b = j + dj;
+        if (a < 0 || b < 0 || a >= N || b >= N) continue;
+        if (score[a * N + b] > best) { best = score[a * N + b]; st = g[a * N + b]; }
+      }
+      next[i * N + j] = st;
+    }
+    gens.push(next);
+    g = next;
+  }
+  return gens;
+})());
+
 export default {
   id: 'games',
   subject: 'math',
@@ -316,6 +354,33 @@ Try different opponents. Play at least one full game.`,
               body: r`Around 1980, political scientist Robert Axelrod invited experts to submit strategies for a repeated prisoner's dilemma tournament. The winner was the simplest entry: **Tit for Tat**, submitted by Anatol Rapoport. Cooperate first, then copy whatever the opponent did last time.
 
 Successful strategies shared four traits: they were **nice** (never the first to defect), **retaliatory** (they punished defection), **forgiving** (they returned to cooperation) and **clear** (easy for others to read).`,
+            },
+            { /*anim:games*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Cooperation on a grid',
+              body: r`In 1992 Martin Nowak and Robert May put players on a grid. Each round, everyone plays the prisoner's dilemma with their eight neighbours, then copies whichever neighbour scored best. No memory, no strategy: just imitation. Start with a sea of cooperators and **one** defector in the middle.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: 0, xmax: 69, ymin: 0, ymax: 69, grid: false, axes: false, maxWidth: 420, pad: 4,
+                animate: { param: 't', speed: 4, max: 91, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(90, Math.floor(p.t)), g = pdGens()[k], prev = pdGens()[Math.max(0, k - 1)], N = PD_N;
+                  // blue: stayed a cooperator, coral: stayed a defector, amber: just defected, green: just started cooperating
+                  const w = plot.X(1) - plot.X(0), key = `${k}:${w.toFixed(3)}`;
+                  let paths = PD_DRAW.get(key);
+                  if (!paths) {
+                    paths = { blue: '', coral: '', amber: '', green: '' };
+                    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+                      const a = prev[i * N + j], b = g[i * N + j], col = a ? (b ? 'coral' : 'green') : b ? 'amber' : 'blue';
+                      paths[col] += `M${plot.X(j).toFixed(2)} ${plot.Y(i + 1).toFixed(2)}h${w.toFixed(2)}v${w.toFixed(2)}h${(-w).toFixed(2)}z`;
+                    }
+                    PD_DRAW.set(key, paths);
+                  }
+                  return Object.entries(paths).map(([col, d]) => s('path', { d, class: `fl-${col}`, opacity: col === 'blue' ? 0.35 : 0.9 }));
+                },
+                readout: (p) => { const k = Math.min(90, Math.floor(p.t)), g = pdGens()[k]; let d = 0; for (const v of g) d += v; return `round ${k} · {blue:cooperators} ${(100 - (100 * d) / g.length).toFixed(0)}% · {coral:defectors} ${((100 * d) / g.length).toFixed(0)}%`; },
+              },
+              after: r`The lone defector grows into an ever-changing, perfectly symmetric pattern, an "evolutionary kaleidoscope". Defectors invade, but clusters of cooperators protect each other: inside a cluster, cooperators mostly meet cooperators and score well. Neither side ever wins outright, and cooperation survives without any memory or foresight, just because neighbours interact with neighbours.`,
             },
             {
               type: 'mcq',

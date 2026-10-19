@@ -101,6 +101,22 @@ function eqAB(t, kf, kb, add = 0, t0 = 20) {
   return [a, tot - a];
 }
 
+// 120 molecules flipping between A and B: each A turns into B with rate 0.2 per second, each B back with rate 0.1
+const EQUIL = (() => {
+  let a = 31337;
+  const rnd = () => (a = (a * 16807) % 2147483647) / 2147483647, N = 120, steps = 300, dt = 0.1;
+  let st = new Array(N).fill(0), pos = Array.from({ length: N }, () => [rnd(), rnd()]);
+  const frames = [];
+  for (let k = 0; k <= steps; k++) {
+    frames.push({ st: st.slice(), pos: pos.map((q) => q.slice()), nB: st.reduce((x, y) => x + y, 0) });
+    const prev = st.slice();
+    st = st.map((v) => (v === 0 ? (rnd() < 0.2 * dt ? 1 : 0) : rnd() < 0.1 * dt ? 0 : 1));
+    frames[k].flip = st.map((v, i) => v !== prev[i]);
+    pos = pos.map(([x, y]) => [Math.min(0.98, Math.max(0.02, x + 0.04 * (rnd() - 0.5))), Math.min(0.98, Math.max(0.02, y + 0.04 * (rnd() - 0.5)))]);
+  }
+  return frames;
+})();
+
 export default {
   id: 'reactions',
   subject: 'physics',
@@ -653,6 +669,34 @@ A catalyst doesn't change the starting or ending energies, so it doesn't change 
                 readout: (p) => `at equilibrium: A **${fix((100 * p.kb) / (p.kf + p.kb), 0)}%**, B **${fix((100 * p.kf) / (p.kf + p.kb), 0)}%** · $K = k_f / k_b = ${fix(p.kf / p.kb, 2)}$`,
               },
               after: r`At first B forms quickly. But as B builds up, the backward reaction speeds up, until the two rates are equal: $k_f[\mathrm A] = k_b[\mathrm B]$. Then nothing seems to change, although molecules keep reacting both ways. This is **dynamic equilibrium**, and the ratio $K = \frac{[\mathrm B]}{[\mathrm A]} = \frac{k_f}{k_b}$ is the **equilibrium constant**.`,
+            },
+            { /*anim:reactions*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Never at rest',
+              body: r`120 molecules, all {blue:A} to begin with. Any A can turn into {coral:B}, and any B back into A (B to A is half as likely each second). A ring flashes on every molecule that changes.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 2.3, ymin: -0.05, ymax: 1.05, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 1.5, max: 30, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(299, Math.floor(p.t / 0.1)), f = EQUIL[k], els = [];
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(1), width: plot.X(1) - plot.X(0), height: plot.Y(0) - plot.Y(1), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  f.pos.forEach(([x, y], i) => {
+                    els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 5, class: f.st[i] ? 'fl-coral' : 'fl-blue' }));
+                    if (f.flip[i]) els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 10, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2.5 }));
+                  });
+                  // the count of B against time
+                  const X = (t) => plot.X(1.2 + (t / 30) * 1.05), Y = (n) => plot.Y(0.05 + (n / 120) * 0.9);
+                  els.push(s('line', { x1: X(0), x2: X(30), y1: Y(80), y2: Y(80), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '4 5' }));
+                  els.push(s('path', { d: EQUIL.slice(0, k + 1).map((q, i) => `${i ? 'L' : 'M'}${X(i * 0.1).toFixed(1)} ${Y(q.nB).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.5 }));
+                  els.push(s('path', { d: EQUIL.slice(0, k + 1).map((q, i) => `${i ? 'L' : 'M'}${X(i * 0.1).toFixed(1)} ${Y(120 - q.nB).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  els.push(s('line', { x1: X(0), x2: X(30), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('text', { x: X(30), y: Y(80) - 6, 'text-anchor': 'end', class: 'tick', text: '80 of 120' }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(299, Math.floor(p.t / 0.1)), lo = Math.max(0, k - 10); let ab = 0, ba = 0; for (let j = lo; j < k; j++) EQUIL[j].flip.forEach((fl, i) => { if (fl) { if (EQUIL[j].st[i]) ba++; else ab++; } }); return `{coral:B: ${EQUIL[k].nB}} · {blue:A: ${120 - EQUIL[k].nB}} · changes in the last second: ${ab} A→B, ${ba} B→A`; },
+              },
+              after: r`After a while the counts settle around 80 B and 40 A, and stay there. But the molecules haven't stopped reacting: in every second, about as many A molecules turn into B as B molecules turn back into A. At **dynamic equilibrium** the forward and backward rates are equal: $0.2 \times 40 = 0.1 \times 80$.`,
             },
             {
               type: 'interactive',

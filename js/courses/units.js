@@ -1,4 +1,4 @@
-import { fix } from '../lib/svg.js';
+import { fix, sig } from '../lib/svg.js';
 
 const r = String.raw;
 const f2 = (v) => (Math.round(v * 100) / 100).toString();
@@ -445,6 +445,33 @@ Converting: $F = \tfrac95 C + 32$ and $K = C + 273.15$.`,
               answer: 10,
               wrong: [{ v: 1000, why: r`That's the weight. The bone area also grows, by $10^2 = 100$.` }, { v: 100, why: r`That's the bone's cross-section. Stress = weight ÷ area = $1000 / 100$.` }, { v: 1, why: 'Weight grows faster than bone area, so the stress isn’t the same.' }],
               explain: r`Weight grows by $10^3 = 1000$ and bone cross-section by $10^2 = 100$, so the stress grows by **10×**. Human leg bones can't take that: the giant would break a thigh bone taking a step. Real large animals, like elephants, have proportionally much thicker legs.`,
+            },
+            { /*anim:units*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Galileo’s bones',
+              body: r`In 1638 Galileo drew two bones: a small one, and one for an animal three times larger, which had to be far thicker. Here an animal grows from mouse-sized to elephant-sized. It is always **drawn at the same size**, so you can compare its shape. Its legs keep the stress in the bone the same.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.6, xmax: 6.6, ymin: -0.4, ymax: 3.9, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 0.5, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = 30 ** ((1 - Math.cos(p.t)) / 2), w = 0.32 * Math.sqrt(k);
+                  const R = (x0, y0, x1, y1, o) => s('rect', { x: plot.X(x0), y: plot.Y(y1), width: plot.X(x1) - plot.X(x0), height: plot.Y(y0) - plot.Y(y1), rx: 4, ...o });
+                  const els = [s('line', { x1: plot.X(-0.5), x2: plot.X(6.5), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.6 })];
+                  // body and head
+                  els.push(R(0.6, 1.6, 4.6, 2.9, { class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(5.25), cy: plot.Y(3.05), r: plot.X(0.62) - plot.X(0), class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  // legs: thickness grows like the square root of the size, so stress stays fixed
+                  for (const cx of [1.25, 3.95]) {
+                    els.splice(1, 0, R(cx - w / 2, 0, cx + w / 2, 1.7, { class: 'fl-coral', opacity: 0.85 }));
+                    els.push(R(cx - 0.16, 0, cx + 0.16, 1.58, { fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  }
+                  els.push(s('text', { x: plot.X(3), y: plot.Y(3.45), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:700', text: `real size ×${fix(k, 1)}` }));
+                  return els;
+                },
+                readout: (p) => { const k = 30 ** ((1 - Math.cos(p.t)) / 2); return r`size $\times$${fix(k, 1)}: weight $\times$${sig(k ** 3, 3, true)}, so each leg needs ${sig(k ** 3, 3, true)}× the cross-section and must be **${fix(Math.sqrt(k), 2)}×** as thick compared with its length`; },
+              },
+              after: r`Scale an animal by $k$ and its weight grows by $k^3$. To keep the same stress, each bone's cross-section must also grow by $k^3$, so its thickness grows by $k^{3/2}$, faster than its length $k$. Relative to its length, the bone gets $\sqrt{k}$ times stockier. The dashed outlines show the mouse's proportions: an elephant built like a mouse would snap its legs. Real animals cheat a little too, by standing on straighter legs, but the trend from spindly mouse to pillar-legged elephant is exactly Galileo's.`,
             },
             {
               type: 'mcq',

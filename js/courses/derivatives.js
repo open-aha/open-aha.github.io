@@ -85,6 +85,28 @@ As $h$ shrinks to 0, $2 + h$ gets as close to 2 as we like. We write
 $$\lim_{h \to 0} \frac{(1 + h)^2 - 1}{h} = 2.$$
 This **limit** is the slope of the tangent line, the **instantaneous rate of change**.`,
             },
+            { /*anim:derivatives*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Zoom until it’s straight',
+              body: r`Here is the {blue:graph of $d(t) = t^2$} around the point $(1, 1)$, with the {violet:line of slope 2} through it. We zoom in on the point, keeping the same scale on both axes.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1, xmax: 1, ymin: -1, ymax: 1, grid: false, axes: false, maxWidth: 360, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 8, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const u = Math.min(1, Math.max(0, (p.t - 0.6) / 6)), w = 1.5 * 1000 ** -u, pts = [], els = [];
+                  // screen coordinates: (t - 1) / w across, (t² - 1) / w up
+                  for (let i = 0; i <= 160; i++) { const X = -1.1 + (2.2 * i) / 160, tt = 1 + X * w; pts.push(`${i ? 'L' : 'M'}${plot.X(X).toFixed(1)} ${plot.Y((tt * tt - 1) / w).toFixed(1)}`); }
+                  els.push(s('line', { x1: plot.X(-1), x2: plot.X(1), y1: plot.Y(-2), y2: plot.Y(2), stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-dasharray': '7 5' }));
+                  els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 3 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: 5.5, class: 'fl-coral' }));
+                  els.push(s('rect', { x: plot.X(-1), y: plot.Y(1), width: plot.X(1) - plot.X(-1), height: plot.Y(-1) - plot.Y(1), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  return els;
+                },
+                readout: (p) => { const u = Math.min(1, Math.max(0, (p.t - 0.6) / 6)), w = 1.5 * 1000 ** -u; return `zoom ×${fix(1.5 / w, 0)} · showing $t$ from ${fix(1 - w, 4)} to ${fix(1 + w, 4)}`; },
+              },
+              after: r`At first the curve bends visibly away from the line. Zoom in 10 times and it's hard to tell them apart; at 1000 times they're the same line. A smooth curve, looked at closely enough, **is** a straight line, and the derivative is that line's slope. Not every graph does this: $|t|$ has a corner at 0 that stays a corner however far you zoom, so it has no derivative there.`,
+            },
             {
               type: 'numeric',
               title: 'At t = 3',

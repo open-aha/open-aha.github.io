@@ -278,6 +278,45 @@ export default {
 
 Every repeating wallpaper pattern has one of exactly **17** combinations of these symmetries, and the tilework of the Alhambra palace in Spain shows many of them.`,
             },
+            { /*anim:tilings*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Moving a pattern onto itself',
+              body: r`Four border patterns, each built from the same little flag. Watch a {coral:copy} of each pattern move, and land exactly on the {blue:original}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.3, xmax: 12.3, ymin: -1.3, ymax: 1.3, grid: false, axes: false, clipExtra: true,
+                animate: { param: 't', speed: 0.55, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.floor(p.t / 3) % 4, u = Math.min(1, Math.max(0, ((p.t % 3) - 0.5) / 1.8)), e = u * u * (3 - 2 * u), els = [];
+                  // the flag: a pole with a pennant, deliberately lopsided
+                  const FLAG = [[0, -0.7], [0.12, -0.7], [0.12, 0.25], [0.75, 0.45], [0.12, 0.7], [0, 0.7]];
+                  const tf = (pts, f) => pts.map(f);
+                  // each pattern lists its flags as functions of a point; period 2 along x
+                  const pats = [
+                    (i) => [tf(FLAG, ([x, y]) => [x + i, y])],
+                    (i) => [tf(FLAG, ([x, y]) => [x + 2 * i + 0.1, y]), tf(FLAG, ([x, y]) => [2 * i + 1.9 - x, y])],
+                    (i) => [tf(FLAG, ([x, y]) => [x + 2 * i + 0.1, y]), tf(FLAG, ([x, y]) => [2 * i + 1.9 - x, -y])],
+                    (i) => [tf(FLAG, ([x, y]) => [x + 2 * i + 0.1, y]), tf(FLAG, ([x, y]) => [x + 2 * i + 1.1, -y])],
+                  ];
+                  const moves = [
+                    ([x, y]) => [x + e, y],
+                    ([x, y]) => [6 + (x - 6) * Math.cos(Math.PI * e), y],
+                    ([x, y]) => [6 + (x - 6) * Math.cos(Math.PI * e) - y * Math.sin(Math.PI * e), (x - 6) * Math.sin(Math.PI * e) + y * Math.cos(Math.PI * e)],
+                    ([x, y]) => [x + e, y * Math.cos(Math.PI * e)],
+                  ];
+                  const draw = (pts, o) => s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', 'stroke-linejoin': 'round', ...o });
+                  const n = k === 0 ? 14 : 7;
+                  for (let i = -1; i < n; i++) pats[k](i).forEach((f) => els.push(draw(f, { class: 'fl-blue', opacity: 0.35 })));
+                  for (let i = -1; i < n; i++) pats[k](i).forEach((f) => els.push(draw(f.map(moves[k]), { fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.5 })));
+                  if (k === 1) els.push(s('line', { x1: plot.X(6), x2: plot.X(6), y1: plot.Y(-1.2), y2: plot.Y(1.2), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  if (k === 2) els.push(s('circle', { cx: plot.X(6), cy: plot.Y(0), r: 5, class: 'fl-ink' }));
+                  if (k === 3) els.push(s('line', { x1: plot.X(-0.3), x2: plot.X(12.3), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  return els;
+                },
+                readout: (p) => ['**Translation**: slide one step along', '**Reflection**: flip in the dashed mirror line', '**Rotation**: a half-turn about the dot', '**Glide reflection**: flip in the dashed line *and* slide half a step'][Math.floor(p.t / 3) % 4],
+              },
+              after: r`Each pattern lands exactly on itself after its own kind of move, and only after that kind: the glide pattern, like a trail of footprints, has no plain mirror line at all, yet flipping **and** sliding works. Patterns along a strip can only use these four moves (with half-turns as the only rotations), which is why there are just seven kinds of frieze.`,
+            },
             {
               type: 'mcq',
               title: 'Footprints',

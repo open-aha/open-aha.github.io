@@ -20,6 +20,49 @@ const PERMS = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]]
 const WORKERS = ['Ana', 'Ben', 'Cleo'], JOBS = ['painting', 'wiring', 'plumbing'];
 const assignCost = (k) => PERMS[k].reduce((t, j, w) => t + COST[w][j], 0);
 
+// a 9-sided feasible region (tangent lines to the unit circle) and two routes to its best corner
+const LP9 = Array.from({ length: 9 }, (_, i) => { const a = (2 * Math.PI * i) / 9 + 0.15; return [Math.cos(a), Math.sin(a)]; });
+const LP_C = [Math.cos(0.5), Math.sin(0.5)];
+const LP_VERTS = LP9.map((n, i) => {
+  const m = LP9[(i + 1) % 9], det = n[0] * m[1] - n[1] * m[0];
+  return [(m[1] - n[1]) / det, (n[0] - m[0]) / det];
+});
+// the simplex path: from the worst corner, step to a better neighbour each time (here, always the next corner round)
+const LP_SIMPLEX = (() => {
+  const val = (v) => v[0] * LP_C[0] + v[1] * LP_C[1];
+  let i = LP_VERTS.reduce((b, v, k) => (val(v) < val(LP_VERTS[b]) ? k : b), 0);
+  const path = [LP_VERTS[i]];
+  for (;;) {
+    const nb = [(i + 1) % 9, (i + 8) % 9].filter((k) => val(LP_VERTS[k]) > val(LP_VERTS[i]) + 1e-9).sort((p, q) => val(LP_VERTS[q]) - val(LP_VERTS[p]));
+    if (!nb.length) break;
+    i = nb[0];
+    path.push(LP_VERTS[i]);
+  }
+  return path;
+})();
+// the interior route: the "central path", maximising c·x + μ Σ log(slack) as μ shrinks towards 0
+const LP_CENTRAL = (() => {
+  let x = [0, 0];
+  const pts = [];
+  for (let k = 0; k <= 60; k++) {
+    const mu = 3 * 0.86 ** k;
+    for (let it = 0; it < 30; it++) {
+      let g = [LP_C[0], LP_C[1]], H = [0, 0, 0];
+      for (const n of LP9) {
+        const sl = 1 - n[0] * x[0] - n[1] * x[1];
+        g[0] -= (mu * n[0]) / sl; g[1] -= (mu * n[1]) / sl;
+        H[0] += (mu * n[0] * n[0]) / sl ** 2; H[1] += (mu * n[0] * n[1]) / sl ** 2; H[2] += (mu * n[1] * n[1]) / sl ** 2;
+      }
+      const det = H[0] * H[2] - H[1] * H[1];
+      let d = [(H[2] * g[0] - H[1] * g[1]) / det, (H[0] * g[1] - H[1] * g[0]) / det], st = 1;
+      while (LP9.some((n) => 1 - n[0] * (x[0] + st * d[0]) - n[1] * (x[1] + st * d[1]) <= 0)) st /= 2;
+      x = [x[0] + st * d[0], x[1] + st * d[1]];
+    }
+    pts.push(x);
+  }
+  return pts;
+})();
+
 export default {
   id: 'optimization',
   subject: 'math',
@@ -434,6 +477,51 @@ In 1947, George Dantzig invented the **simplex method**: start at one corner, th
                 readout: (p) => { const path = [[0, 0], [5, 0], [5, 2]], [x, y] = path[p.k]; return `corner (${x}, ${y}): profit **${3 * x + 2 * y}**${p.k === 2 ? ' · no neighbour is better: optimal ✓' : ''}`; },
               },
               after: r`From $(0,0)$ the method moves to $(5, 0)$ (profit 15), then $(5, 2)$ (profit 19). Its neighbours, $(3, 4)$ with 17 and $(5, 0)$ with 15, are both worse, so it stops: for linear problems, a corner better than its neighbours is the best of all. It never had to visit $(0, 5)$ or $(3, 4)$.`,
+            },
+            { /*anim:optimization*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two ways to the top',
+              body: r`A feasible region with nine corners, and a profit that grows towards the top right (the dashed lines are equal-profit lines). The {coral:simplex method} starts at a corner and walks along the edges, one better corner at a time. An {blue:interior-point method} starts in the middle and heads straight for the answer.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.25, xmax: 1.25, ymin: -1.2, ymax: 1.2, grid: false, axes: false, maxWidth: 440,
+                animate: { param: 't', speed: 0.8, max: 7.5, autoplay: true },
+                under: ({ plot, s }) => {
+                  const els = [s('path', { d: LP_VERTS.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', class: 'fl-violet-soft', stroke: 'var(--violet)', 'stroke-width': 2 })];
+                  for (let v = -1.2; v <= 1.2; v += 0.3) {
+                    const px = -LP_C[1], py = LP_C[0];
+                    els.push(s('line', { x1: plot.X(v * LP_C[0] - 2 * px), y1: plot.Y(v * LP_C[1] - 2 * py), x2: plot.X(v * LP_C[0] + 2 * px), y2: plot.Y(v * LP_C[1] + 2 * py), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '3 6', opacity: 0.6 }));
+                  }
+                  return els;
+                },
+                clipExtra: true,
+                extra: ({ plot, p, s }) => {
+                  const n = LP_SIMPLEX.length - 1, T = Math.min(p.t, 6), els = [];
+                  // simplex: one edge per time unit (spread over 6 units)
+                  const u = (T / 6) * n, k = Math.min(n - 1, Math.floor(u)), f = Math.min(1, u - k);
+                  const sp = LP_SIMPLEX.slice(0, k + 1).concat([[LP_SIMPLEX[k][0] + (LP_SIMPLEX[k + 1][0] - LP_SIMPLEX[k][0]) * f, LP_SIMPLEX[k][1] + (LP_SIMPLEX[k + 1][1] - LP_SIMPLEX[k][1]) * f]]);
+                  const line = (pts, col, w) => s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': w, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+                  els.push(line(sp, 'coral', 4));
+                  LP_SIMPLEX.slice(0, k + 1).forEach(([x, y]) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 5, class: 'fl-coral' })));
+                  // move along the central path at a steady speed (by length, not by μ)
+                  const cum = [0];
+                  for (let i = 1; i < LP_CENTRAL.length; i++) cum.push(cum[i - 1] + Math.hypot(LP_CENTRAL[i][0] - LP_CENTRAL[i - 1][0], LP_CENTRAL[i][1] - LP_CENTRAL[i - 1][1]));
+                  const goal = (T / 6) * cum[cum.length - 1], ip = [LP_CENTRAL[0]];
+                  for (let i = 1; i < LP_CENTRAL.length; i++) {
+                    if (cum[i] <= goal) { ip.push(LP_CENTRAL[i]); continue; }
+                    const w = (goal - cum[i - 1]) / (cum[i] - cum[i - 1]);
+                    ip.push([LP_CENTRAL[i - 1][0] + (LP_CENTRAL[i][0] - LP_CENTRAL[i - 1][0]) * w, LP_CENTRAL[i - 1][1] + (LP_CENTRAL[i][1] - LP_CENTRAL[i - 1][1]) * w]);
+                    break;
+                  }
+                  els.push(line(ip, 'blue', 3.5));
+                  const [ex, ey] = sp[sp.length - 1], [bx, by] = ip[ip.length - 1];
+                  els.push(s('circle', { cx: plot.X(ex), cy: plot.Y(ey), r: 8, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(bx), cy: plot.Y(by), r: 8, class: 'fl-blue', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => { const n = LP_SIMPLEX.length - 1, k = Math.min(n, Math.floor((Math.min(p.t, 6) / 6) * n + 1e-9)); return `simplex: ${k} of ${n} edges walked · interior path: ${p.t >= 6 ? 'arrived' : 'cutting through the middle'}`; },
+              },
+              after: r`The simplex method only ever stands on corners, and here it needs four edge steps. With millions of corners it is usually still quick, but its route can wind around the boundary. Interior-point methods follow a smooth curve, the **central path**, that keeps away from the walls until the very end. Each step costs more work, but the number of steps grows very slowly with the size of the problem.`,
             },
             {
               type: 'mcq',

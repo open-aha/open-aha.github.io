@@ -530,6 +530,37 @@ where $v_{\text{rim}} = R\omega$ is the speed of the rim. A **flywheel** uses th
               ],
               explain: r`A rolling object shares its energy: $\frac12 mv^2$ for moving along and $\frac12 I\omega^2$ for spinning, with $v = R\omega$ when there's no slipping. The more of its mass sits far from the axis, the bigger the spinning share, and the slower it rolls. That's why the solid ball beat the hoop in the earlier race.`,
             },
+            { /*anim:rotation*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Every point of a rolling wheel',
+              body: r`A wheel rolls to the right without slipping. Arrows show the velocity of eight points on its rim and of its centre. Watch the two parts get added: first the {blue:sliding along}, which is the same everywhere, then the {coral:spinning}, which goes round the rim, then their {violet:sum}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.2, xmax: 9.6, ymin: -0.35, ymax: 3.3, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 15, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  // one full turn per loop, so the restart is seamless
+                  const R = 1.1, v = (2 * Math.PI * R) / 15, stage = Math.floor(p.t / 5), cx = 1.4 + v * p.t, cy = R, rot = -(cx - 1.4) / R, els = [];
+                  const arrow = (x0, y0, dx, dy, col) => { const X0 = plot.X(x0), Y0 = plot.Y(y0), X1 = plot.X(x0 + dx), Y1 = plot.Y(y0 + dy), L = Math.hypot(X1 - X0, Y1 - Y0); if (L < 3) return null; const a = Math.atan2(Y1 - Y0, X1 - X0), h = Math.min(9, L / 2); return s('path', { d: `M${X0} ${Y0}L${X1} ${Y1}M${X1 - h * Math.cos(a - 0.45)} ${Y1 - h * Math.sin(a - 0.45)}L${X1} ${Y1}L${X1 - h * Math.cos(a + 0.45)} ${Y1 - h * Math.sin(a + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); };
+                  els.push(s('line', { x1: plot.X(-0.2), x2: plot.X(9.6), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(cy), r: plot.X(R) - plot.X(0), class: 'fl-surface', stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  const L = 1.0; // arrow length for the centre's speed
+                  const pts = [[0, 0]];
+                  for (let k = 0; k < 8; k++) { const a = rot + (k * Math.PI) / 4; pts.push([R * Math.cos(a), R * Math.sin(a)]); }
+                  for (const [rx, ry] of pts) {
+                    els.push(s('circle', { cx: plot.X(cx + rx), cy: plot.Y(cy + ry), r: 3.5, class: 'fl-ink' }));
+                    // spinning clockwise: velocity ω × r = (ry, -rx) · (v/R)
+                    const tx = (L * ry) / R, ty = (-L * rx) / R;
+                    const el = stage === 0 ? arrow(cx + rx, cy + ry, L, 0, 'blue') : stage === 1 ? arrow(cx + rx, cy + ry, tx, ty, 'coral') : arrow(cx + rx, cy + ry, L + tx, ty, 'violet');
+                    if (el) els.push(el);
+                  }
+                  if (stage === 2) els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(0), r: 6, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => ['{blue:sliding}: every point moves forward at the centre’s speed $v$', '{coral:spinning}: each rim point moves round at speed $v$ (no slipping)', '{violet:both}: the top moves at $2v$, the bottom point is momentarily at rest'][Math.floor(p.t / 5) % 3],
+              },
+              after: r`Rolling is sliding plus spinning, and "without slipping" means the spin speed at the rim exactly matches the forward speed. At the bottom they cancel, so the contact point is at rest at that instant; at the top they add, giving $2v$. In the sum, every arrow is at right angles to the line joining its point to the contact point, and proportional to its length: for that instant, the whole wheel is simply turning about the point touching the ground.`,
+            },
             {
               type: 'numeric',
               title: 'The spinning share',

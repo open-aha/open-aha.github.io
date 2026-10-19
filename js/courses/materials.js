@@ -548,6 +548,36 @@ The sharper the tip (small $\rho$), the bigger the concentration. A crack is the
 
 That's why bridges, cranes, roofs and bicycle frames are built from triangles: **trusses**. Each bar is pulled or pushed along its length, with no bending, so thin members can carry big loads.`,
             },
+            { /*anim:materials*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Push on the corner',
+              body: r`Three frames made of stiff bars joined by **hinges** (pins that let the bars turn freely). The same sideways push rocks the top corner of each one.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.4, xmax: 11.4, ymin: -0.9, ymax: 3.6, grid: false, axes: false,
+                animate: { param: 't', speed: 1.4, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const pw = (1 - Math.cos(p.t)) / 2, sh = 0.9 * pw, els = [];
+                  const X = ([x, y]) => [plot.X(x), plot.Y(y)];
+                  const bar = (a, b, col = 'ink') => { const [x1, y1] = X(a), [x2, y2] = X(b); return s('line', { x1, y1, x2, y2, stroke: `var(--${col})`, 'stroke-width': 5, 'stroke-linecap': 'round' }); };
+                  const pin = (a) => { const [x, y] = X(a); return s('circle', { cx: x, cy: y, r: 6, class: 'fl-card', stroke: 'var(--ink)', 'stroke-width': 2.5 }); };
+                  const ground = (x0, x1) => s('line', { x1: plot.X(x0), x2: plot.X(x1), y1: plot.Y(-0.12), y2: plot.Y(-0.12), stroke: 'var(--axis)', 'stroke-width': 2 });
+                  const push = (pt) => { const [x, y] = X(pt); return s('path', { d: `M${x - 46} ${y}h30m0 -7l12 7l-12 7z`, fill: 'var(--coral)', stroke: 'var(--coral)', 'stroke-width': 3, 'stroke-linejoin': 'round', opacity: 0.25 + 0.75 * pw }); };
+                  const lab = (x, text) => s('text', { x: plot.X(x), y: plot.Y(-0.62), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--ink-2)', text });
+                  // 1. a square: the top slides sideways, the bars keep their lengths
+                  const ang = Math.asin(Math.max(-0.95, Math.min(0.95, sh / 2.6))), A = [0.6, 0], B = [3.2, 0], C = [3.2 + 2.6 * Math.sin(ang), 2.6 * Math.cos(ang)], D = [0.6 + 2.6 * Math.sin(ang), 2.6 * Math.cos(ang)];
+                  els.push(ground(0, 3.8), bar(A, B), bar(B, C), bar(C, D), bar(D, A), pin(A), pin(B), pin(C), pin(D), push(D), lab(1.9, 'square: wobbles'));
+                  // 2. a triangle: rigid
+                  const E = [4.5, 0], F = [7.1, 0], G = [5.8, 2.6 * Math.cos(0)];
+                  els.push(ground(4.0, 7.6), bar(E, F), bar(F, G), bar(G, E), pin(E), pin(F), pin(G), push(G), lab(5.8, 'triangle: rigid'));
+                  // 3. a square with one diagonal: two triangles, rigid
+                  const H = [8.4, 0], I = [11, 0], J = [11, 2.6], K = [8.4, 2.6];
+                  els.push(ground(7.9, 11.4), bar(H, I), bar(I, J), bar(J, K), bar(K, H), bar(H, J, 'teal'), pin(H), pin(I), pin(J), pin(K), push(K), lab(9.7, 'braced: rigid'));
+                  return els;
+                },
+              },
+              after: r`Four bars with hinges can change shape without any bar changing length: the square collapses into a parallelogram. Three bars can't: three side lengths fix a triangle's angles completely (that's the SSS rule from geometry). Add one diagonal and the square becomes two triangles, and it locks solid. Bridges, cranes, roof trusses and bicycle frames are built out of triangles for exactly this reason.`,
+            },
             {
               type: 'mcq',
               title: 'Bracing a gate',

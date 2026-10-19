@@ -119,6 +119,37 @@ Navigators looked up $\delta$ for each day in printed tables, the *nautical alma
 
 Longitude therefore needs an accurate clock that keeps home time through months at sea, despite rolling, temperature changes and humidity. Pendulum clocks were useless on a ship.`,
             },
+            { /*anim:navigation*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Noon travels west',
+              body: r`The Earth seen from above the North Pole, turning once a day with the Sun off to the right. Each meridian has local **noon** when it points straight at the Sun. Watch {blue:Greenwich} and a {coral:ship at 45° W}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.25, xmax: 2.2, ymin: -1.2, ymax: 1.2, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 1.2, max: 24, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const D = Math.PI / 180, R = plot.X(1) - plot.X(0), cx = plot.X(0), cy = plot.Y(0);
+                  // Greenwich time in hours; the Greenwich meridian points at the Sun at 12:00
+                  const gt = (12 + p.t) % 24, rot = (gt - 12) * 15 * D;
+                  const els = [];
+                  for (let k = 0; k < 6; k++) els.push(s('line', { x1: plot.X(1.35), x2: plot.X(2.15), y1: plot.Y(-0.75 + 0.3 * k), y2: plot.Y(-0.75 + 0.3 * k), stroke: 'var(--amber)', 'stroke-width': 2, opacity: 0.6 }));
+                  els.push(s('circle', { cx: plot.X(1.95), cy: plot.Y(0), r: 16, class: 'fl-amber' }));
+                  els.push(s('circle', { cx, cy, r: R, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  els.push(s('path', { d: `M${cx} ${cy - R}A${R} ${R} 0 0 0 ${cx} ${cy + R}Z`, fill: 'var(--night)', opacity: 0.35 }));
+                  const mer = (lonDeg, col, w) => { const a = rot + lonDeg * D; return s('line', { x1: cx, y1: cy, x2: cx + R * Math.cos(a), y2: cy - R * Math.sin(a), stroke: col, 'stroke-width': w, 'stroke-linecap': 'round' }); };
+                  for (let k = 0; k < 24; k++) els.push(mer(k * 15, 'var(--line-2)', 1));
+                  els.push(mer(0, 'var(--blue)', 4), mer(-45, 'var(--coral)', 4));
+                  els.push(s('circle', { cx, cy, r: 5, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => {
+                  const hm = (h) => { const m = Math.floor(((h % 24) + 24) % 24 * 60); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+                  const gt = (12 + p.t) % 24;
+                  return `{blue:Greenwich ${hm(gt)}} · {coral:ship's local Sun time ${hm(gt - 3)}} · always 3 hours behind = 45° west`;
+                },
+              },
+              after: r`As the Earth turns eastwards, noon sweeps **westwards** around the globe at $15°$ per hour. The ship sees its noon 3 hours after Greenwich does, so its Sun time is always 3 hours behind: that difference **is** its longitude. Measure local noon with a sextant, read Greenwich time off a reliable clock, and the gap tells you how far east or west you are.`,
+            },
             {
               type: 'numeric',
               title: 'Local noon',

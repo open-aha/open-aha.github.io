@@ -37,6 +37,22 @@ const extinction = (R) => {
   return q;
 };
 
+// five outbreaks, each starting from one case, with R = 1.5 (random number of new cases per case)
+const BRANCH = (() => {
+  const mul = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const pois = (u) => { const L = Math.exp(-1.5); let k = 0, q = 1; do { k++; q *= u(); } while (q > L); return k - 1; };
+  return [8, 2, 10, 4, 11].map((seed) => {
+    const u = mul(seed * 977), gens = [[{ parent: -1 }]];
+    for (let g = 0; g < 6; g++) {
+      const next = [];
+      gens[g].slice(0, 30).forEach((_, i) => { const n = pois(u); for (let k = 0; k < n; k++) next.push({ parent: i }); });
+      if (!next.length) break;
+      gens.push(next);
+    }
+    return gens;
+  });
+})();
+
 export default {
   id: 'epidemics',
   subject: 'math',
@@ -491,6 +507,30 @@ Instead of burning out, the infection can settle at a steady level: it becomes *
 
 Treating each case as independently infecting a random number of others (with average $R$) is called a **branching process**. The probability $q$ that a chain eventually dies out satisfies an equation; for typical random spreading it's
 $$q = e^{R(q - 1)}$$`,
+            },
+            { /*anim:epidemics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Five sparks',
+              body: r`Five people each bring the same infection into five separate towns. Every case infects a random number of others, **1.5 on average**. Watch the chains of infection grow, generation by generation.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 5, ymin: -6.6, ymax: 0.5, grid: false, axes: false, height: 340,
+                animate: { param: 't', speed: 1.1, max: 8.5, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const G = Math.min(6, Math.floor(p.t)), els = [];
+                  BRANCH.forEach((gens, c) => {
+                    const xs = gens.map((row) => { const m = Math.min(row.length, 30); return row.slice(0, 30).map((_, i) => c + 0.5 + (m > 1 ? (i / (m - 1) - 0.5) * 0.86 : 0)); });
+                    for (let g = 1; g <= Math.min(G, gens.length - 1); g++) gens[g].slice(0, 30).forEach((nd, i) => {
+                      els.push(s('line', { x1: plot.X(xs[g - 1][nd.parent]), y1: plot.Y(-(g - 1)), x2: plot.X(xs[g][i]), y2: plot.Y(-g), stroke: 'var(--coral)', 'stroke-width': 1.2, opacity: 0.6 }));
+                    });
+                    for (let g = 0; g <= Math.min(G, gens.length - 1); g++) xs[g].forEach((x) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(-g), r: 4, class: 'fl-coral' })));
+                    if (gens.length - 1 < G) els.push(s('text', { x: plot.X(c + 0.5), y: plot.Y(-gens.length) + 4, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--teal)', text: 'died out' }));
+                  });
+                  return els;
+                },
+                readout: (p) => { const G = Math.min(6, Math.floor(p.t)), dead = BRANCH.filter((g) => g.length - 1 < G).length; return `generation ${G} · outbreaks that died out by chance: **${dead} of 5**`; },
+              },
+              after: r`Even though each case causes 1.5 new cases **on average**, two of the five chains fizzled out almost at once: the first case happened to infect nobody, or only one person who infected nobody. For this kind of spread the chance that one imported case dies out is $q \approx 0.42$, the solution of $q = e^{1.5(q - 1)}$. That's why early outbreaks are so unpredictable, and why many introductions of a disease never take off.`,
             },
             {
               type: 'mcq',

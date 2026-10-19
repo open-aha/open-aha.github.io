@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const N = 2000;
 const SIEVE = (() => {
@@ -46,6 +47,15 @@ const twoSq = (n) => { const w = []; for (let a = 0; a * a <= n / 2; a++) { cons
 
 const PRIME_PI = (() => { const N = 10000, c = new Uint8Array(N + 1), pi = new Int32Array(N + 1); for (let i = 2; i * i <= N; i++) if (!c[i]) for (let j = i * i; j <= N; j += i) c[j] = 1; for (let i = 2; i <= N; i++) pi[i] = pi[i - 1] + (c[i] ? 0 : 1); return pi; })();
 const LI = (x) => { let s = 0; const n = 400, a = 2; for (let i = 0; i < n; i++) { const t = a + ((x - a) * (i + 0.5)) / n; s += 1 / Math.log(t); } return (s * (x - a)) / n; };
+let POLAR_PRIMES = null;
+const polarPrimes = () => {
+  if (POLAR_PRIMES) return POLAR_PRIMES;
+  const N = 40000, comp = new Uint8Array(N + 1), out = [];
+  for (let i = 2; i <= N; i++) { if (comp[i]) continue; out.push(i); for (let j = i * i; j <= N; j += i) comp[j] = 1; }
+  return (POLAR_PRIMES = out);
+};
+const polarR = (t) => 30 * 1000 ** Math.min(1, Math.max(0, (t - 1) / 12));
+
 export default {
   id: 'primes',
   subject: 'math',
@@ -445,6 +455,26 @@ $$\zeta(2) = \frac{1}{1 - \frac14} \cdot \frac{1}{1 - \frac19} \cdot \frac{1}{1 
                 { t: 'Yes: n² + n + 41 with large enough coefficients', why: 'Every polynomial fails somewhere. Look at what happens at multiples of f(0).' },
               ],
               explain: r`Every term of $f(kp)$ except the constant contains a factor of $kp$, so $f(kp)$ leaves the same remainder as $f(0) = p$ when divided by $p$: zero. Those values are multiples of $p$, and a polynomial can equal $\pm p$ only finitely often, so infinitely many of them are composite. (If $f(0)$ isn't prime, use any $m$ where $f(m)$ is.) Prime-rich polynomials exist, but no perfect one.`,
+            },
+            { /*anim:primes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Primes in polar coordinates',
+              body: r`A different picture: put each prime $p$ at distance $p$ from the centre, at an angle of $p$ **radians** (so $p$ goes round about $p / 6.28$ times). Then zoom out.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1, xmax: 1, ymin: -1, ymax: 1, grid: false, axes: false, maxWidth: 400,
+                animate: { param: 't', speed: 1, max: 16, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const R = polarR(p.t), d = [], dot = Math.max(2.5, 7 - 1.2 * Math.log10(R));
+                  for (const q of polarPrimes()) {
+                    if (q > 1.45 * R) break;
+                    d.push(`M${plot.X((q * Math.cos(q)) / R).toFixed(1)} ${plot.Y((q * Math.sin(q)) / R).toFixed(1)}h0`);
+                  }
+                  return [s('path', { d: d.join(''), stroke: 'var(--blue)', 'stroke-width': dot, 'stroke-linecap': 'round', fill: 'none' })];
+                },
+                readout: (p) => { const R = polarR(p.t); return `showing distances up to ${fix(R, 0)} · ${polarPrimes().filter((q) => q <= 1.45 * R).length} primes`; },
+              },
+              after: r`Zoomed in, the primes lie along **spiral arms**, and further out, along a different set of arms. The spirals come from near-misses: 6 radians is just short of one full turn, so numbers 6 apart sit almost on top of each other, slowly drifting: they form 6 spirals, and primes (beyond 3) only use the 2 of them that hold numbers of the form $6k \pm 1$. Further out, 44 radians is extremely close to 7 full turns, giving 44 spirals, of which primes use only the 20 whose numbers share no factor with 44. So the pattern isn't hidden structure in the primes: it comes from primes avoiding common factors, plus how well $2\pi$ is approximated by fractions like $\frac{44}{7}$.`,
             },
           ],
           recap: [

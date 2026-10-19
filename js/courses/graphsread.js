@@ -1,8 +1,29 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const VALS = [[48, 'Brand A', 'blue'], [52, 'Brand B', 'coral']];
 // study hours vs exam score
 const SX = [1, 2, 3, 4, 5, 6, 7, 8], SY = [52, 55, 61, 62, 68, 71, 73, 79];
 const sse = (m, b) => SX.reduce((t, x, i) => t + (SY[i] - m * x - b) ** 2, 0);
+
+// Anscombe's quartet (1973): four data sets with the same summary statistics
+const ANS_X = [10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5];
+const ANS = [
+  [ANS_X, [8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68]],
+  [ANS_X, [9.14, 8.14, 8.74, 8.77, 9.26, 8.1, 6.13, 3.1, 9.13, 7.26, 4.74]],
+  [ANS_X, [7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73]],
+  [[8, 8, 8, 8, 8, 8, 8, 19, 8, 8, 8], [6.58, 5.76, 7.71, 8.84, 8.47, 7.04, 5.25, 12.5, 5.56, 7.91, 6.89]],
+];
+// blend two of the sets, then nudge the blend so its means, spreads and correlation match exactly
+function anscombeAt(t) {
+  const i = Math.floor(t) % 4, j = (i + 1) % 4, f = t - Math.floor(t), e = f < 0.55 ? 0 : (f - 0.55) / 0.45, w = e * e * (3 - 2 * e);
+  const x = ANS[i][0].map((v, k) => v + (ANS[j][0][k] - v) * w), y = ANS[i][1].map((v, k) => v + (ANS[j][1][k] - v) * w);
+  const mean = (a) => a.reduce((s, v) => s + v, 0) / a.length;
+  const sd = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1)); };
+  const z = (a) => { const m = mean(a), d = sd(a); return a.map((v) => (v - m) / d); };
+  const zx = z(x), zy = z(y), c = zx.reduce((s, v, k) => s + v * zy[k], 0) / (x.length - 1);
+  const perp = z(zy.map((v, k) => v - c * zx[k])), r = 0.8164;
+  return [zx.map((v) => 9 + 3.3166 * v), zx.map((v, k) => 7.5 + 2.0316 * (r * v + Math.sqrt(1 - r * r) * perp[k]))];
+}
 
 export default {
   id: 'graphsread',
@@ -430,6 +451,23 @@ A **trend line** summarises the cloud. The usual choice, the **least-squares** l
               prompt: r`Every point of a scatter plot lies exactly on the line $y = -3x + 2$. What is the correlation coefficient $r$?`,
               answer: -1,
               explain: r`All points on a straight line with negative slope: $r = -1$. The correlation measures how close to a line the points are, not how steep the line is; $y = -0.01x$ would also give $r = -1$.`,
+            },
+            { /*anim:graphsread*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Same numbers, different pictures',
+              body: r`In 1973 the statistician Francis Anscombe built four small data sets that share the **same** means, spreads, correlation and best-fit line. Watch the points move from one set to the next. The numbers in the readout never change.`,
+              widget: {
+                kind: 'graph', xmin: 2, xmax: 20, ymin: 2, ymax: 14, grid: 2, gridY: 2, height: 320, axes: { xAt: 2, yAt: 2, xticks: 2, yticks: 2 },
+                animate: { param: 't', speed: 0.3, max: 4, autoplay: true },
+                curves: [{ f: (x) => 3 + 0.5 * x, color: 'coral', width: 2.5 }],
+                extra: ({ plot, p, s }) => {
+                  const [x, y] = anscombeAt(p.t);
+                  return x.map((v, k) => s('circle', { cx: plot.X(v), cy: plot.Y(y[k]), r: 7, class: 'fl-blue', stroke: 'var(--card)', 'stroke-width': 2 }));
+                },
+                readout: (p) => `set ${['I', 'II', 'III', 'IV'][Math.floor(p.t + 0.45) % 4]} · mean $x$ = 9.00, mean $y$ = 7.50 · correlation 0.82 · best line $y = 3.00 + 0.50x$`,
+              },
+              after: r`A straight-ish cloud, a smooth curve, a perfect line spoiled by one outlier, and a vertical stack with one far-away point: four completely different stories with **identical** summary statistics. The correlation and the trend line can't tell them apart; only the picture can. Always plot your data before you trust a summary of it.`,
             },
             {
               type: 'mcq',

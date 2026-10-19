@@ -25,6 +25,29 @@ const chirpPhase = (tau, Mc) => -2 * Math.pow(tau / (5 * Mc * 4.925e-6), 5 / 8);
 const sup = (n) => String(n).replace(/-/g, '⁻').replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
 const sci = (x) => { const e = Math.floor(Math.log10(x)), m = x / 10 ** e; return `${m.toFixed(1)} × 10^{${e}}`; };
 
+// light rays past a black hole (units GM/c² = 1, so r_s = 2): u'' + u = 3u² with u = 1/r, integrated in the angle φ
+const BH_B = [2.5, 4, 4.8, 5.1, 5.18, 5.21, 5.3, 5.7, 6.8, 8.5];
+let BH_RAYS = null;
+const bhRays = () => {
+  if (BH_RAYS) return BH_RAYS;
+  BH_RAYS = BH_B.map((b) => {
+    const x0 = -16, r0 = Math.hypot(x0, b);
+    let phi = Math.atan2(b, x0), u = 1 / r0, du = Math.cos(phi) / b;
+    const h = -0.002, f = (uu) => 3 * uu * uu - uu, pts = [[x0, b]], len = [0];
+    for (let k = 0; k < 40000; k++) {
+      // RK4 on (u, u')
+      const k1u = du, k1v = f(u), k2u = du + (h / 2) * k1v, k2v = f(u + (h / 2) * k1u), k3u = du + (h / 2) * k2v, k3v = f(u + (h / 2) * k2u), k4u = du + h * k3v, k4v = f(u + h * k3u);
+      u += (h / 6) * (k1u + 2 * k2u + 2 * k3u + k4u); du += (h / 6) * (k1v + 2 * k2v + 2 * k3v + k4v); phi += h;
+      if (u <= 0) break;
+      const r = 1 / u, x = r * Math.cos(phi), y = r * Math.sin(phi), [px, py] = pts[pts.length - 1];
+      pts.push([x, y]); len.push(len[len.length - 1] + Math.hypot(x - px, y - py));
+      if (r < 2 || r > 18) break;
+    }
+    return { b, pts, len, captured: 1 / u < 2.05 };
+  });
+  return BH_RAYS;
+};
+
 export default {
   id: 'blackholes',
   subject: 'physics',
@@ -495,6 +518,32 @@ On 14 September 2015, the LIGO detectors recorded waves from two black holes, ab
                 { t: 'The singularity', why: 'The singularity is hidden inside the horizon at $r_s$. Light at $1.5 r_s$ is still outside.' },
               ],
               explain: r`Light emitted sideways at the photon sphere circles the hole and returns, so (in principle) you'd see yourself from behind. The photon-sphere orbits are unstable, like balancing on a hilltop, and the bright ring in the Event Horizon Telescope images is light skimming just outside this sphere.`,
+            },
+            { /*anim:blackholes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Light skimming a black hole',
+              body: r`Ten beams of light come in from the left, aimed to pass the black hole at different distances $b$ (in units of $GM/c^2$, so the horizon is at 2 and the {violet:photon sphere} at 3). The paths are worked out from general relativity.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -12, xmax: 12, ymin: -8.5, ymax: 9.5, grid: false, axes: false, maxWidth: 520, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 14, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const L = 6 * p.t, els = [], R = (q) => plot.X(q) - plot.X(0);
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R(3), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+                  for (const ray of bhRays()) {
+                    let n = 0;
+                    while (n < ray.len.length - 1 && ray.len[n + 1] <= L) n++;
+                    const d = ray.pts.slice(0, n + 1).filter((_, i) => i % 3 === 0 || i === n).map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('');
+                    els.push(s('path', { d, fill: 'none', stroke: ray.captured ? 'var(--coral)' : 'var(--amber)', 'stroke-width': 2, opacity: 0.9 }));
+                    const [hx, hy] = ray.pts[n];
+                    if (n < ray.len.length - 1) els.push(s('circle', { cx: plot.X(hx), cy: plot.Y(hy), r: 3.5, class: ray.captured ? 'fl-coral' : 'fl-amber' }));
+                  }
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R(2), class: 'fl-ink' }));
+                  return els;
+                },
+                readout: () => `beams aimed closer than $b = 3\\sqrt3 \\approx 5.20$ fall in ({coral:coral}); farther ones escape, bent ({amber:amber})`,
+              },
+              after: r`Far from the hole, light is barely deflected. Closer in, the bending grows quickly, and a beam aimed just outside $b = 3\sqrt3 \approx 5.2$ whips round the photon sphere, sometimes looping right round, before escaping in a completely different direction. Just inside that value it spirals in. So a black hole looks bigger than its horizon: its dark "shadow" has radius $3\sqrt3 \approx 5.2$, about 2.6 times the horizon's. That shadow, ringed by light, is what the Event Horizon Telescope photographed in 2019.`,
             },
             {
               type: 'numeric',

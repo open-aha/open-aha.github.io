@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const D = Math.PI / 180;
 const merc = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * D) / 2));
@@ -428,6 +429,42 @@ But the shortest route, the great circle, **starts off heading north of west** a
                 { t: 'You reach the North Pole after a quarter of the way round', why: 'You approach it in an ever-tightening spiral, called a loxodrome.' },
               ],
               explain: r`A rhumb line crossing every meridian at 45° spirals in towards the pole: a **loxodrome**. Surprisingly, its total length is finite: $\sqrt2$ times the distance due north to the pole.`,
+            },
+            { /*anim:maps*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The loxodrome',
+              body: r`Follow a ship that sets off from the equator and always steers on a bearing of **075°** (a little north of east), crossing every meridian at the same angle. Watch its track on the turning globe.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.15, xmax: 1.15, ymin: -1.15, ymax: 1.15, grid: false, axes: false, maxWidth: 400,
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const D = Math.PI / 180, v0 = 62 * D, lc = 0.25 * p.t - 0.6, tb = Math.tan(75 * D);
+                  const pr = (la, lo) => {
+                    const dl = lo - lc;
+                    return [Math.cos(la) * Math.sin(dl), Math.sin(la) * Math.cos(v0) - Math.cos(la) * Math.sin(v0) * Math.cos(dl), Math.sin(la) * Math.sin(v0) + Math.cos(la) * Math.cos(v0) * Math.cos(dl)];
+                  };
+                  const els = [s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 1.5 })];
+                  // draw a curve on the sphere, solid on the near side only
+                  const curve = (pts, o) => {
+                    let d = '', pen = false;
+                    for (const [la, lo] of pts) { const [x, y, z] = pr(la, lo); if (z < 0) { pen = false; continue; } d += `${pen ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`; pen = true; }
+                    return s('path', { d, fill: 'none', ...o });
+                  };
+                  for (let lo = 0; lo < 360; lo += 30) els.push(curve(Array.from({ length: 61 }, (_, i) => [(-90 + 3 * i) * D, lo * D]), { stroke: 'var(--blue)', 'stroke-width': 0.8, opacity: 0.45 }));
+                  for (let la = -60; la <= 60; la += 30) els.push(curve(Array.from({ length: 121 }, (_, i) => [la * D, 3 * i * D]), { stroke: 'var(--blue)', 'stroke-width': la ? 0.8 : 1.6, opacity: la ? 0.45 : 0.8 }));
+                  // the rhumb line at 45°: longitude = (Mercator height of the latitude)
+                  // at bearing 075°: longitude = tan 75° × (Mercator height of the latitude), latitude = distance × cos 75°
+                  const phiNow = Math.min(89.9, 8 * p.t) * D, track = [];
+                  for (let i = 0; i <= 900; i++) { const la = (phiNow * i) / 900; track.push([la, tb * Math.log(Math.tan(Math.PI / 4 + la / 2))]); }
+                  els.push(curve(track, { stroke: 'var(--coral)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+                  const [sx, sy, sz] = pr(...track[track.length - 1]);
+                  if (sz > 0) els.push(s('circle', { cx: plot.X(sx), cy: plot.Y(sy), r: 6, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  return els;
+                },
+                readout: (p) => { const phi = (Math.min(89.9, 8 * p.t) * Math.PI) / 180, k = Math.cos((75 * Math.PI) / 180); return `latitude ${fix((phi * 180) / Math.PI, 1)}° · laps around the pole ${fix((Math.tan((75 * Math.PI) / 180) * Math.log(Math.tan(Math.PI / 4 + phi / 2))) / (2 * Math.PI), 2)} · distance sailed ${fix((phi * 6371) / k, 0)} km`; },
+              },
+              after: r`Near the pole the ship circles faster and faster: the laps never stop adding up, yet the distance sailed creeps towards a finite total: the 10,008 km trip due north divided by $\cos 75°$, about 38,700 km. (At a bearing of 045°, the total would be $\sqrt2 \times 10{,}008 \approx 14{,}150$ km.) On a Mercator map this same track is a perfectly straight line, which is why sailors liked it: set one compass bearing and hold it.`,
             },
             {
               type: 'numeric',

@@ -92,6 +92,17 @@ const swings = (q) => {
   return cnt;
 };
 
+// an instant-runoff count with 100 voters; each group is coloured by its first choice
+const IRV_GROUPS = [
+  { n: 34, rank: ['A', 'B', 'C', 'D'], col: 'blue' },
+  { n: 28, rank: ['B', 'C', 'A', 'D'], col: 'coral' },
+  { n: 22, rank: ['C', 'B', 'A', 'D'], col: 'teal' },
+  { n: 10, rank: ['D', 'C', 'B', 'A'], col: 'amber' },
+  { n: 6, rank: ['D', 'B', 'C', 'A'], col: 'amber' },
+];
+// who each group backs once the listed candidates are out
+const irvVote = (g, out) => g.rank.find((c) => !out.includes(c));
+
 export default {
   id: 'voting',
   subject: 'math',
@@ -281,6 +292,37 @@ Arrow proved that with three or more candidates, **no method satisfies all three
 3. Repeat.
 
 It's used in Australian elections, for the mayor of New York City, and in Irish presidential elections.`,
+            },
+            { /*anim:voting*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watch the count',
+              body: r`100 voters rank four candidates. Each bar is made of ballots, coloured by the voter's **first** choice. In each round the last-placed candidate is knocked out and their ballots move to the next name still in the race. The dashed line is a majority (51 votes).`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 4.4, ymin: -9, ymax: 72, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 0.55, max: 7, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const C = ['A', 'B', 'C', 'D'], stages = [[], ['D'], ['D', 'C']];
+                  const k = Math.min(2, Math.floor(p.t / 2.4)), f = Math.min(1, Math.max(0, (p.t - 2.4 * k - 1.2) / 1));
+                  const out0 = stages[k], out1 = stages[Math.min(2, k + 1)], e = k < 2 ? f * f * (3 - 2 * f) : 0;
+                  const els = [s('line', { x1: plot.X(0.1), x2: plot.X(4.3), y1: plot.Y(51), y2: plot.Y(51), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '6 6' })];
+                  C.forEach((c, i) => {
+                    let y = 0;
+                    const x0 = plot.X(i + 0.25), w = plot.X(0.6) - plot.X(0);
+                    IRV_GROUPS.forEach((g) => {
+                      // a group's ballots fade out of the old candidate's bar and grow in the new one's
+                      const a = irvVote(g, out0) === c ? 1 : 0, b = irvVote(g, out1) === c ? 1 : 0, amt = g.n * (a + (b - a) * e);
+                      if (amt > 0.01) { els.push(s('rect', { x: x0, y: plot.Y(y + amt), width: w, height: plot.Y(y) - plot.Y(y + amt), class: `fl-${g.col}`, opacity: 0.8, stroke: 'var(--card)', 'stroke-width': 1 })); y += amt; }
+                    });
+                    const outNow = out0.includes(c);
+                    els.push(s('text', { x: x0 + w / 2, y: plot.Y(0) + 22, 'text-anchor': 'middle', class: 'lbl halo-text', style: outNow ? 'fill:var(--ink-3);text-decoration:line-through' : '', text: c }));
+                    if (!outNow && y > 0) els.push(s('text', { x: x0 + w / 2, y: plot.Y(y) - 8, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700', text: String(Math.round(y)) }));
+                  });
+                  return els;
+                },
+                readout: (p) => ['Round 1: A leads with 34, but nobody has a majority. **D** is last and is knocked out.', 'Round 2: D’s ballots went to C (10) and B (6). Now **C** is last and is knocked out.', 'Round 3: C’s ballots all prefer B. **B wins with 66**, though A led the first count.'][Math.min(2, Math.floor(p.t / 2.4))],
+              },
+              after: r`A had the most first choices, so A would win a plurality vote. But most voters ranked A low: once their favourites were knocked out, their ballots flowed to B. Instant runoff finds a candidate acceptable to a majority, at the cost of a longer count, and (as you'll see) some strange behaviour of its own.`,
             },
             {
               type: 'numeric',

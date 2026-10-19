@@ -18,6 +18,24 @@ const solidT = (N, q) => 1 / Math.log((q + N) / (q + 1)); // temperature in unit
 // heat capacity of hydrogen gas, in units of R: translation + rotation (θ ≈ 85 K) + vibration (θ ≈ 6300 K)
 const cvH2 = (T) => { const rot = 1 / (1 + Math.exp(-(T - 2.2 * 85) / 55)), x = 6300 / T, vib = x > 60 ? 0 : (x * x * Math.exp(x)) / (Math.exp(x) - 1) ** 2; return 1.5 + rot + vib; };
 
+// 500 molecules each start with 4 energy units; at each swap a random molecule gives one unit (if it has one) to another random molecule.
+// Frame f comes after 5f² swaps: slowly at first, then faster.
+let SWAP_RUN = null;
+const swapRun = () => {
+  if (SWAP_RUN) return SWAP_RUN;
+  let seed = 21;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const N = 500, E = new Array(N).fill(4), hists = [];
+  const hist = () => { const h = new Array(21).fill(0); for (const e of E) h[Math.min(20, e)]++; return h; };
+  hists.push(hist());
+  for (let f = 0; f < 240; f++) {
+    for (let k = 5 * f * f; k < 5 * (f + 1) * (f + 1); k++) { const a = Math.floor(rnd() * N), b = Math.floor(rnd() * N); if (a !== b && E[a] > 0) { E[a]--; E[b]++; } }
+    hists.push(hist());
+  }
+  return (SWAP_RUN = hists);
+};
+const swapFrame = (t) => Math.min(240, Math.floor(Math.max(0, t - 0.8) * 12));
+
 export default {
   id: 'statmech',
   subject: 'physics',
@@ -143,6 +161,28 @@ High-energy states are exponentially rare, unless the temperature is high. The k
                 readout: (p) => { const x = Math.exp(-1 / p.t); return `ground rung: **${(100 * (1 - x)).toFixed(0)}%** · each rung up holds ${x.toFixed(2)}× the one below · average energy ${(x / (1 - x)).toFixed(2)} ε`; },
               },
               after: r`Each rung holds a fixed fraction $e^{-\varepsilon/k_BT}$ of the one below. When $k_BT \ll \varepsilon$, almost everything sits on the ground rung; when $k_BT \gg \varepsilon$, many rungs fill and the average energy approaches $k_BT$, the classical value.`,
+            },
+            { /*anim:statmech*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Swapping energy at random',
+              body: r`500 molecules start with exactly 4 units of energy each. Over and over, a random molecule passes one unit to another random molecule. The {blue:bars} count how many molecules have each amount of energy; the {coral:dots} are the Boltzmann prediction.`,
+              widget: {
+                kind: 'graph', xmin: -0.7, xmax: 16.7, ymin: 0, ymax: 230, grid: false, height: 320, axes: { xticks: 2, yticks: 50, xlabel: 'energy units' }, clipExtra: true,
+                animate: { param: 't', speed: 1, max: 24, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const h = swapRun()[swapFrame(p.t)], els = [];
+                  for (let e = 0; e <= 16; e++) {
+                    els.push(s('rect', { x: plot.X(e - 0.38), y: plot.Y(h[e]), width: plot.X(0.76) - plot.X(0), height: plot.Y(0) - plot.Y(h[e]), class: 'fl-blue', opacity: 0.7 }));
+                    // geometric (discrete Boltzmann) distribution with mean 4: P(E) = (1/5)(4/5)^E
+                    els.push(s('circle', { cx: plot.X(e), cy: plot.Y(500 * 0.2 * 0.8 ** e), r: 5, class: 'fl-coral' }));
+                    if (h[e] > 230) els.push(s('text', { x: plot.X(e) + 10, y: plot.Y(215), class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--blue)', text: `${h[e]} ↑` }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const k = swapFrame(p.t), h = swapRun()[k]; return `${(5 * k * k).toLocaleString('en')} swaps · ${h[0]} molecules have no energy at all · ${h.slice(10).reduce((a, b) => a + b, 0)} have 10 or more`; },
+              },
+              after: r`Nothing in the rule favours any molecule, and the total energy never changes, yet the fair start (everyone at 4) doesn't last. The counts settle into a falling exponential: many molecules with little energy, a few with a lot, and each extra unit about $\frac45$ as likely as the one before. This is the Boltzmann distribution, $P(E) \propto e^{-E/kT}$, and it arises simply because it's the arrangement that can be made in by far the most ways.`,
             },
             {
               type: 'numeric',

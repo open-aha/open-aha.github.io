@@ -36,6 +36,20 @@ const erf = (x) => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - 
 const Phi = (z) => 0.5 * (1 + erf(z / Math.SQRT2));
 const pdf = (z) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
 
+// a bomber seen from above; hits land anywhere, but hits on the engines or cockpit bring the plane down
+const PLANE_ENG = [[-3.1, 0.35], [-1.7, 0.45], [1.7, 0.45], [3.1, 0.35]];
+const inPlane = (x, y) => (x * x) / 0.42 ** 2 + (y * y) / 4.2 ** 2 <= 1 || (Math.abs(x) <= 4.6 && y >= -0.5 + 0.15 * Math.abs(x) && y <= 0.9 - 0.12 * Math.abs(x)) || (Math.abs(x) <= 1.6 && y >= -3.9 && y <= -3.2);
+const lethal = (x, y) => PLANE_ENG.some(([ex, ey]) => (x - ex) ** 2 + (y - ey) ** 2 <= 0.34 ** 2) || (x * x + (y - 3.3) ** 2 <= 0.42 ** 2);
+const PLANE_HITS = (() => {
+  let a = 424242;
+  const rnd = () => (a = (a * 16807) % 2147483647) / 2147483647;
+  return Array.from({ length: 70 }, () => {
+    const hits = [];
+    while (hits.length < 4) { const x = -4.6 + 9.2 * rnd(), y = -4.2 + 8.4 * rnd(); if (inPlane(x, y)) hits.push([x, y]); }
+    return { hits, lost: hits.some(([x, y]) => lethal(x, y)) };
+  });
+})();
+
 export default {
   id: 'statistics',
   subject: 'math',
@@ -672,6 +686,29 @@ A **box plot** draws the box from $Q_1$ to $Q_3$, a line at the median, and whis
                 { t: 'Evenly everywhere', why: 'The pattern of holes is informative, just not in the obvious way.' },
               ],
               explain: r`The statistician Abraham Wald pointed out that the sample only contained **survivors**. Holes in returning planes show where a plane can be hit and still fly home. This is **survivorship bias**: drawing conclusions from the examples that made it through a filter.`,
+            },
+            { /*anim:statistics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Holes in the data',
+              body: r`Planes fly out, and each one is hit in 4 random places. A hit on an {amber:engine} or the cockpit brings the plane down; anywhere else it limps home. The analysts only see holes on the planes that come back.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -5, xmax: 5, ymin: -4.6, ymax: 4.6, grid: false, axes: false, maxWidth: 400,
+                animate: { param: 't', speed: 3, max: 76, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = Math.min(70, Math.floor(p.t)), els = [];
+                  const poly = (pts, o) => s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', ...o });
+                  els.push(poly([[-4.6, 0.9 - 0.12 * 4.6], [0, 0.9], [4.6, 0.9 - 0.12 * 4.6], [4.6, -0.5 + 0.15 * 4.6], [0, -0.5], [-4.6, -0.5 + 0.15 * 4.6]], { class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  els.push(poly([[-1.6, -3.2], [1.6, -3.2], [1.6, -3.9], [-1.6, -3.9]], { class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  els.push(s('ellipse', { cx: plot.X(0), cy: plot.Y(0), rx: plot.X(0.42) - plot.X(0), ry: plot.Y(0) - plot.Y(4.2), class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  PLANE_ENG.forEach(([x, y]) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: plot.X(0.34) - plot.X(0), class: 'fl-amber-soft', stroke: 'var(--amber)', 'stroke-width': 1.5 })));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(3.3), r: plot.X(0.42) - plot.X(0), class: 'fl-amber-soft', stroke: 'var(--amber)', 'stroke-width': 1.5 }));
+                  PLANE_HITS.slice(0, n).forEach((pl) => { if (!pl.lost) pl.hits.forEach(([x, y]) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 3.5, class: 'fl-coral' }))); });
+                  return els;
+                },
+                readout: (p) => { const n = Math.min(70, Math.floor(p.t)), back = PLANE_HITS.slice(0, n).filter((pl) => !pl.lost).length; return `planes sent: ${n} · came back: ${back} · holes recorded: ${4 * back}`; },
+              },
+              after: r`The returning planes are riddled with holes on the wings, body and tail, and almost none on the engines or cockpit. It's tempting to add armour where the holes are. The statistician Abraham Wald pointed out the opposite: planes **were** hit on the engines just as often, but those planes never came back to be counted. The missing holes mark exactly where armour is needed. That's **survivorship bias**: studying only the survivors.`,
             },
             {
               type: 'mcq',

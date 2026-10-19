@@ -108,6 +108,28 @@ function sphere({ plot, s }, light, { shine = 0, R = 1, n = 30, base = [80, 130,
 }
 const lightDir = (az, el) => [Math.cos(el * D) * Math.sin(az * D), Math.sin(el * D), Math.cos(el * D) * Math.cos(az * D)];
 
+// a tiny ray tracer: a sphere on a floor, one light, 48 × 32 pixels, each brightness worked out once
+const RT_W = 48, RT_H = 32;
+const RT_IMG = (() => {
+  const C = [0, 0, 5], R = 1.4, floorY = -1.4, f = 1.5, Lr = [-1, 1.1, -0.15], Ln = Math.hypot(...Lr), L = Lr.map((v) => v / Ln);
+  const hitSphere = (o, d) => { const oc = [o[0] - C[0], o[1] - C[1], o[2] - C[2]], b = oc[0] * d[0] + oc[1] * d[1] + oc[2] * d[2], c = oc[0] ** 2 + oc[1] ** 2 + oc[2] ** 2 - R * R, h = b * b - c; if (h < 0) return -1; const t = -b - Math.sqrt(h); return t > 1e-4 ? t : -1; };
+  const img = [];
+  for (let j = 0; j < RT_H; j++) for (let i = 0; i < RT_W; i++) {
+    const x = ((i + 0.5) / RT_W - 0.5) * 3, y = (0.5 - (j + 0.5) / RT_H) * 2, n = Math.hypot(x, y, f), d = [x / n, y / n, f / n];
+    let v = 0.06, kind = 'sky';
+    const ts = hitSphere([0, 0, 0], d), tf = d[1] < 0 ? floorY / d[1] : -1;
+    if (ts > 0 && (tf < 0 || ts < tf)) {
+      const P = d.map((q) => q * ts), N = [(P[0] - C[0]) / R, (P[1] - C[1]) / R, (P[2] - C[2]) / R];
+      v = Math.max(0, N[0] * L[0] + N[1] * L[1] + N[2] * L[2]) * 0.9 + 0.08; kind = 'ball';
+    } else if (tf > 0) {
+      const P = d.map((q) => q * tf), shadow = hitSphere(P, L) > 0, check = (Math.floor(P[0]) + Math.floor(P[2])) % 2 === 0;
+      v = (shadow ? 0.2 : 0.9) * (check ? 1 : 0.7); kind = 'floor';
+    }
+    img.push({ v, kind, y, ray: [d[1] / d[2], kind === 'ball' ? ts * d[2] : kind === 'floor' ? tf * d[2] : 9] });
+  }
+  return img;
+})();
+
 export default {
   id: 'graphics',
   subject: 'math',
@@ -891,6 +913,48 @@ where $\mathbf n$ is the surface's **normal** (a unit vector pointing straight o
                 readout: (p) => `shininess ${p.sh}: ${p.sh < 10 ? 'a broad, dull sheen' : p.sh < 60 ? 'a soft highlight' : 'a tight, glossy highlight'}`,
               },
               after: r`Low shininess spreads the highlight out (plastic, satin); high shininess concentrates it into a small spot (polished metal, wet skin). This model is a cheap approximation, but it was the standard way to shade 3D graphics for decades.`,
+            },
+            { /*anim:graphics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Ray tracing',
+              body: r`Put everything together and you can draw a scene from scratch. For every pixel, shoot a ray from the eye through that pixel into the scene, find the first thing it hits, and shade that point with the cosine law. To test for a shadow, shoot a second ray from the point towards the light: if it hits the ball first, the point is in shadow.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 4.6, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 220, max: RT_W * RT_H + 300, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = Math.min(RT_W * RT_H, Math.floor(p.t)), els = [];
+                  // the image being built, on the right
+                  const x0 = plot.X(5.2), y0 = plot.Y(4.3), cw = (plot.X(9.8) - plot.X(5.2)) / RT_W, paths = {};
+                  els.push(s('rect', { x: x0, y: y0, width: cw * RT_W, height: cw * RT_H, fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1 }));
+                  for (let k = 0; k < n; k++) {
+                    // each pixel: its object's colour, darkened by a night-coloured layer where the light is weak
+                    const px = RT_IMG[k], cls = px.kind === 'ball' ? 'blue' : px.kind === 'floor' ? 'amber' : 'surface', dark = px.kind === 'sky' ? 0 : Math.round((1 - Math.min(1, px.v)) * 6) / 6;
+                    const sq = `M${(x0 + (k % RT_W) * cw).toFixed(1)} ${(y0 + Math.floor(k / RT_W) * cw).toFixed(1)}h${(cw + 0.3).toFixed(2)}v${(cw + 0.3).toFixed(2)}h${(-cw - 0.3).toFixed(2)}z`;
+                    paths[cls] = (paths[cls] || '') + sq;
+                    if (dark > 0) paths[`night:${dark}`] = (paths[`night:${dark}`] || '') + sq;
+                  }
+                  // the colours first, then the darkening layers on top
+                  for (const [key, d] of Object.entries(paths).sort(([a], [b]) => a.startsWith('night:') - b.startsWith('night:'))) {
+                    if (key.startsWith('night:')) els.push(s('path', { d, fill: 'var(--night)', opacity: (0.85 * +key.slice(6)).toFixed(2) }));
+                    else els.push(s('path', { d, class: `fl-${key}` }));
+                  }
+                  // side view on the left: eye, screen, ball and floor, with the current ray
+                  const ex = 0.4, ey = 2.3, sx = 1.4, sc = 0.55, Y = (yy) => plot.Y(ey + yy * sc), X = (zz) => plot.X(ex + zz * 0.8);
+                  els.push(s('line', { x1: X(0), x2: X(6.3), y1: Y(-1.4), y2: Y(-1.4), stroke: 'var(--amber)', 'stroke-width': 3 }));
+                  els.push(s('circle', { cx: X(5), cy: Y(0), r: Math.abs(Y(1.4) - Y(0)), class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  els.push(s('line', { x1: X(sx), x2: X(sx), y1: Y(1.2), y2: Y(-1.2), stroke: 'var(--ink-3)', 'stroke-width': 3 }));
+                  els.push(s('circle', { cx: X(0), cy: Y(0), r: 5, class: 'fl-ink' }));
+                  if (n < RT_W * RT_H) {
+                    const px = RT_IMG[n], z = Math.min(px.ray[1], 6.3);
+                    els.push(s('line', { x1: X(0), y1: Y(0), x2: X(z), y2: Y(px.ray[0] * z), stroke: 'var(--coral)', 'stroke-width': 2 }));
+                    if (px.kind !== 'sky') els.push(s('circle', { cx: X(z), cy: Y(px.ray[0] * z), r: 5, class: 'fl-coral' }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const n = Math.min(RT_W * RT_H, Math.floor(p.t)); return `pixels traced: ${n} of ${RT_W * RT_H}${n < RT_W * RT_H ? ` · this ray hits ${{ ball: 'the ball', floor: 'the floor', sky: 'nothing' }[RT_IMG[n].kind]}` : ' · done'}`; },
+              },
+              after: r`Each pixel takes one line-meets-sphere calculation (a quadratic equation), one dot product for the brightness, and one more ray for the shadow. Real ray tracers do the same thing, plus mirror reflections (bounce the ray and trace again) and soft light from many directions, millions of times per frame. The left panel shows each ray from the side: the eye, the screen, the ball and the floor.`,
             },
             {
               type: 'numeric',

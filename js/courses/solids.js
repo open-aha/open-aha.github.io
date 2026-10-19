@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const PHI = (1 + Math.sqrt(5)) / 2;
 
@@ -361,6 +362,35 @@ $$V_\text{sphere} = \tfrac23 \times \pi r^2 (2r) = \tfrac43 \pi r^3$$
 He was so proud of this that he asked for a sphere inside a cylinder to be carved on his tomb. Cicero reported finding the tomb, with the carving, about 140 years later.
 
 Using Cavalieri's principle: at every height, a slice of the hemisphere has the same area as a slice of a cylinder with a cone removed. So hemisphere = cylinder − cone $= \pi r^3 - \tfrac13 \pi r^3 = \tfrac23 \pi r^3$.`,
+            },
+            { /*anim:solids*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Archimedes’ slices',
+              body: r`A sphere of radius 1, a cylinder around it, and a double cone with its two tips at the centre. Slide a horizontal knife through all three at height $z$. On the right are the slices, seen from above.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.4, xmax: 5.0, ymin: -1.35, ymax: 1.35, grid: false, axes: false, maxWidth: 600,
+                animate: { param: 't', speed: 0.5, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const z = -0.98 * Math.cos(p.t), rs = Math.sqrt(1 - z * z), rc = Math.abs(z), R = (r) => plot.X(r) - plot.X(0), els = [];
+                  // side view
+                  els.push(s('rect', { x: plot.X(-1), y: plot.Y(1), width: R(2), height: plot.Y(-1) - plot.Y(1), class: 'fl-amber-soft', stroke: 'var(--amber)', 'stroke-width': 2 }));
+                  els.push(s('path', { d: `M${plot.X(-1)} ${plot.Y(1)}L${plot.X(1)} ${plot.Y(-1)}M${plot.X(1)} ${plot.Y(1)}L${plot.X(-1)} ${plot.Y(-1)}`, stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R(1), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  els.push(s('line', { x1: plot.X(-1.3), x2: plot.X(1.3), y1: plot.Y(z), y2: plot.Y(z), stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  // the slices from above
+                  const c1 = 2.3, c2 = 4.1, T = (x, y, text, col) => s('text', { x: plot.X(x), y: plot.Y(y), 'text-anchor': 'middle', class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text });
+                  els.push(s('circle', { cx: plot.X(c1), cy: plot.Y(0), r: R(0.8 * rs), class: 'fl-blue', opacity: 0.7 }));
+                  els.push(s('circle', { cx: plot.X(c1), cy: plot.Y(0), r: R(0.8), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  els.push(T(c1, -1.1, 'sphere', 'blue'));
+                  els.push(s('circle', { cx: plot.X(c2), cy: plot.Y(0), r: R(0.8), class: 'fl-amber', opacity: 0.6 }));
+                  els.push(s('circle', { cx: plot.X(c2), cy: plot.Y(0), r: R(0.8 * rc), class: 'fl-coral', opacity: 0.85 }));
+                  els.push(T(c2, -1.1, 'cylinder (cone inside)', 'amber'));
+                  return els;
+                },
+                readout: (p) => { const z = -0.98 * Math.cos(p.t); return `$z = ${fix(z, 2)}$ · {blue:sphere} **${fix(Math.PI * (1 - z * z), 2)}** + {coral:cone} **${fix(Math.PI * z * z, 2)}** = {amber:cylinder} **3.14**`; },
+              },
+              after: r`At every height, the sphere's slice (radius $\sqrt{1 - z^2}$) plus the cone's slice (radius $|z|$) has area $\pi(1 - z^2) + \pi z^2 = \pi$: exactly the cylinder's slice. Stack all the slices and the volumes must match too: sphere + double cone = cylinder. The cylinder is $2\pi$ and the double cone is a third of it, $\frac{2\pi}{3}$, so the sphere is $2\pi - \frac{2\pi}{3} = \frac43\pi$. This was Archimedes' own argument (with a balance instead of slices), the one he wanted on his tomb.`,
             },
             {
               type: 'numeric',

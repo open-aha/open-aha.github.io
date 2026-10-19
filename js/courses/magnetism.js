@@ -59,6 +59,9 @@ const dflux = (x) => (-3 * x) / (1 + x * x) ** 2.5;
 // hysteresis model: magnetisation on the rising and falling branches, for coercivity hc
 const mUp = (H, hc) => Math.tanh((H - hc) / 0.3), mDown = (H, hc) => Math.tanh((H + hc) / 0.3);
 
+// 1 m pipes; free fall y = 4.9t², or with eddy-current drag a = g - v/τ (terminal speed 0.25 m/s, so τ = 0.0255 s)
+const pipeDrop = (t) => { const tau = 0.25 / 9.8, v = 0.25 * (1 - Math.exp(-t / tau)), y = 0.25 * (t - tau * (1 - Math.exp(-t / tau))); return { y: Math.min(1, y), v: y >= 1 ? 0 : v }; };
+
 export default {
   id: 'magnetism',
   subject: 'physics',
@@ -430,6 +433,37 @@ The minus sign is **Lenz's law**: the induced current flows in the direction tha
                 { t: 'Air resistance inside the narrow pipe', why: 'A non-magnetic object of the same shape falls through quickly. The effect is electromagnetic.' },
               ],
               explain: r`As the magnet falls, the flux through each ring of the pipe changes, inducing swirling **eddy currents**. By Lenz's law, they create fields that oppose the motion and brake the magnet. Some trains and roller coasters use the same effect for smooth, contact-free braking.`,
+            },
+            { /*anim:magnetism*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A magnet in a copper pipe',
+              body: r`Two 1 m pipes: {ink:plastic} on the left, {amber:copper} on the right. A strong magnet is dropped into each at the same moment (shown in slow motion). In the copper, the falling magnet's changing field drives rings of current round the pipe: {coral:one ring below it} and {blue:one above}, circulating in opposite directions.`,
+              widget: {
+                kind: 'graph', xmin: -2.1, xmax: 2.1, ymin: -1.15, ymax: 0.12, grid: false, axes: false, height: 400, maxWidth: 380,
+                animate: { param: 't', speed: 0.5, max: 4.8, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const t = p.t, yf = Math.min(1, 4.9 * t * t), { y } = pipeDrop(t), els = [], R = (q) => plot.X(q) - plot.X(0);
+                  const pipe = (cx, cls, col) => els.push(s('rect', { x: plot.X(cx - 0.17), y: plot.Y(0), width: R(0.34), height: plot.Y(-1) - plot.Y(0), class: cls, stroke: `var(--${col})`, 'stroke-width': 2, opacity: 0.8 }));
+                  pipe(-1, 'fl-surface', 'ink-3');
+                  pipe(1, 'fl-amber-soft', 'amber');
+                  const magnet = (cx, yy) => { els.push(s('rect', { x: plot.X(cx - 0.11), y: plot.Y(-yy + 0.04), width: R(0.22), height: plot.Y(0) - plot.Y(0.04), class: 'fl-coral' })); els.push(s('rect', { x: plot.X(cx - 0.11), y: plot.Y(-yy), width: R(0.22), height: plot.Y(0) - plot.Y(0.04), class: 'fl-blue' })); };
+                  if (yf < 1) magnet(-1, Math.min(0.96, yf));
+                  if (y < 1) magnet(1, Math.min(0.96, y));
+                  if (y < 0.96 && t > 0) for (const [dy, col] of [[-0.09, 'coral'], [0.13, 'blue']]) {
+                    if (-y + dy > -0.01) continue; // no ring above the top of the pipe
+                    const cy = plot.Y(-y + dy);
+                    els.push(s('ellipse', { cx: plot.X(1), cy, rx: R(0.2), ry: 5, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5 }));
+                    const dir = col === 'coral' ? 1 : -1, ax = plot.X(1), ay = cy + 5;
+                    els.push(s('path', { d: `M${ax - 6 * dir} ${ay - 4}L${ax} ${ay}L${ax - 6 * dir} ${ay + 4}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linecap': 'round' }));
+                  }
+                  els.push(s('text', { x: plot.X(-1), y: plot.Y(-1) + 18, 'text-anchor': 'middle', class: 'tick', text: 'plastic' }));
+                  els.push(s('text', { x: plot.X(1), y: plot.Y(-1) + 18, 'text-anchor': 'middle', class: 'tick', text: 'copper' }));
+                  return els;
+                },
+                readout: (p) => { const t = p.t, d = pipeDrop(t); return `${fix(t, 2)} s · plastic: ${t < 0.452 ? `falling at ${fix(9.8 * t, 2)} m/s` : 'out after 0.45 s'} · copper: ${d.y >= 1 ? 'out after 4.03 s' : `falling at ${fix(d.v, 2)} m/s`}`; },
+              },
+              after: r`In the plastic pipe the magnet is in free fall and is out in under half a second. In the copper, the current rings act as electromagnets that oppose the change (Lenz's law): the ring below pushes the magnet up, the ring above pulls it back up. Within a tenth of a second the drag balances gravity, and the magnet drifts down at a steady crawl (here 0.25 m/s, typical for a strong magnet in thick copper). The energy goes into warming the pipe. Magnetic brakes on trains and roller coasters work the same way.`,
             },
           ],
           recap: [

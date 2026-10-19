@@ -581,6 +581,49 @@ Now **slide** the triangles around inside the big square. Watch the leftover spa
 $$a^2 + b^2 = c^2.$$
 That's the whole proof. It works for **every** right triangle.`,
             },
+            { /*anim:geometry*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Shear, slide, shear',
+              body: r`A different proof, close to Euclid's own. A **shear** slides one side of a shape along itself, like pushing over a deck of cards: the base and the height stay put, so the **area never changes**. Watch the two small squares shear, slide down, and shear again.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.8, xmax: 7.8, ymin: -6.1, ymax: 7.7, grid: false, axes: false, maxWidth: 440,
+                animate: { param: 't', speed: 0.45, max: 4.6, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const c = 5, AH = 3.2, h = 2.4, A = [0, 0], B = [c, 0], C = [AH, h], Hf = [AH, 0];
+                  const ph = (k) => { const u = Math.min(1, Math.max(0, p.t - 0.3 - k * 1.25)); return u * u * (3 - 2 * u); };
+                  const e1 = ph(0), e2 = ph(1), e3 = ph(2);
+                  const add = (u, v, k = 1) => [u[0] + k * v[0], u[1] + k * v[1]];
+                  const poly = (pts, o) => s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', 'stroke-linejoin': 'round', ...o });
+                  // one leg's square: its far side shears to vertical, slides down by c, then the slanted sides shear flat
+                  const piece = (P, Q, nrm, side, foot) => {
+                    // P is the corner on the hypotenuse, Q is C; square P, Q, Q + side*nrm, P + side*nrm
+                    const far0 = add(P, nrm, side), far1 = add(P, [0, c]);
+                    const shift = [(far1[0] - far0[0]) * e1, (far1[1] - far0[1]) * e1];
+                    let pts = [P, Q, add(add(Q, nrm, side), shift), add(add(P, nrm, side), shift)];
+                    pts = pts.map((q) => add(q, [0, -c * e2]));
+                    // final vertical shear: corner points above Q's column drop to the hypotenuse level
+                    const dy = (Q[1] - foot[1]) * e3;
+                    pts = pts.map((q, i) => (i === 1 || i === 2 ? [q[0], q[1] - dy] : q));
+                    return pts;
+                  };
+                  const els = [];
+                  els.push(poly([A, B, add(B, [0, -c]), add(A, [0, -c])], { fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  els.push(s('line', { x1: plot.X(AH), x2: plot.X(AH), y1: plot.Y(0), y2: plot.Y(-c), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '3 5' }));
+                  const pb = piece(A, C, [-0.6, 0.8], 4, Hf), pc = piece(B, C, [0.8, 0.6], 3, Hf);
+                  els.push(poly(pb, { class: 'fl-blue', opacity: 0.6, stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  els.push(poly(pc, { class: 'fl-coral', opacity: 0.6, stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  els.push(poly([A, B, C], { class: 'fl-amber', stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  const mid = (pts) => [pts.reduce((a, q) => a + q[0], 0) / 4, pts.reduce((a, q) => a + q[1], 0) / 4];
+                  const lab = ([x, y], text) => s('text', { x: plot.X(x), y: plot.Y(y) + 7, 'text-anchor': 'middle', class: 'lbl-math halo-text', style: 'font-size:max(calc(20px * var(--fs, 1)), var(--fmin, 0px))', text });
+                  if (e2 < 0.3 || e3 > 0.7) els.push(lab(mid(pb), 'b²'), lab(mid(pc), 'a²'));
+                  els.push(lab([AH / 2 + 0.9, -c - 0.55], e3 > 0.7 ? 'b² + a² = c²' : 'c²'));
+                  return els;
+                },
+                readout: (p) => (p.t < 1.55 ? 'Shear: each square leans over. Same base, same height, same area.' : p.t < 2.8 ? 'Slide: move each shape straight down, through the triangle.' : 'Shear again: each one becomes a rectangle inside the big square.'),
+              },
+              after: r`The {blue:blue square} ($b^2$) becomes the left rectangle, and the {coral:coral square} ($a^2$) the right one. Together they fill the square on the hypotenuse exactly, so $a^2 + b^2 = c^2$. The dotted line, the altitude from the right angle, is where the two rectangles meet. This is Euclid's proof (Book I, Proposition 47), animated: instead of shuffling triangles, every step keeps the area fixed.`,
+            },
             {
               type: 'numeric',
               title: 'Find the hypotenuse',

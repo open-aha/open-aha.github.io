@@ -65,6 +65,10 @@ const rmsErr = (w, n) => { let s = 0; const M = 2000; for (let i = 0; i < M; i++
 const mystery = (x) => 0.8 * Math.sin(x) + 0.5 * Math.sin(3 * x) + 0.2 * Math.sin(5 * x);
 const bCoef = (f, n) => { let t = 0; const N = 2000; for (let i = 0; i < N; i++) { const x = (2 * PI * (i + 0.5)) / N; t += f(x) * Math.sin(n * x); } return (2 * t) / N; };
 
+// a bar of length π, uniformly hot (1) inside, ends held at 0: T = Σ (4/nπ) sin(nx) e^{-n² kt} over odd n
+const heatKt = (t) => { const u = Math.min(1, Math.max(0, (t - 0.8) / 7)); return 0.0005 + 0.8 * u * u * u; };
+const heatT = (x, kt) => { let s = 0; for (let n = 1; n < 80; n += 2) s += (4 / (n * Math.PI)) * Math.sin(n * x) * Math.exp(-n * n * kt); return s; };
+
 export default {
   id: 'fourier',
   subject: 'math',
@@ -455,6 +459,39 @@ Today, Fourier's ideas are everywhere:
               answer: 9,
               wrong: [{ v: 3, why: r`The rate depends on $n^2$, not $n$.` }],
               explain: r`$3^2 = 9$ times faster: in the time the smooth $\sin x$ shape halves, the $\sin 3x$ ripple has halved 9 times, shrinking to about $\frac{1}{500}$. That's why heat smooths out sharp temperature differences so quickly.`,
+            },
+            { /*anim:fourier*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watching the wiggles fade',
+              body: r`A metal bar starts evenly hot, with its two ends held cold. Its temperature (top) is a Fourier sum of $\sin x, \sin 3x, \sin 5x, \ldots$ The bars at the bottom show how much of each harmonic is left as the heat spreads.`,
+              widget: {
+                kind: 'graph', xmin: -0.3, xmax: 6.6, ymin: -0.75, ymax: 4.7, grid: false, axes: false, height: 360, maxWidth: 560,
+                animate: { param: 't', speed: 1, max: 10, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const kt = heatKt(p.t), X = (x) => plot.X((6 * x) / Math.PI), els = [], pts = [];
+                  // temperature profile, 0 to 1.2 drawn from y = 2.3 to 4.5
+                  const PY = (T) => plot.Y(2.3 + 1.8 * T);
+                  els.push(s('line', { x1: X(0), x2: X(Math.PI), y1: PY(0), y2: PY(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  for (let i = 0; i <= 150; i++) { const x = (Math.PI * i) / 150; pts.push(`${i ? 'L' : 'M'}${X(x).toFixed(1)} ${PY(heatT(x, kt)).toFixed(1)}`); }
+                  els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 3 }));
+                  // the bar itself, coloured by temperature
+                  for (let i = 0; i < 48; i++) {
+                    const x = (Math.PI * (i + 0.5)) / 48, T = Math.min(1, Math.max(0, heatT(x, kt)));
+                    els.push(s('rect', { x: X((Math.PI * i) / 48), y: plot.Y(2.0), width: X(Math.PI / 48) - X(0) + 0.6, height: plot.Y(1.55) - plot.Y(2.0), style: `fill:color-mix(in srgb, var(--coral) ${Math.round(100 * T)}%, var(--blue))` }));
+                  }
+                  // harmonic sizes
+                  for (let k = 0; k < 8; k++) {
+                    const n = 2 * k + 1, b = (4 / (n * Math.PI)) * Math.exp(-n * n * kt), bx = 0.4 + 0.75 * k, h = 1.0 * b / (4 / Math.PI);
+                    els.push(s('rect', { x: plot.X(bx - 0.22), y: plot.Y(h), width: plot.X(0.44) - plot.X(0), height: Math.max(0, plot.Y(0) - plot.Y(h)), class: 'fl-violet', opacity: 0.8 }));
+                    els.push(s('text', { x: plot.X(bx), y: plot.Y(0) + 16, 'text-anchor': 'middle', class: 'tick', text: String(n) }));
+                  }
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(6.2), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  return els;
+                },
+                readout: (p) => { const kt = heatKt(p.t); return `$kt = ${fix(kt, 3)}$ · {violet:harmonic 1}: ${fix(100 * Math.exp(-kt), 1)}% left · {violet:harmonic 3}: ${fix(100 * Math.exp(-9 * kt), 1)}% left`; },
+              },
+              after: r`Each harmonic fades on its own, the $n$th like $e^{-n^2 kt}$: the sharp edges (made of high harmonics) are gone almost at once, and soon the bar's profile is just a single smooth arch, $\sin x$, sinking slowly. This is exactly how Fourier solved the heat equation in 1807: split the starting temperature into harmonics, let each one decay at its own rate, and add them back up.`,
             },
             {
               type: 'numeric',

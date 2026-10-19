@@ -405,6 +405,37 @@ In 1968 Dick Fosbury won Olympic gold going over backwards, arching his back ove
               ],
               explain: r`Arched over the bar, each body part crosses in turn while the centre of mass stays a few centimetres below it. Every world record since the 1970s has used the flop. (It only became practical once deep foam mats replaced sand pits.)`,
             },
+            { /*anim:sports*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Under the bar',
+              body: r`Here is a jumper's body (thickness included) passing over the bar at the top of a jump, drawn from the side. Watch the {amber:centre of mass} as the jumper arches their back.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.25, xmax: 1.25, ymin: 1.3, ymax: 2.55, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 0.7, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const bar = 2.0, half = 0.12, Lb = 1.8, phi = Math.max(0.02, 1.6 * (1 - Math.cos(p.t)) / 2), R = Lb / (2 * phi);
+                  // the body's centre line is an arc; its lowest underside point at the top just clears the bar
+                  const cy = bar + half + 0.01 - R, els = [];
+                  const pts = [];
+                  for (let i = 0; i <= 60; i++) { const a = -phi + (2 * phi * i) / 60; pts.push([R * Math.sin(a), cy + R * Math.cos(a)]); }
+                  const com = bar + half + 0.01 - R * (1 - Math.sin(phi) / phi);
+                  els.push(s('line', { x1: plot.X(-1.2), x2: plot.X(1.2), y1: plot.Y(bar), y2: plot.Y(bar), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '6 6' }));
+                  els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': plot.X(2 * half) - plot.X(0), 'stroke-linecap': 'round', opacity: 0.85 }));
+                  const [hx, hy] = pts[0];
+                  els.push(s('circle', { cx: plot.X(hx), cy: plot.Y(hy), r: plot.X(0.13) - plot.X(0), class: 'fl-blue' }));
+                  // the bar, end on
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(bar), r: 6, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2 }));
+                  const cx0 = plot.X(0), cyp = plot.Y(com);
+                  els.push(s('circle', { cx: cx0, cy: cyp, r: 8, class: 'fl-amber', stroke: 'var(--ink)', 'stroke-width': 2 }));
+                  els.push(s('path', { d: `M${cx0 - 8} ${cyp}h16M${cx0} ${cyp - 8}v16`, stroke: 'var(--ink)', 'stroke-width': 1.5 }));
+                  els.push(s('text', { x: plot.X(1.0), y: plot.Y(bar) + 18, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'bar height' }));
+                  return els;
+                },
+                readout: (p) => { const phi = Math.max(0.02, 1.6 * (1 - Math.cos(p.t)) / 2), R = 1.8 / (2 * phi), d = 100 * (0.13 - R * (1 - Math.sin(phi) / phi)); return `centre of mass **${fix(Math.abs(d), 0)} cm ${d >= 0 ? 'above' : 'below'}** the bar`; },
+              },
+              after: r`Lying flat over the bar, the centre of mass must be above it, by at least half the body's thickness. Arched like a bridge, the body drapes down on both sides, and the centre of mass ends up **outside the body, below the bar**. Every centimetre the centre of mass doesn't have to rise is energy saved at take-off, which is how the Fosbury flop beats the older techniques.`,
+            },
             {
               type: 'numeric',
               title: 'Pole vault energy',

@@ -16,6 +16,17 @@ const rayleigh = (lam) => (700 / lam) ** 4; // scattering relative to 700 nm red
 const coronaDeg = (dum) => (1.22 * 550e-9 / (dum * 1e-6)) * DEG; // first dark ring, 550 nm light, droplet diameter in µm
 const hueOf = (nm) => Math.max(0, Math.min(270, (270 * (700 - nm)) / 300));
 
+// Descartes' calculation: parallel sunlight entering a drop at height b (radius 1), one reflection inside
+const DROP_N = 1.333;
+const dropRay = (b) => {
+  const refract = (d, nrm, eta) => { const ci = -(d[0] * nrm[0] + d[1] * nrm[1]), k = 1 - eta * eta * (1 - ci * ci); const f = eta * ci - Math.sqrt(Math.max(0, k)); return [eta * d[0] + f * nrm[0], eta * d[1] + f * nrm[1]]; };
+  const next = (P, u) => { const sc = -2 * (P[0] * u[0] + P[1] * u[1]); return [P[0] + sc * u[0], P[1] + sc * u[1]]; };
+  const E = [-Math.sqrt(1 - b * b), b], u1 = refract([1, 0], E, 1 / DROP_N), Q = next(E, u1);
+  const u2 = [u1[0] - 2 * (u1[0] * Q[0] + u1[1] * Q[1]) * Q[0], u1[1] - 2 * (u1[0] * Q[0] + u1[1] * Q[1]) * Q[1]], R = next(Q, u2);
+  const out = refract(u2, [-R[0], -R[1]], DROP_N), ang = (Math.acos(Math.max(-1, Math.min(1, -out[0]))) * 180) / Math.PI;
+  return { E, Q, R, out, ang };
+};
+
 export default {
   id: 'skyoptics',
   subject: 'physics',
@@ -42,6 +53,34 @@ export default {
               body: r`Sunlight enters a spherical raindrop, **refracts** (bends), **reflects** once off the back, and refracts again on the way out. Where it leaves depends on how far from the drop's centre it entered: its **impact parameter** $b$ (0 at the centre, 1 at the edge).
 
 To see a rainbow, the Sun must be behind you. Angles are measured from the **antisolar point**: the shadow of your head.`,
+            },
+            { /*anim:skyoptics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Descartes traces the rays',
+              body: r`In 1637 René Descartes traced sunlight through a raindrop by hand, ray by ray. Each ray enters at a different height, bends, reflects once off the back, and bends again on the way out. Watch where the rays come out, and the tally on the right of the angle each makes with the incoming sunlight.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.4, xmax: 4.2, ymin: -2.3, ymax: 1.3, grid: false, axes: false,
+                animate: { param: 't', speed: 9, max: 112, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(100, Math.floor(p.t)), els = [], hist = new Array(46).fill(0);
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  for (let i = 0; i <= k; i++) {
+                    const b = (i + 0.5) / 101, r = dropRay(b), cur = i === k, near = Math.abs(r.ang - 42) < 1;
+                    hist[Math.min(45, Math.round(r.ang))]++;
+                    const o = [r.R[0] + 2.6 * r.out[0], r.R[1] + 2.6 * r.out[1]];
+                    els.push(s('path', { d: `${cur ? `M${plot.X(-3.4)} ${plot.Y(b)}L` : 'M'}${plot.X(r.E[0])} ${plot.Y(r.E[1])}L${plot.X(r.Q[0])} ${plot.Y(r.Q[1])}L${plot.X(r.R[0])} ${plot.Y(r.R[1])}L${plot.X(o[0])} ${plot.Y(o[1])}`, fill: 'none', stroke: near ? 'var(--coral)' : 'var(--amber)', 'stroke-width': cur ? 2.5 : 1, opacity: cur ? 1 : near ? 0.6 : 0.3 }));
+                  }
+                  // tally of exit angles, 0° to 45°
+                  const X = (a) => plot.X(1.6 + (a / 45) * 2.5), base = plot.Y(-2.0), sc = (plot.Y(0) - plot.Y(2.6)) / 22;
+                  hist.forEach((c, a) => { if (c) els.push(s('rect', { x: X(a) - 2, y: base - c * sc, width: Math.max(2, X(1) - X(0) - 1), height: c * sc, class: a >= 41 && a <= 43 ? 'fl-coral' : 'fl-amber' })); });
+                  els.push(s('line', { x1: X(0), x2: X(45), y1: base, y2: base, stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  for (const a of [0, 20, 42]) els.push(s('text', { x: X(a), y: base + 16, 'text-anchor': 'middle', class: 'tick', text: `${a}°` }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(100, Math.floor(p.t)), r = dropRay((k + 0.5) / 101); return `ray ${k + 1} of 101 comes out at ${r.ang.toFixed(1)}° to the sunlight`; },
+              },
+              after: r`Rays entering near the centre come almost straight back; rays entering higher come out at larger angles, but **never more than about 42°**. Near that limit, many neighbouring rays come out at almost exactly the same angle, so the light piles up there. Every drop sends this concentrated light back at 42° from the incoming sunlight, so you see a bright ring of drops at 42° from the point opposite the Sun: the rainbow.`,
             },
             {
               type: 'explain',

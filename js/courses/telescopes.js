@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const sinc2 = (u) => (Math.abs(u) < 1e-9 ? 1 : (Math.sin(Math.PI * u) / (Math.PI * u)) ** 2);
 const f2 = (v) => (Math.round(v * 100) / 100).toString();
@@ -111,6 +112,30 @@ A coin held at arm's length can cover the Moon, even though the Moon is 3,474 km
               body: r`A simple refracting telescope has a large **objective** lens with a long focal length $f_o$, which forms an image of a distant object, and a small **eyepiece** with a short focal length $f_e$, which acts as a magnifier for that image. The angular magnification is
 $$M = \frac{f_o}{f_e}$$
 Big research telescopes use curved **mirrors** instead of a large objective lens, but the principle is the same.`,
+            },
+            { /*anim:telescopes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Turning a small angle into a big one',
+              body: r`Light from a distant star arrives as parallel rays. The {blue:objective} (focal length 4) brings them to a focus; the {teal:eyepiece} (focal length 1) turns them parallel again. Watch what happens to the **angle** as the star drifts across the sky (angles are exaggerated).`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.4, xmax: 8.2, ymin: -1.9, ymax: 1.9, grid: false, axes: false, clipExtra: true,
+                animate: { param: 't', speed: 0.6, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const fo = 4, fe = 1, th = ((3.2 * Math.PI) / 180) * Math.sin(p.t), F = [fo, fo * Math.tan(th)], slopeOut = -F[1] / fe, els = [];
+                  const lens = (x, h, col) => s('ellipse', { cx: plot.X(x), cy: plot.Y(0), rx: plot.X(0.12) - plot.X(0), ry: plot.Y(0) - plot.Y(h), class: `fl-${col}`, opacity: 0.35, stroke: `var(--${col})`, 'stroke-width': 2 });
+                  els.push(s('line', { x1: plot.X(-2.4), x2: plot.X(8.2), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--line-2)', 'stroke-width': 1.2, 'stroke-dasharray': '4 6' }));
+                  els.push(lens(0, 1.3, 'blue'), lens(fo + fe, 0.6, 'teal'));
+                  for (const h of [-0.9, -0.3, 0.3, 0.9]) {
+                    const ye = h + (F[1] - h) * ((fo + fe) / fo), x0 = -2.4, y0 = h + Math.tan(th) * x0;
+                    els.push(s('path', { d: `M${plot.X(x0)} ${plot.Y(y0)}L${plot.X(0)} ${plot.Y(h)}L${plot.X(fo + fe)} ${plot.Y(ye)}L${plot.X(8.2)} ${plot.Y(ye + slopeOut * (8.2 - fo - fe))}`, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2, opacity: 0.9 }));
+                  }
+                  els.push(s('circle', { cx: plot.X(F[0]), cy: plot.Y(F[1]), r: 4, class: 'fl-coral' }));
+                  return els;
+                },
+                readout: (p) => { const th = 3.2 * Math.sin(p.t), out = (Math.atan(4 * Math.tan((th * Math.PI) / 180)) * 180) / Math.PI; return `starlight arrives at ${fix(th, 2)}° · leaves the eyepiece at ${fix(-out, 2)}° · 4 times the angle (and flipped)`; },
+              },
+              after: r`The rays from one star all meet at a single point in the focal plane, and how far that point sits from the axis depends on the star's angle. The short-focus eyepiece sends the light on at a much steeper angle: $\frac{f_o}{f_e} = 4$ times steeper here. Everything the telescope shows is spread out by that same factor, which is its **magnification**. (The image is also upside down, which astronomers don't mind.)`,
             },
             {
               type: 'numeric',

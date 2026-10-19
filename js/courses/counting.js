@@ -5,6 +5,10 @@ const fact = (n) => (n <= 1 ? 1 : n * fact(n - 1));
 // derangements: D(n) = n! Σ (−1)^k / k!
 const derange = (n) => { let d = 1; for (let i = 1; i <= n; i++) d = i * d + (i % 2 ? -1 : 1); return d; };
 
+// a Galton board with 8 rows: ball k goes right at row r when bit r of its random number is 1
+const GALTON_BITS = (() => { let a = 987654321; return Array.from({ length: 256 }, () => { a = (a * 1103515245 + 12345) % 2147483648; return a >>> 8; }); })();
+const galtonRights = (k, rows) => { let n = 0; for (let r = 0; r < rows; r++) n += (GALTON_BITS[k] >> r) & 1; return n; };
+
 export default {
   id: 'counting',
   subject: 'math',
@@ -301,6 +305,42 @@ read "$n$ choose $k$". It's the ordered count divided by the $k!$ orderings of e
                 { t: 'Because factorials always add like that', why: 'It can be shown with factorials, but there’s a clearer counting reason.' },
               ],
               explain: r`Fix one particular item. Groups of size $k$ either include it (then choose $k - 1$ more from the other $n - 1$) or exclude it (then choose all $k$ from the other $n - 1$). These two cases don't overlap and cover everything.`,
+            },
+            { /*anim:counting*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A board of pegs',
+              body: r`Balls drop through 8 rows of pegs, bouncing left or right with equal chance at each one. The numbers on the pegs are Pascal's triangle. Watch where 256 balls end up.`,
+              widget: {
+                kind: 'graph', xmin: -5, xmax: 5, ymin: -7.2, ymax: 9.4, grid: false, axes: false, height: 440, maxWidth: 520,
+                animate: { param: 't', speed: 1, max: 31, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const rows = 8, per = 0.1, els = [], C = (n, k) => { let v = 1; for (let i = 0; i < k; i++) v = (v * (n - i)) / (i + 1); return v; };
+                  const pegY = (r) => 8.6 - r, pegX = (r, j) => (j - r / 2) * 0.95;
+                  for (let r = 0; r < rows; r++) for (let j = 0; j <= r; j++) {
+                    els.push(s('circle', { cx: plot.X(pegX(r, j)), cy: plot.Y(pegY(r)), r: 11, class: 'fl-surface', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                    els.push(s('text', { x: plot.X(pegX(r, j)), y: plot.Y(pegY(r)) + 4, 'text-anchor': 'middle', style: 'font-size:max(calc(11px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-2)', text: String(C(r, j)) }));
+                  }
+                  const counts = new Array(rows + 1).fill(0), launched = Math.min(256, Math.floor(p.t / per) + 1);
+                  for (let k = 0; k < launched; k++) {
+                    const age = (p.t - k * per) * 4; // rows fallen
+                    if (age >= rows + 1.6) { counts[galtonRights(k, rows)]++; continue; }
+                    const r = Math.max(0, Math.floor(age)), f = Math.max(0, age - r), done = galtonRights(k, Math.min(r, rows)), next = r < rows ? (GALTON_BITS[k] >> r) & 1 : 0;
+                    const x = (done - r / 2) * 0.95 + (next - 0.5) * 0.475 * Math.min(1, f * 2) * (r < rows ? 1 : 0), y = pegY(0) + 0.6 - age;
+                    els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 5, class: 'fl-coral' }));
+                  }
+                  const bw = plot.X(0.8) - plot.X(0), base = plot.Y(-7), unit = (plot.Y(-7) - plot.Y(-0.5)) / 75;
+                  counts.forEach((n, j) => {
+                    const x = plot.X((j - rows / 2) * 0.95);
+                    els.push(s('rect', { x: x - bw / 2, y: base - n * unit, width: bw, height: n * unit, class: 'fl-coral', opacity: 0.6 }));
+                    els.push(s('rect', { x: x - bw / 2, y: base - C(rows, j) * unit, width: bw, height: 2, class: 'fl-ink' }));
+                    els.push(s('text', { x, y: base + 16, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));font-weight:700', text: String(C(rows, j)) }));
+                  });
+                  return els;
+                },
+                readout: (p) => `balls dropped: ${Math.min(256, Math.floor(p.t / 0.1) + 1)} of 256 · black ticks: Pascal's row 8 (out of 256)`,
+              },
+              after: r`To reach a peg, a ball needs some number of right-bounces, in any order. The number of different routes to each peg is exactly its Pascal number, because every route arrives from one of the two pegs above it. With 8 rows there are $2^8 = 256$ equally likely routes in total, so out of 256 balls you expect about 1, 8, 28, 56, 70, 56, 28, 8, 1 in the bins. Add more rows and the heap takes the shape of the famous **bell curve**.`,
             },
             {
               type: 'explain',

@@ -531,6 +531,33 @@ It follows from Bernoulli's equation, or energy conservation: each bit of water 
               ],
               explain: r`As $d$ falls, $v = \sqrt{2gd}$ falls, so draining slows down. That's why a draining bath takes a while to empty its last few centimetres, and why ancient water clocks needed cleverly shaped vessels to keep time evenly.`,
             },
+            { /*anim:fluids*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watching a tank drain',
+              body: r`A tank on a 0.5 m stand starts with water 1 m deep and drains through a small hole at the bottom. Watch the water level and the jet together.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.2, xmax: 3.3, ymin: -0.05, ymax: 1.75, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 12, max: 310, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  // the level falls so that √h drops steadily: √h = 1 − kt (the tank empties after 1/k = 290 s here)
+                  const k = 1 / 290, h = Math.max(0, (1 - k * p.t) ** 2), base = 0.5, els = [], v = Math.sqrt(2 * 9.8 * h);
+                  els.push(s('line', { x1: plot.X(-0.2), x2: plot.X(3.3), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 2 }));
+                  els.push(s('rect', { x: plot.X(0.1), y: plot.Y(base), width: plot.X(0.5) - plot.X(0), height: plot.Y(0) - plot.Y(base), class: 'fl-muted', opacity: 0.4 }));
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(base + h), width: plot.X(0.7) - plot.X(0), height: plot.Y(base) - plot.Y(base + h), class: 'fl-blue', opacity: 0.55 }));
+                  els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(base + 1.1)}V${plot.Y(base)}H${plot.X(0.7)}V${plot.Y(base + 1.1)}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  if (h > 0.001) {
+                    // the jet: leaves sideways at v = √(2gh) from just above the base, falls 0.5 m
+                    const pts = [];
+                    for (let i = 0; i <= 40; i++) { const tt = (Math.sqrt((2 * (base + 0.03)) / 9.8) * i) / 40; pts.push([0.7 + v * tt, base + 0.03 - 4.9 * tt * tt]); }
+                    els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const k = 1 / 290, h = Math.max(0, (1 - k * Math.min(p.t, 290)) ** 2); return `after ${fix(Math.min(p.t, 290), 0)} s: depth ${fix(100 * h, 0)} cm · jet speed ${fix(Math.sqrt(2 * 9.8 * h), 2)} m/s · lands ${fix(2 * Math.sqrt(h * 0.53), 2)} m away`; },
+              },
+              after: r`The jet's speed is $\sqrt{2gh}$, so as the water gets shallower the jet weakens, lands closer, and the level falls ever more slowly. Halfway in **time**, three quarters of the water has already gone: the depth falls as $(1 - kt)^2$, a parabola in time. That's why the last bit of a draining bath seems to take forever, and why water clocks (clepsydras) used specially shaped vessels to make the level fall evenly.`,
+            },
             {
               type: 'numeric',
               title: 'Half the height',

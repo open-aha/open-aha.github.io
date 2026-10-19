@@ -146,6 +146,43 @@ To rewrite any quadratic, add and subtract the missing corner:
 $$x^2 + 6x + 5 = (x + 3)^2 - 9 + 5 = (x + 3)^2 - 4$$
 This **vertex form** shows the lowest point at once: $(-3, -4)$.`,
             },
+            { /*anim:quadratics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Completing it, literally',
+              body: r`The same idea in motion, the way al-Khwarizmi drew it around 820 AD: an {blue:$x \times x$ square} and a {coral:$6 \times x$ strip}. Split the strip and move the halves.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.8, xmax: 11.4, ymin: -0.9, ymax: 8.2, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 0.5, max: 5, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = 4.5, sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+                  const e1 = sm((p.t - 0.6) / 1.2), e2 = sm((p.t - 2.1) / 1.4), e3 = sm((p.t - 3.6) / 0.6);
+                  const rect = (x0, y0, w, h, o) => s('rect', { x: plot.X(x0), y: plot.Y(y0 + h), width: plot.X(w) - plot.X(0), height: plot.Y(0) - plot.Y(h), stroke: 'var(--card)', 'stroke-width': 2, ...o });
+                  const T = (x, y, text, fill, fs = 18) => s('text', { x: plot.X(x), y: plot.Y(y) + 6, 'text-anchor': 'middle', class: 'lbl-math halo-text', style: `font-size:max(calc(${fs}px * var(--fs, 1)), var(--fmin, 0px));fill:${fill}`, text });
+                  const els = [];
+                  // the square sits at the top left: x from 0 to X, y from 8 - X to 8 (top edge at y = 7.6)
+                  const top = 7.6, y0 = top - X;
+                  els.push(rect(0, y0, X, X, { class: 'fl-blue', opacity: 0.75 }));
+                  // strip halves: start side by side to the right of the square (each 3 wide, X tall)
+                  els.push(rect(X, y0, 3, X, { class: 'fl-coral', opacity: 0.75 }));
+                  // second half: starts at x = X + 3, then turns and moves under the square
+                  const th = (-Math.PI / 2) * e2, c0 = [X + 3 + 1.5 + 0.4 * e1, y0 + X / 2], c1 = [X / 2, y0 - 1.5], cx = c0[0] + (c1[0] - c0[0]) * e2, cy = c0[1] + (c1[1] - c0[1]) * e2;
+                  const corner = ([dx, dy]) => [cx + dx * Math.cos(th) - dy * Math.sin(th), cy + dx * Math.sin(th) + dy * Math.cos(th)];
+                  const pts = [[-1.5, -X / 2], [1.5, -X / 2], [1.5, X / 2], [-1.5, X / 2]].map(corner);
+                  els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', class: 'fl-coral', opacity: 0.75, stroke: 'var(--card)', 'stroke-width': 2 }));
+                  // the missing corner
+                  if (e2 > 0.98) els.push(rect(X, y0 - 3, 3, 3, e3 > 0 ? { class: 'fl-amber', opacity: 0.25 + 0.6 * e3 } : { fill: 'none', stroke: 'var(--ink-3)', 'stroke-dasharray': '5 5', 'stroke-width': 1.5 }));
+                  els.push(T(X / 2, y0 + X / 2, 'x²', '#fff', 22));
+                  els.push(T(X / 2, top + 0.35, 'x', 'var(--blue)'));
+                  els.push(T(X + 1.5, top + 0.35, '3', 'var(--coral)'));
+                  if (e2 > 0.98) { els.push(T(X + 1.5, y0 - 1.5, e3 > 0.5 ? '9' : '?', 'var(--ink)')); els.push(T(-0.4, y0 - 1.5, '3', 'var(--coral)')); }
+                  if (e2 < 0.02) els.push(T(X + 4.5 + 0.4 * e1, top + 0.35, '3', 'var(--coral)'));
+                  return els;
+                },
+                readout: (p) => (p.t < 2.1 ? r`$x^2 + 6x$: a square and a strip of width 6, cut in half` : p.t < 3.6 ? r`one half on each side: an L-shape, still with area $x^2 + 6x$` : r`fill the gap: $x^2 + 6x + \amber{9} = (x + 3)^2$`),
+              },
+              after: r`The two halves of the strip make an L-shape that is a square with one corner missing. The missing corner is $3 \times 3$, half the strip's width squared. Add it, and the shape is a complete square of side $x + 3$. That is all "completing the square" means: $x^2 + bx + \left(\tfrac{b}{2}\right)^2 = \left(x + \tfrac{b}{2}\right)^2$.`,
+            },
             {
               type: 'numeric',
               title: 'Vertex',

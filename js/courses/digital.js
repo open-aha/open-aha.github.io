@@ -357,6 +357,36 @@ $$\begin{array}{r} \scriptstyle 1\,1\,1\phantom{0} \\ 1011 \\ +\ 0111 \\ \hline 
               ],
               explain: r`Adding $0111\ldots1 + 1$ makes a carry ripple from the bottom all the way to the top, one gate delay after another. Real processors use cleverer **carry-lookahead** adders that work out many carries at once, trading extra gates for speed.`,
             },
+            { /*anim:digital*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watch the carry ripple',
+              body: r`An 8-bit ripple-carry adder computes $11111111 + 00000001$ (that's $255 + 1$). Each full adder needs about **2 gate delays** to pass its carry on. Each box adds one bit of each number (shown above it) plus the carry from its right. Watch the {coral:carry} travel, and the sum bits underneath.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 8.7, ymin: -1.5, ymax: 2.1, grid: false, axes: false, height: 260,
+                animate: { param: 't', speed: 1.4, max: 11, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const k = Math.min(8, Math.floor(p.t)), els = [], A = [1, 1, 1, 1, 1, 1, 1, 1], B = [0, 0, 0, 0, 0, 0, 0, 1];
+                  const T = (x, y, text, o = {}) => s('text', { x: plot.X(x), y: plot.Y(y) + 5, 'text-anchor': 'middle', style: `font-size:max(calc(${o.fs || 14}px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;font-family:var(--font-mono);${o.fill ? 'fill:' + o.fill : ''}`, text });
+                  // bit i (0 = least significant) sits at column 7 - i; carry into bit i is known after i stages
+                  for (let i = 0; i < 8; i++) {
+                    const x = 8.1 - i, cin = i === 0 ? 0 : i <= k ? 1 : 0, known = i <= k, sum = A[7 - i] ^ B[7 - i] ^ cin;
+                    els.push(s('rect', { x: plot.X(x - 0.38), y: plot.Y(0.85), width: plot.X(0.76) - plot.X(0), height: plot.Y(0) - plot.Y(0.85), rx: 8, class: known ? 'fl-blue-soft' : 'fl-surface', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                    els.push(T(x - 0.15, 1.35, String(A[7 - i]), { fill: 'var(--ink-2)' }), T(x + 0.15, 1.35, String(B[7 - i]), { fill: 'var(--ink-2)' }));
+                    els.push(T(x, 0.42, '+', { fill: 'var(--ink-3)' }));
+                    els.push(T(x, -0.55, String(sum), { fs: 20, fill: known ? 'var(--ink)' : 'var(--coral)' }));
+                    // carry wire to the next column on the left
+                    const cout = i < k ? 1 : 0;
+                    if (i < 7) els.push(s('line', { x1: plot.X(x - 0.38), x2: plot.X(x - 0.62), y1: plot.Y(0.42), y2: plot.Y(0.42), stroke: cout ? 'var(--coral)' : 'var(--line-2)', 'stroke-width': cout ? 5 : 3 }));
+                  }
+                  els.push(T(0.3, -0.55, k >= 8 ? '1' : '·', { fs: 20, fill: k >= 8 ? 'var(--ink)' : 'var(--ink-3)' }));
+                  els.push(s('line', { x1: plot.X(0.72), x2: plot.X(0.45), y1: plot.Y(0.42), y2: plot.Y(0.42), stroke: k >= 8 ? 'var(--coral)' : 'var(--line-2)', 'stroke-width': k >= 8 ? 5 : 3 }));
+                  return els;
+                },
+                readout: (p) => { const k = Math.min(8, Math.floor(p.t)); return k < 8 ? `after ${2 * k} gate delays the output still reads ${'1'.repeat(7 - k)}${'0'.repeat(k + 1)}: **not finished** (coral bits are still wrong)` : 'after 16 gate delays: 1 00000000 = 256 ✓'; },
+              },
+              after: r`Each column can't finish until the carry from the column to its right arrives, so the carry crawls along one stage at a time. Adding 1 to 11111111 is the worst case: the carry must ripple through every column, and the output flickers through wrong values on the way. A 64-bit ripple adder would need over 100 gate delays, which is why real processors use **carry-lookahead** adders that work out all the carries in parallel.`,
+            },
           ],
           recap: [
             'Half adder: sum = A XOR B, carry = A AND B.',

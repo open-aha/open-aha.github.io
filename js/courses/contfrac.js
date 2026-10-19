@@ -98,6 +98,23 @@ function zigzag(x1, y1, x2, y2) {
 const phiTot = (n) => { let c = 0; for (let k = 1; k <= n; k++) if (gcd(k, n) === 1) c++; return c; };
 const fareySize = (N) => { let c = 1; for (let k = 1; k <= N; k++) c += phiTot(k); return c; };
 
+// Klein's picture of √2: the lattice points closest to the line y = √2·x, below and above it
+const KLEIN_HULL = (N, above) => {
+  // anchored on the axes: below the line at (1, 0), above it at (0, 1)
+  const pts = [above ? [0, 1] : [1, 0]];
+  for (let q = 1; q <= N; q++) pts.push([q, above ? Math.ceil(Math.SQRT2 * q) : Math.floor(Math.SQRT2 * q)]);
+  // the side of the hull facing the line: an upper hull below it, a lower hull above it
+  const hull = [];
+  for (const P of pts) {
+    while (hull.length >= 2) {
+      const [a, b] = [hull[hull.length - 2], hull[hull.length - 1]], cr = (b[0] - a[0]) * (P[1] - a[1]) - (b[1] - a[1]) * (P[0] - a[0]);
+      if (above ? cr <= 0 : cr >= 0) hull.pop(); else break;
+    }
+    hull.push(P);
+  }
+  return hull;
+};
+
 export default {
   id: 'contfrac',
   subject: 'math',
@@ -232,6 +249,35 @@ We abbreviate this **continued fraction** as $[1; 2, 3, 4]$. The steps are exact
                 },
               },
               after: r`For $\pi = [3; 7, 15, 1, 292, \dots]$ the convergents are $3, \frac{22}{7}, \frac{333}{106}, \frac{355}{113}, \dots$. The approximation $\frac{355}{113}$, found by the Chinese astronomer Zu Chongzhi in the 5th century, is correct to 6 decimal places.`,
+            },
+            { /*anim:contfrac*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A string pulled tight',
+              body: r`Felix Klein's picture of the convergents. Draw the line $y = \sqrt2\,x$ through a grid of dots (each dot $(q, p)$ stands for the fraction $\frac pq$). Imagine pegs at all the dots, and a string on each side of the line, anchored at the corner and pulled taut towards infinity. Watch where the strings bend as more of the grid comes in.`,
+              widget: {
+                kind: 'graph', xmin: -1, xmax: 31, ymin: -1.5, ymax: 44, grid: false, axes: false, height: 360,
+                animate: { param: 't', speed: 2.2, max: 34, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const N = Math.max(1, Math.min(30, Math.floor(p.t))), els = [];
+                  let dots = '';
+                  for (let q = 0; q <= 30; q++) for (let pp = 0; pp <= 43; pp++) dots += `M${plot.X(q).toFixed(1)} ${plot.Y(pp).toFixed(1)}h0.1`;
+                  els.push(s('path', { d: dots, stroke: 'var(--ink-3)', 'stroke-width': 2.5, 'stroke-linecap': 'round', opacity: 0.4 }));
+                  els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(30.5), y2: plot.Y(30.5 * Math.SQRT2), stroke: 'var(--ink)', 'stroke-width': 1.5 }));
+                  for (const [above, col] of [[false, 'blue'], [true, 'coral']]) {
+                    const H = KLEIN_HULL(N, above);
+                    els.push(s('path', { d: H.map(([q, pp], i) => `${i ? 'L' : 'M'}${plot.X(q).toFixed(1)} ${plot.Y(pp).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                    H.slice(1, -1).forEach(([q, pp]) => {
+                      if (!['1/1', '3/2', '7/5', '17/12', '41/29'].includes(`${pp}/${q}`)) return;
+                      els.push(s('circle', { cx: plot.X(q), cy: plot.Y(pp), r: 5, class: `fl-${col}` }));
+                      els.push(s('text', { x: plot.X(q) + (above ? -8 : 8), y: plot.Y(pp) + (above ? -6 : 16), 'text-anchor': above ? 'end' : 'start', class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text: `${pp}/${q}` }));
+                    });
+                  }
+                  return els;
+                },
+                readout: (p) => `grid up to denominator ${Math.max(1, Math.min(30, Math.floor(p.t)))} · the strings bend only at convergents of $\\sqrt2$: $\\tfrac11, \\tfrac32, \\tfrac75, \\tfrac{17}{12}, \\tfrac{41}{29}, \\ldots$`,
+              },
+              after: r`The corners of the {blue:lower string} are $\frac11, \frac75, \frac{41}{29}, \dots$ (just below $\sqrt2$) and the corners of the {coral:upper string} are $\frac32, \frac{17}{12}, \dots$ (just above). Together they are exactly the convergents of $\sqrt2 = [1; 2, 2, 2, \dots]$. That's why convergents are the best approximations: a fraction closer to the line, with a smaller denominator, would be a peg poking through the taut string.`,
             },
             {
               type: 'interactive',

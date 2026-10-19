@@ -21,6 +21,23 @@ const interleave = (x, y) => { const a = Math.round(x * 1000).toString().padStar
 const ternary = (x, n = 8) => { let s = ''; for (let i = 0; i < n; i++) { x *= 3; const d = Math.floor(x + 1e-9); s += d; x -= d; } return s; };
 const inCantor = (x) => { for (let i = 0; i < 30; i++) { x *= 3; const d = Math.floor(x + 1e-12); if (d === 1 && x - 1 > 1e-9) return false; x -= d; if (x < 1e-12) return true; } return true; };
 
+// the order-n Hilbert curve through the centres of a 2^n × 2^n grid (the standard index-to-point conversion)
+const hilbertPts = (n) => {
+  const N = 2 ** n, out = [];
+  for (let d = 0; d < N * N; d++) {
+    let x = 0, y = 0, t = d;
+    for (let s = 1; s < N; s *= 2) {
+      const rx = 1 & (t >> 1), ry = 1 & (t ^ rx);
+      if (ry === 0) { if (rx === 1) { x = s - 1 - x; y = s - 1 - y; } const tmp = x; x = y; y = tmp; }
+      x += s * rx; y += s * ry; t >>= 2;
+    }
+    out.push([(x + 0.5) / N, (y + 0.5) / N]);
+  }
+  return out;
+};
+const HILBERT = [1, 2, 3, 4, 5, 6].map(hilbertPts);
+const hilbertStage = (t) => { const k = Math.min(5, Math.floor(t / 3.2)), u = Math.min(1, ((t % 3.2) / 2.2)); return { k, u: k === 5 && t > 16 ? 1 : u }; };
+
 export default {
   id: 'infinity',
   subject: 'math',
@@ -453,6 +470,24 @@ Cantor went further. For **any** set, the set of all its subsets is strictly big
               prompt: r`The $n$-th stage of Hilbert’s space-filling curve visits every one of the $4^n$ small squares of a grid. How many squares does the 3rd stage visit?`,
               answer: 64,
               explain: r`$4^3 = 64$ (an 8 × 8 grid). In the limit the curve passes through every point of the square, yet it is a continuous image of a line segment.`,
+            },
+            { /*anim:infinity*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A curve that fills the square',
+              body: r`Hilbert's curve, stage by stage. Each stage splits every small square into 4 and visits them in the same U-shaped order, turned so the pieces join up.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.03, xmax: 1.03, ymin: -0.03, ymax: 1.03, grid: false, axes: false, maxWidth: 360,
+                animate: { param: 't', speed: 1, max: 22, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { k, u } = hilbertStage(p.t), pts = HILBERT[k], m = Math.max(2, Math.ceil(pts.length * u)), els = [];
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(1), width: plot.X(1) - plot.X(0), height: plot.Y(0) - plot.Y(1), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  els.push(s('path', { d: pts.slice(0, m).map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--blue)', 'stroke-width': Math.max(1.2, 4 - 0.55 * k), 'stroke-linejoin': 'round' }));
+                  return els;
+                },
+                readout: (p) => { const { k } = hilbertStage(p.t), n = k + 1; return `stage ${n}: visits ${4 ** n} squares, length ${(2 ** n - 1 / 2 ** n).toFixed(3)} (the square's side is 1)`; },
+              },
+              after: r`Each stage refines the one before: the point a given fraction of the way along the curve stays inside the same small square from one stage to the next, and those squares keep shrinking. So the stages settle down to a limiting curve, a continuous path that passes through **every** point of the square. The length doubles each time (it's $2^n - 2^{-n}$ at stage $n$), heading to infinity, while the curve itself never leaves the square.`,
             },
             {
               type: 'numeric',

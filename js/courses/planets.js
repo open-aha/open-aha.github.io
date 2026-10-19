@@ -195,6 +195,31 @@ where $R$ is the planet's radius. Inside this **Roche limit**, a fluid moon can'
 
 The repeated tugs keep Io's orbit slightly elliptical, so Jupiter's tides flex it in and out every orbit. That flexing heats Io's interior, making it the most volcanically active body in the Solar System.`,
             },
+            { /*anim:planets*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Three moons in step',
+              body: r`Io, Europa and Ganymede, with periods in the ratio $1 : 2 : 4$ (orbit sizes to scale). A line flashes whenever two neighbours pass each other.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.15, xmax: 1.15, ymin: -1.15, ymax: 1.15, grid: false, axes: false, maxWidth: 400,
+                animate: { param: 't', speed: 0.8, max: 1000, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const M = [['Io', 0.394, 1, 0, 'coral'], ['Europa', 0.627, 0.5, 0, 'blue'], ['Ganymede', 1, 0.25, Math.PI / 2, 'teal']], els = [];
+                  const pos = ([, r, n, ph], tt) => [r * Math.cos(n * tt + ph), r * Math.sin(n * tt + ph)];
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(0.13) - plot.X(0), class: 'fl-amber' }));
+                  M.forEach(([, r]) => els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(r) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 })));
+                  // conjunction lines: angle between neighbours near zero (fade over a short time)
+                  for (const [i, j] of [[0, 1], [1, 2]]) {
+                    const a = M[i], b = M[j], rel = ((((a[2] - b[2]) * p.t + a[3] - b[3]) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), d = Math.min(rel, 2 * Math.PI - rel);
+                    if (d < 0.35) { const [x, y] = pos(M[j], p.t); els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(x * 1.08), y2: plot.Y(y * 1.08), stroke: `var(--${a[4]})`, 'stroke-width': 3, opacity: (1 - d / 0.35).toFixed(2) })); }
+                  }
+                  M.forEach((m) => { const [x, y] = pos(m, p.t); els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 8, class: `fl-${m[4]}`, stroke: 'var(--card)', 'stroke-width': 2 })); });
+                  return els;
+                },
+                readout: () => `{coral:Io} · {blue:Europa} · {teal:Ganymede}: when Io passes Europa, Ganymede is a quarter-turn away; when Europa passes Ganymede, Io is on the far side`,
+              },
+              after: r`Io catches up with Europa always at the same few places, and Europa with Ganymede at others, so the moons' tugs on each other repeat in the same pattern lap after lap. That rhythm keeps pumping their orbits slightly out of round, which flexes Io with tides and heats it: Io is the most volcanic body in the Solar System. The three moons can never all line up together. Pierre-Simon Laplace explained this lock in the 1780s, and it's now called the **Laplace resonance**.`,
+            },
             {
               type: 'numeric',
               title: 'Predict the period',

@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
 
@@ -494,6 +495,31 @@ You can add, subtract and multiply first and reduce later, or reduce first. You 
               body: r`Start at 0 and keep jumping forward by the same amount. Which hours do you land on?`,
               widget: clock({ n: 12, k: 5 }),
               after: r`Here's the pattern: you visit every hour exactly when the jump and the clock size share no common factor (their gcd is 1).`,
+            },
+            { /*anim:numbers*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Times tables on a circle',
+              body: r`Put 200 points around a circle, numbered 0 to 199. Pick a multiplier $m$ and join every point $k$ to the point $m \times k \bmod 200$. Watch what the times tables draw as $m$ slowly changes.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.15, xmax: 1.15, ymin: -1.15, ymax: 1.15, grid: false, axes: false, maxWidth: 440,
+                animate: { param: 't', speed: 0.22, max: 8, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const N = 200, k0 = Math.floor(p.t), f = p.t - k0, m = 2 + k0 + Math.min(1, f / 0.7) ** 2 * (3 - 2 * Math.min(1, f / 0.7));
+                  const P = (j) => [plot.X(Math.cos(Math.PI + (2 * Math.PI * j) / N)), plot.Y(Math.sin(Math.PI + (2 * Math.PI * j) / N))];
+                  let d = '';
+                  for (let k = 0; k < N; k++) {
+                    const [x1, y1] = P(k), [x2, y2] = P((m * k) % N);
+                    d += `M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`;
+                  }
+                  return [
+                    s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }),
+                    s('path', { d, fill: 'none', stroke: 'var(--blue)', 'stroke-width': 0.8, opacity: 0.7 }),
+                  ];
+                },
+                readout: (p) => { const k0 = Math.floor(p.t), f = p.t - k0, m = 2 + k0 + Math.min(1, f / 0.7) ** 2 * (3 - 2 * Math.min(1, f / 0.7)); const names = { 2: 'a **cardioid** (heart)', 3: 'a **nephroid** (kidney), with 2 cusps', 4: '3 cusps', 5: '4 cusps', 6: '5 cusps', 7: '6 cusps', 8: '7 cusps', 9: '8 cusps', 10: '9 cusps' }; return `multiplier $m = ${fix(m, 2)}$${f > 0.7 || f === 0 ? ': ' + names[Math.round(m)] : ''}`; },
+              },
+              after: r`The 2 times table draws a heart-shaped **cardioid**, the 3 times table a **nephroid**, and in general the $m$ times table draws a curve with $m - 1$ cusps. These are the shapes traced by a point on a circle rolling around another circle, and the cardioid is also the outline of the main body of the Mandelbrot set. Simple remainder arithmetic, drawn on a clock, hides a whole family of curves. (This picture was popularised by Mathologer's video *Times Tables, Mandelbrot and the Heart of Mathematics*.)`,
             },
             {
               type: 'numeric',

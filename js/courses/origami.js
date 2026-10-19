@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const D = Math.PI / 180;
 const sectors = (th) => [70, th - 70, 250 - th, 110];
@@ -9,6 +10,16 @@ const reflectAcross = (X, A, P) => {
   const k = ((X[0] - M[0]) * d[0] + (X[1] - M[1]) * d[1]) / (d[0] ** 2 + d[1] ** 2);
   return [X[0] - 2 * k * d[0], X[1] - 2 * k * d[1]];
 };
+
+// rigid folding of a Miura-ori sheet (Schenk & Guest 2013): panels a × b with angle γ, fold angle θ
+function miura(th, m = 8, n = 6, a = 1, b = 1, g = Math.PI / 3) {
+  const c = Math.cos(th), k = Math.sqrt(1 + c * c * Math.tan(g) ** 2);
+  const H = a * Math.sin(th) * Math.sin(g), S = (b * c * Math.tan(g)) / k, L = a * Math.sqrt(1 - (Math.sin(th) * Math.sin(g)) ** 2), V = b / k;
+  const P = (i, j) => [i * S, j * L + (i % 2) * V, (j % 2) * H];
+  const panels = [];
+  for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) panels.push([P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)]);
+  return { panels, w: m * S, l: n * L + V, w0: m * b * Math.sin(g), l0: n * a + b * Math.cos(g) };
+}
 
 export default {
   id: 'origami',
@@ -468,6 +479,38 @@ Around 1980, Hisashi Abe published a folding method that trisects any acute angl
               body: r`Astrophysicist Koryo Miura designed a pattern of parallelograms (the **Miura-ori**) that folds a large flat sheet into a compact stack, and unfolds it again in one smooth motion by pulling two opposite corners. It is **rigid-foldable**: each panel stays flat while only the creases bend.
 
 A Miura-folded solar array flew on Japan's Space Flyer Unit satellite in 1995. Origami-inspired designs now appear in deployable antennas, foldable telescope concepts, heart stents that expand inside an artery, and the way airbags are folded inside a steering wheel.`,
+            },
+            { /*anim:origami*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watch it fold',
+              body: r`A Miura-ori sheet of 48 identical parallelogram panels. Every panel stays perfectly flat and rigid; only the creases bend. Watch the whole sheet fold in one smooth motion.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4.6, xmax: 4.6, ymin: -3.1, ymax: 3.1, grid: false, axes: false, maxWidth: 520,
+                animate: { param: 't', speed: 0.5, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const th = ((1 - Math.cos(p.t)) / 2) * (86 * Math.PI) / 180;
+                  const { panels, w, l } = miura(th);
+                  // view: turn the sheet, then tilt it towards us
+                  const yaw = -0.6, tilt = 1.0, light = [0.3, -0.5, 0.8];
+                  const view = ([x, y, z]) => {
+                    const x1 = x - w / 2, y1 = y - l / 2;
+                    const xr = x1 * Math.cos(yaw) - y1 * Math.sin(yaw), yr = x1 * Math.sin(yaw) + y1 * Math.cos(yaw);
+                    return [xr, yr * Math.cos(tilt) + z * Math.sin(tilt), -yr * Math.sin(tilt) + z * Math.cos(tilt)];
+                  };
+                  const faces = panels.map((q) => {
+                    const v = q.map(view);
+                    const e1 = [q[1][0] - q[0][0], q[1][1] - q[0][1], q[1][2] - q[0][2]], e2 = [q[3][0] - q[0][0], q[3][1] - q[0][1], q[3][2] - q[0][2]];
+                    const nrm = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]], nl = Math.hypot(...nrm);
+                    const lum = Math.abs((nrm[0] * light[0] + nrm[1] * light[1] + nrm[2] * light[2]) / nl);
+                    return { v, depth: v.reduce((sum, pt) => sum + pt[2], 0) / 4, lum };
+                  });
+                  faces.sort((f1, f2) => f1.depth - f2.depth);
+                  return faces.map((f) => s('path', { d: f.v.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', class: 'fl-blue', 'fill-opacity': (0.25 + 0.7 * f.lum).toFixed(2), stroke: 'var(--card)', 'stroke-width': 1, 'stroke-linejoin': 'round' }));
+                },
+                readout: (p) => { const th = ((1 - Math.cos(p.t)) / 2) * (86 * Math.PI) / 180, M = miura(th); return `fold angle ${fix((th * 180) / Math.PI, 0)}° · footprint ${fix((100 * M.w * M.l) / (M.w0 * M.l0), 0)}% of the flat sheet`; },
+              },
+              after: r`The sheet shrinks in **both** directions at once, and a single motion controls it all: one number, the fold angle, fixes the position of every panel. That's why pulling two opposite corners opens the whole thing. A solar array or antenna folded this way can be packed into a rocket and deployed in space by a single motor, with no panel ever bending.`,
             },
             {
               type: 'mcq',

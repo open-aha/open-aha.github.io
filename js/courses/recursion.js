@@ -549,6 +549,40 @@ The recursion: the turns after $n + 1$ folds are the turns after $n$ folds, then
               },
               explain: r`$2^8 - 1 = 255$, so **8 folds**. Remarkably, the curve never crosses itself, and copies of it fit together to tile the whole plane. (Real paper can only be folded about 7 or 8 times, but the recursion goes on forever.)`,
             },
+            { /*anim:recursion*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Unfolding the dragon',
+              body: r`Here's another way to see the dragon. Take the curve so far, make a copy, and swing the copy round its **end point** by a quarter turn. The two halves together are the next curve. Repeat.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1, xmax: 1, ymin: -0.75, ymax: 0.75, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.6, max: 11.5, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const L = Math.min(10, Math.floor(p.t)), u = Math.min(1, (p.t - L) / 0.75), e = L >= 10 ? 0 : u * u * (3 - 2 * u);
+                  // the curve after L unfoldings, as a list of points
+                  let pts = [[0, 0], [1, 0]];
+                  for (let k = 0; k < L; k++) {
+                    const [ex, ey] = pts[pts.length - 1];
+                    pts = pts.concat(pts.slice(0, -1).reverse().map(([x, y]) => [ex + (y - ey), ey - (x - ex)]));
+                  }
+                  const [ex, ey] = pts[pts.length - 1], a = (-Math.PI / 2) * e;
+                  const copy = pts.slice(0, -1).reverse().map(([x, y]) => [ex + (x - ex) * Math.cos(a) - (y - ey) * Math.sin(a), ey + (x - ex) * Math.sin(a) + (y - ey) * Math.cos(a)]);
+                  // fit what is drawn into the view (it changes smoothly, so the zoom does too)
+                  const all = L < 10 ? pts.concat(copy) : pts;
+                  const xs = all.map((q) => q[0]), ys = all.map((q) => q[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+                  const sc = 0.9 / Math.max((Math.max(...xs) - Math.min(...xs)) / 2, (Math.max(...ys) - Math.min(...ys)) / 1.5, 1e-9);
+                  const P = ([x, y]) => `${plot.X((x - cx) * sc).toFixed(1)} ${plot.Y((y - cy) * sc).toFixed(1)}`;
+                  const w = Math.max(1, 3.5 - 0.3 * L);
+                  return [
+                    s('path', { d: 'M' + pts.map(P).join('L'), fill: 'none', stroke: 'var(--blue)', 'stroke-width': w, 'stroke-linejoin': 'round' }),
+                    L < 10 ? s('path', { d: 'M' + [[ex, ey], ...copy].map(P).join('L'), fill: 'none', stroke: 'var(--coral)', 'stroke-width': w, 'stroke-linejoin': 'round' }) : null,
+                    s('circle', { cx: plot.X((ex - cx) * sc), cy: plot.Y((ey - cy) * sc), r: 5, class: 'fl-ink' }),
+                  ];
+                },
+                readout: (p) => { const L = Math.min(10, Math.floor(p.t)); return `${2 ** L} segments${L < 10 ? `, swinging a copy to make ${2 ** (L + 1)}` : ''}`; },
+              },
+              after: r`Swinging a copy round the end point is exactly what unfolding the paper strip does: every crease opens to a right angle, and the second half of the strip is the first half, turned. After 10 rounds there are 1024 segments, and the curve never crosses itself. Four dragons can even be fitted together, nose to nose, to tile the whole plane.`,
+            },
             {
               type: 'mcq',
               title: 'The next sequence',

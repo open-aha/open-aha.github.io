@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const L_SCREEN = 2; // m
 const hue = (nm) => Math.max(0, Math.min(270, (270 * (700 - nm)) / 300));
@@ -125,6 +126,42 @@ Longer wavelengths and closer slits give wider fringes.`,
               body: r`A **diffraction grating** has thousands of evenly spaced slits or grooves. With so many sources, the bright fringes become extremely sharp, and they appear only at angles $\theta$ where
 $$d \sin\theta = m\lambda \qquad (m = 0, 1, 2, \dots)$$
 Different wavelengths bend by different amounts, so white light fans out into a spectrum. The tightly packed tracks on a CD act as a grating, which is why it shimmers with rainbows.`,
+            },
+            { /*anim:waveoptics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Adding eight arrows',
+              body: r`Think of the light from each of 8 slits as an arrow (a phasor) whose direction is its phase. In a given direction, each slit's light arrives a little later than its neighbour's, so each arrow turns by the same extra angle $\varphi$. Add them tip to tail and watch the total as $\varphi$ grows.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4.6, xmax: 9.6, ymin: -1.2, ymax: 5.6, grid: false, axes: false,
+                animate: { param: 't', speed: 0.25, max: 2 * Math.PI * 1.08, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const N = 8, phi = p.t, els = [];
+                  // the chain of phasors, starting at the origin (scaled so 8 in a row reach the top)
+                  let x = 0, y = 0, k = 0.62;
+                  const pts = [[0, 0]];
+                  for (let i = 0; i < N; i++) { x += k * Math.cos(Math.PI / 2 + i * phi); y += k * Math.sin(Math.PI / 2 + i * phi); pts.push([x, y]); }
+                  pts.slice(1).forEach(([px, py], i) => {
+                    const [qx, qy] = pts[i];
+                    els.push(s('line', { x1: plot.X(qx), y1: plot.Y(qy), x2: plot.X(px), y2: plot.Y(py), stroke: 'var(--blue)', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+                    els.push(s('circle', { cx: plot.X(px), cy: plot.Y(py), r: 3, class: 'fl-blue' }));
+                  });
+                  els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(x), y2: plot.Y(y), stroke: 'var(--coral)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  // brightness against φ
+                  const X = (f) => plot.X(1.6 + (f / (2 * Math.PI * 1.08)) * 7.8), Y = (I) => plot.Y(0.2 + I * 4.8);
+                  const I = (f) => { const a = Math.sin((N * f) / 2), b = Math.sin(f / 2); return Math.abs(b) < 1e-6 ? 1 : (a / (N * b)) ** 2; };
+                  const curve = [];
+                  for (let i = 0; i <= 400; i++) { const f = (2 * Math.PI * 1.08 * i) / 400; curve.push([X(f), Y(I(f))]); }
+                  els.push(s('line', { x1: X(0), x2: X(2 * Math.PI * 1.08), y1: Y(0), y2: Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('path', { d: curve.map(([a, b], i) => `${i ? 'L' : 'M'}${a.toFixed(1)} ${b.toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  els.push(s('circle', { cx: X(phi), cy: Y(I(phi)), r: 6, class: 'fl-coral' }));
+                  for (const [f, lab] of [[0, '0'], [Math.PI, '180°'], [2 * Math.PI, '360°']]) els.push(s('text', { x: X(f), y: Y(0) + 18, 'text-anchor': 'middle', class: 'tick', text: lab }));
+                  els.push(s('text', { x: X(Math.PI), y: Y(1) - 4, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(12px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-3)', text: 'brightness' }));
+                  return els;
+                },
+                readout: (p) => { const N = 8, f = p.t, a = Math.sin((N * f) / 2), b = Math.sin(f / 2), I = Math.abs(b) < 1e-6 ? 1 : (a / (N * b)) ** 2; return `$\\varphi = ${fix((f * 180) / Math.PI, 0)}°$ · total arrow ${fix(8 * Math.sqrt(I), 2)} of 8 · brightness ${fix(100 * I, 1)}%`; },
+              },
+              after: r`When $\varphi$ is 0 (or a full 360°), all eight arrows line up and the light is 64 times brighter than from one slit. Turn $\varphi$ just a little and the chain curls up; at $\varphi = 45°$ it closes into a regular octagon and the total is **zero**: darkness. With thousands of slits, the chain closes after the tiniest turn, so the bright directions become razor-sharp lines. That's what lets a grating split two nearly identical colours.`,
             },
             {
               type: 'numeric',

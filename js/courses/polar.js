@@ -303,6 +303,20 @@ In the 1850s Jules Lissajous reflected light off two vibrating tuning forks set 
               wrong: [{ v: 267, tol: 1, why: r`The horizontal signal is the 3 in $3 : 2$: it vibrates faster than the reference.` }, { v: 1200, why: r`Scale the ratio: $\frac{3}{2} \times 400$.` }],
               explain: r`The horizontal frequency is $\frac{3}{2}$ of the vertical one: $\frac32 \times 400 = 600$ Hz. A **steady** figure means the ratio is exactly $3 : 2$; if the frequencies are slightly off, the figure slowly rotates and morphs, and the rate of drift measures the error.`,
             },
+            { /*anim:polar*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A figure that turns',
+              body: r`Suppose the two signals are **almost** in the ratio $3 : 2$, but one is a hair too fast. Then the phase between them creeps forward steadily. Here is $x = \sin(3t + \delta)$, $y = \sin 2t$ with $\delta$ slowly growing.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.2, xmax: 1.2, ymin: -1.2, ymax: 1.2, grid: false, axes: false, maxWidth: 360,
+                animate: { param: 't', speed: 0.5, max: 2 * Math.PI, autoplay: true },
+                curves: [{ param: { x: (u, p) => Math.sin(3 * u + p.t), y: (u) => Math.sin(2 * u), t0: 0, t1: 2 * Math.PI }, color: 'violet', width: 2.5 }],
+                extra: ({ plot, s }) => [s('rect', { x: plot.X(-1), y: plot.Y(1), width: plot.X(1) - plot.X(-1), height: plot.Y(-1) - plot.Y(1), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 })],
+                readout: (p) => `phase shift $\\delta = ${fix((p.t * 180) / Math.PI, 0)}°$`,
+              },
+              after: r`The curve seems to rotate like a solid object turning in 3D. It comes back to exactly the same shape each time $\delta$ grows by $360°$, and $\delta$ grows by $360°$ every second for each hertz by which the signal is off. So if the pattern takes 2 seconds to come back round, the signal is off by just 0.5 Hz. Technicians tuned oscillators exactly this way: adjust until the figure stops turning.`,
+            },
             {
               type: 'mcq',
               kicker: 'Challenge',

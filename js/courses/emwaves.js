@@ -30,6 +30,9 @@ const fmtFreq = (f) => {
 const arrayGain = (thDeg, phiDeg, N = 8) => { const psi = Math.PI * Math.sin((thDeg * Math.PI) / 180) + (phiDeg * Math.PI) / 180; let re = 0, im = 0; for (let n = 0; n < N; n++) { re += Math.cos(n * psi); im += Math.sin(n * psi); } return Math.hypot(re, im) / N; };
 const beamDir = (phiDeg) => { let best = 0, bg = -1; for (let t = -90; t <= 90; t += 0.25) { const g = arrayGain(t, phiDeg); if (g > bg) { bg = g; best = t; } } return best; };
 
+// phase difference between the two components: held at 0°, 45°, 90°, 135°, 180°, sliding between
+const polPhi = (t) => { const k = Math.floor(t / 5), u = Math.min(1, Math.max(0, ((t % 5) - 3.6) / 1.4)); return (Math.PI / 4) * (k + u * u * (3 - 2 * u)); };
+
 export default {
   id: 'emwaves',
   subject: 'physics',
@@ -257,6 +260,31 @@ So high-frequency waves have high-energy photons. A single ultraviolet or X-ray 
 
 A **polariser** only lets through the component of the field along its axis. Unpolarised light loses **half** its intensity passing through. Light that is already polarised at an angle $\theta$ to the polariser's axis is reduced by **Malus's law**:
 $$I = I_0 \cos^2\theta$$`,
+            },
+            { /*anim:emwaves*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two wiggles, one pattern',
+              body: r`Look straight down a light beam coming towards you. Its electric field is the sum of a {coral:horizontal wiggle} and a {blue:vertical wiggle} of the same size and frequency. The {ink:black arrow} is the total field; its tip leaves a fading trail. Watch what happens as the vertical wiggle slips behind the horizontal one.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 1.6, ymin: -1.6, ymax: 1.6, grid: false, axes: false, maxWidth: 340,
+                animate: { param: 't', speed: 1, max: 40, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const ph = polPhi(p.t), w = 2 * Math.PI * 0.8 * p.t, els = [], E = (wt) => [Math.cos(wt), Math.cos(wt - ph)];
+                  els.push(s('line', { x1: plot.X(-1.5), x2: plot.X(1.5), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(-1.5), y2: plot.Y(1.5), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  const trail = [];
+                  for (let i = 0; i <= 90; i++) { const [x, y] = E((2 * Math.PI * i) / 90); trail.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`); }
+                  els.push(s('path', { d: trail.join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  for (let k = 1; k <= 14; k++) { const [x, y] = E(w - 0.12 * k); els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 4 - 0.2 * k, class: 'fl-ink', opacity: 0.55 * (1 - k / 15) })); }
+                  const [x, y] = E(w);
+                  const arrow = (x0, y0, x1, y1, col, wd) => { const X0 = plot.X(x0), Y0 = plot.Y(y0), X1 = plot.X(x1), Y1 = plot.Y(y1), L = Math.hypot(X1 - X0, Y1 - Y0); if (L < 3) return null; const a = Math.atan2(Y1 - Y0, X1 - X0), h = Math.min(11, L / 2); return s('path', { d: `M${X0} ${Y0}L${X1} ${Y1}M${X1 - h * Math.cos(a - 0.45)} ${Y1 - h * Math.sin(a - 0.45)}L${X1} ${Y1}L${X1 - h * Math.cos(a + 0.45)} ${Y1 - h * Math.sin(a + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': wd, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); };
+                  for (const el of [arrow(0, 0, x, 0, 'coral', 3), arrow(0, 0, 0, y, 'blue', 3), arrow(0, 0, x, y, 'ink', 4)]) if (el) els.push(el);
+                  return els;
+                },
+                readout: (p) => { const deg = (polPhi(p.t) * 180) / Math.PI, d = Math.round(deg), name = Math.abs(deg - d) > 0.5 ? 'changing' : d % 180 === 0 ? `**linear**, along the ${d === 0 ? 'rising' : 'falling'} diagonal` : d === 90 ? '**circular**, turning anticlockwise' : d === 270 ? '**circular**, turning clockwise' : '**elliptical**'; return `vertical wiggle ${fix(deg, 0)}° behind · ${name}`; },
+              },
+              after: r`In step (or exactly opposite), the two wiggles add to a single straight-line wiggle: **linear** polarisation, at an angle. A quarter of a cycle apart, the field never shrinks: it just turns round and round, **circular** polarisation. Anything in between gives an **ellipse**. So every polarisation is a mixture of two linear ones. That's how the circular filters in 3D cinema glasses are made: a linear polariser, plus a clear layer that delays one of the two wiggles by a quarter of a cycle.`,
             },
             {
               type: 'explain',

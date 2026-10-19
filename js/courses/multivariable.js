@@ -458,6 +458,31 @@ $$\nabla f = \lambda \nabla g, \qquad g(x, y) = c.$$
 
 The number $\lambda$ is a **Lagrange multiplier** (Joseph-Louis Lagrange, 1788). For $f = xy$, $g = x + y$: $(y, x) = \lambda(1, 1)$ forces $x = y$, and $x + y = 10$ gives $(5, 5)$. As a bonus, $\lambda$ measures how much the best value improves if the constraint is relaxed a little, like the shadow prices of the Linear Programming course.`,
             },
+            { /*anim:multivariable*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Watching the gradients line up',
+              body: r`A walker moves along the path $x + y = 10$ (blue), across the landscape $f(x, y) = xy$. At each point we draw the {coral:gradient of $f$}, $\nabla f = (y, x)$, and the {blue:gradient of the path's equation}, $\nabla g = (1, 1)$, along with the {ink:contour of $f$} through the walker.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.5, xmax: 11, ymin: -0.5, ymax: 11, grid: true, maxWidth: 380, clipExtra: true,
+                animate: { param: 't', speed: 0.5, max: 2 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const x = 5 - 4 * Math.cos(p.t), y = 10 - x, c = x * y, els = [];
+                  const arrow = (x0, y0, dx, dy, col) => { const X1 = plot.X(x0 + dx), Y1 = plot.Y(y0 + dy), a = Math.atan2(Y1 - plot.Y(y0), X1 - plot.X(x0)); return s('path', { d: `M${plot.X(x0)} ${plot.Y(y0)}L${X1} ${Y1}M${X1 - 10 * Math.cos(a - 0.4)} ${Y1 - 10 * Math.sin(a - 0.4)}L${X1} ${Y1}L${X1 - 10 * Math.cos(a + 0.4)} ${Y1 - 10 * Math.sin(a + 0.4)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); };
+                  const hyp = [];
+                  for (let i = 0; i <= 80; i++) { const xx = c / 11 + ((11 - c / 11) * i) / 80; hyp.push(`${i ? 'L' : 'M'}${plot.X(xx).toFixed(1)} ${plot.Y(c / xx).toFixed(1)}`); }
+                  els.push(s('path', { d: hyp.join(''), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+                  els.push(s('line', { x1: plot.X(-0.5), y1: plot.Y(10.5), x2: plot.X(10.5), y2: plot.Y(-0.5), stroke: 'var(--blue)', 'stroke-width': 3 }));
+                  const gl = Math.hypot(y, x), sc = 2.6 / gl;
+                  els.push(arrow(x, y, y * sc, x * sc, 'coral'));
+                  els.push(arrow(x, y, 1.6 / Math.SQRT2, 1.6 / Math.SQRT2, 'blue'));
+                  els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 6, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => { const x = 5 - 4 * Math.cos(p.t), y = 10 - x, ang = Math.abs(Math.atan2(x, y) - Math.PI / 4) * 180 / Math.PI; return `$(${fix(x, 2)}, ${fix(y, 2)})$ · $f = ${fix(x * y, 2)}$ · angle between the gradients ${fix(ang, 0)}°`; },
+              },
+              after: r`Away from the best point, the coral arrow leans along the path: walking that way still climbs, so $f$ can still grow. Only at $(5, 5)$, where $f = 25$, do the two gradients point the same way. There the contour just touches the path instead of crossing it, and $\nabla f = \lambda \nabla g$ with $\lambda = 5$: that is Lagrange's condition, seen happening.`,
+            },
             {
               type: 'numeric',
               title: 'On a circle',

@@ -206,6 +206,34 @@ Now push it repeatedly with a **driving frequency** of your choice. How big do t
               ],
               explain: r`At resonance the force is in phase with the **velocity**, so it does positive work all the time, which is exactly why energy builds up so efficiently. The 90° phase shift is how physicists pinpoint a resonance precisely.`,
             },
+            { /*anim:resonance*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Three speeds of pushing',
+              body: r`Three identical oscillators (natural frequency $f_0$), each driven by a {blue:hand} moving up and down. One is driven slowly, one exactly at $f_0$, one fast. Compare each {coral:mass} with its own hand. (The swings are scaled to the same size so you can compare their timing.)`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 9, ymin: -2.2, ymax: 2.4, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 1000, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const g = 0.25, els = [];
+                  [[0.45, 'slow'], [1, 'at resonance'], [1.8, 'fast']].forEach(([w, lab], i) => {
+                    const cx = 1.5 + 3 * i, ph = Math.atan2(g * w, 1 - w * w), th = 2.2 * w * p.t;
+                    const hy = 1.6 + 0.35 * Math.cos(th), my = -0.6 + 0.9 * Math.cos(th - ph);
+                    // spring as a zigzag from the hand down to the mass
+                    const n = 12, pts = [[cx, hy]];
+                    for (let k = 1; k < n; k++) pts.push([cx + (k % 2 ? 0.18 : -0.18), hy + ((my + 0.25 - hy) * k) / n]);
+                    pts.push([cx, my + 0.25]);
+                    els.push(s('path', { d: pts.map(([x, y], j) => `${j ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                    els.push(s('rect', { x: plot.X(cx - 0.45), y: plot.Y(hy + 0.1), width: plot.X(0.9) - plot.X(0), height: plot.Y(0) - plot.Y(0.2), rx: 4, class: 'fl-blue' }));
+                    els.push(s('rect', { x: plot.X(cx - 0.3), y: plot.Y(my + 0.25), width: plot.X(0.6) - plot.X(0), height: plot.Y(0) - plot.Y(0.5), rx: 6, class: 'fl-coral' }));
+                    els.push(s('text', { x: plot.X(cx), y: plot.Y(-2.0), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700', text: `${lab}: lags ${fix((ph * 180) / Math.PI, 0)}°` }));
+                  });
+                  return els;
+                },
+                readout: () => r`driven at $0.45f_0$, $f_0$ and $1.8f_0$`,
+              },
+              after: r`Driven slowly, the mass just follows the hand, **in step**. Driven at resonance, it lags a **quarter of a cycle** behind: it moves fastest exactly when the hand pushes hardest, so every push feeds it energy, and the swing grows huge. Driven fast, it can't keep up and moves almost **opposite** to the hand, half a cycle behind. That flip from in-step to opposite, passing through 90° at resonance, is how engineers locate a resonance precisely.`,
+            },
           ],
           recap: [
             'Driven amplitude peaks near the natural frequency.',

@@ -52,6 +52,25 @@ const COINS = [4, 3, 1];
 const greedyCoins = (n) => { let c = 0; for (const k of COINS) { c += Math.floor(n / k); n %= k; } return c; };
 const DP = (() => { const b = [0]; for (let n = 1; n <= 40; n++) b[n] = 1 + Math.min(...COINS.filter((k) => k <= n).map((k) => b[n - k])); return b; })();
 
+// bottom-up merge sort of 32 shuffled bars, recorded one write at a time
+const MERGE_LOG = (() => {
+  let a = 7;
+  const arr = Array.from({ length: 32 }, (_, i) => i + 1);
+  for (let i = 31; i > 0; i--) { a = (a * 16807) % 2147483647; const j = a % (i + 1); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  const frames = [{ arr: arr.slice(), lo: 0, hi: 0, w: 1, pos: -1, cmp: 0 }];
+  let cmp = 0;
+  for (let w = 1; w < 32; w *= 2) for (let lo = 0; lo < 32; lo += 2 * w) {
+    const mid = lo + w, hi = Math.min(lo + 2 * w, 32), L = arr.slice(lo, mid), R = arr.slice(mid, hi);
+    let i = 0, j = 0;
+    for (let k = lo; k < hi; k++) {
+      if (i < L.length && j < R.length) cmp++;
+      arr[k] = j >= R.length || (i < L.length && L[i] <= R[j]) ? L[i++] : R[j++];
+      frames.push({ arr: arr.slice(), lo, hi, w: 2 * w, pos: k, cmp });
+    }
+  }
+  return frames;
+})();
+
 export default {
   id: 'algorithms',
   subject: 'math',
@@ -186,6 +205,24 @@ Each step of binary search **halves** what's left.`,
               body: r`**Merge sort** uses divide and conquer: split the list in half, sort each half (by the same method), then **merge** the two sorted halves by repeatedly taking the smaller front item.
 
 Splitting in half repeatedly takes $\log_2 n$ levels, and each level does about $n$ comparisons while merging. Total: about $n\log_2 n$.`,
+            },
+            { /*anim:algorithms*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Merge sort in action',
+              body: r`32 shuffled bars, sorted bottom-up: first merge neighbours into sorted pairs, then pairs into fours, then eights, sixteens, and finally the whole list. The {amber:shaded block} is the merge in progress.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 32, ymin: 0, ymax: 33, grid: false, axes: false, height: 260,
+                animate: { param: 't', speed: 26, max: MERGE_LOG.length + 40, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const f = MERGE_LOG[Math.min(MERGE_LOG.length - 1, Math.floor(p.t))], els = [];
+                  if (f.pos >= 0 && p.t < MERGE_LOG.length) els.push(s('rect', { x: plot.X(f.lo), y: plot.Y(33), width: plot.X(f.hi) - plot.X(f.lo), height: plot.Y(0) - plot.Y(33), class: 'fl-amber-soft' }));
+                  f.arr.forEach((v, i) => els.push(s('rect', { x: plot.X(i + 0.1), y: plot.Y(v), width: plot.X(0.8) - plot.X(0), height: plot.Y(0) - plot.Y(v), rx: 2, class: i === f.pos && p.t < MERGE_LOG.length ? 'fl-coral' : 'fl-blue', opacity: 0.85 })));
+                  return els;
+                },
+                readout: (p) => { const f = MERGE_LOG[Math.min(MERGE_LOG.length - 1, Math.floor(p.t))]; return p.t >= MERGE_LOG.length - 1 ? `sorted after ${f.cmp} comparisons (bubble sort would need up to 496)` : `merging blocks into runs of ${f.w} · comparisons so far: ${f.cmp}`; },
+              },
+              after: r`There are only $\log_2 32 = 5$ rounds of merging, and each round touches every bar once, so the work is about $n \log_2 n = 32 \times 5 = 160$ steps. Bubble sort's $\tfrac12 n^2$ comparisons are three times as many for 32 items, and the gap grows fast: for a million items it's 20 million steps against half a trillion.`,
             },
             {
               type: 'order',

@@ -392,6 +392,34 @@ $$d = \frac{\Delta t}{1/v_S - 1/v_P} \approx 8.4\ \text{km per second of lag}$$
 
 Harry Fielding Reid proposed this after the 1906 San Francisco earthquake, when fences and roads across the San Andreas fault were found offset by up to about 6 m.`,
             },
+            { /*anim:earthquakes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The bending fence',
+              body: r`A fence and rows of trees cross a locked fault (seen from above, with the motion hugely exaggerated). The two plates creep steadily past each other far from the fault, but the fault itself is stuck. Watch the fence.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -6, xmax: 6, ymin: -3.2, ymax: 3.2, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const S = 1.6, T1 = 8, base = 0, els = [];
+                  const phase = p.t < T1 ? 'build' : p.t < T1 + 0.25 ? 'snap' : 'after';
+                  const acc = Math.min(1, p.t / T1) * S, snap = phase === 'build' ? 0 : Math.min(1, (p.t - T1) / 0.25);
+                  // sideways shift of the ground at distance x from the fault
+                  const u = (x) => (1 - snap) * (acc / Math.PI) * Math.atan(x / 1.2) * 1.0 + snap * (S / 2) * Math.sign(x) + base;
+                  els.push(s('line', { x1: plot.X(0), x2: plot.X(0), y1: plot.Y(-3.2), y2: plot.Y(3.2), stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '8 6' }));
+                  for (const y0 of [-2.4, -1.2, 1.2, 2.4]) for (let x = -5.5; x <= 5.51; x += 1) if (Math.abs(x) > 0.2) els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y0 + u(x)), r: 5, class: 'fl-teal', opacity: 0.8 }));
+                  for (const side of [-1, 1]) {
+                    const pts = [];
+                    for (let i = 0; i <= 60; i++) { const x = side * (0.001 + (5.9 * i) / 60); pts.push([x, u(x)]); }
+                    els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--amber)', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+                  }
+                  for (const [x, dir] of [[-4.6, -1], [4.6, 1]]) els.push(s('path', { d: `M${plot.X(x)} ${plot.Y(-0.5 * dir)}V${plot.Y(0.5 * dir)}m-6 ${dir * 8}l6 ${-dir * 8}l6 ${dir * 8}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                  return els;
+                },
+                readout: (p) => (p.t < 8 ? `${Math.floor(p.t * 25)} years since the last earthquake: the ground near the fault bends, storing strain` : p.t < 8.25 ? '**Earthquake!** The fault slips in seconds' : 'After: the fence is straight again, but broken and offset at the fault'),
+              },
+              after: r`For decades the plates keep moving far from the fault while the fault stays stuck, so the ground near it bends like a drawn bow and stores elastic energy. When the stress beats the friction, the fault slips in seconds and the bent ground springs back: straight again, but offset. Harry Fielding Reid proposed this **elastic rebound** after the 1906 San Francisco earthquake, when fences and roads across the San Andreas fault were found shifted sideways by several metres.`,
+            },
             {
               type: 'interactive',
               kicker: 'Try it',

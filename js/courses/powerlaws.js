@@ -95,6 +95,40 @@ export default {
               },
               after: r`Why? Benford's law holds for quantities spread over many orders of magnitude, where the logarithm is evenly spread. On a logarithmic scale, the stretch from 1 to 2 takes up $\log_{10} 2 \approx 30\%$ of each factor of 10, while 9 to 10 takes only $\log_{10}\frac{10}{9} \approx 4.6\%$.`,
             },
+            { /*anim:powerlaws*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Around the log circle',
+              body: r`Why do powers of 2 follow Benford's law? Wrap a logarithmic scale from 1 to 10 around a circle. Each digit gets an arc: 1 gets the slice from 1 to 2, which is $\log_{10} 2 \approx 30\%$ of the way round, while 9 gets only $\log_{10}\tfrac{10}{9} \approx 5\%$. Doubling a number moves it the same distance round the circle every time.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.25, xmax: 3.1, ymin: -1.25, ymax: 1.25, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 2.5, max: 105, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = Math.min(100, Math.floor(p.t)), L2 = Math.log10(2), els = [], cols = ['coral', 'blue', 'teal', 'amber', 'violet', 'pink', 'blue', 'teal', 'amber'];
+                  const ang = (f) => Math.PI / 2 - 2 * Math.PI * f, P = (f, r) => [plot.X(r * Math.cos(ang(f))), plot.Y(r * Math.sin(ang(f)))];
+                  for (let d = 1; d <= 9; d++) {
+                    const f0 = Math.log10(d), f1 = Math.log10(d + 1), [x0, y0] = P(f0, 1), [x1, y1] = P(f1, 1), R = plot.X(1) - plot.X(0);
+                    els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(0)}L${x0} ${y0}A${R} ${R} 0 0 1 ${x1} ${y1}Z`, class: `fl-${cols[d - 1]}`, opacity: 0.25, stroke: 'var(--card)', 'stroke-width': 1.5 }));
+                    const [tx, ty] = P((f0 + f1) / 2, 0.8);
+                    els.push(s('text', { x: tx, y: ty + 5, 'text-anchor': 'middle', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:800', text: String(d) }));
+                  }
+                  // the last few jumps, then the current point
+                  for (let k = Math.max(0, n - 6); k <= n; k++) { const [x, y] = P((k * L2) % 1, 1); els.push(s('circle', { cx: x, cy: y, r: k === n ? 8 : 4, class: 'fl-ink', opacity: k === n ? 1 : 0.25 + 0.1 * (k - n + 6) })); }
+                  // tally of first digits so far, with Benford's prediction
+                  const cnt = new Array(10).fill(0);
+                  for (let k = 0; k <= n; k++) cnt[Math.floor(10 ** ((k * L2) % 1) + 1e-9)]++;
+                  for (let d = 1; d <= 9; d++) {
+                    const x = plot.X(1.45 + 0.17 * (d - 1)), w = plot.X(0.12) - plot.X(0), base = plot.Y(-1.0), sc = (plot.Y(0) - plot.Y(1.9)) / 0.4;
+                    els.push(s('rect', { x, y: base - (cnt[d] / (n + 1)) * sc, width: w, height: (cnt[d] / (n + 1)) * sc, class: `fl-${cols[d - 1]}`, opacity: 0.8 }));
+                    els.push(s('rect', { x: x - 2, y: base - Math.log10(1 + 1 / d) * sc - 1, width: w + 4, height: 2.5, class: 'fl-ink' }));
+                    els.push(s('text', { x: x + w / 2, y: base + 16, 'text-anchor': 'middle', class: 'tick', text: String(d) }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const n = Math.min(100, Math.floor(p.t)), f = (n * Math.log10(2)) % 1, e = Math.floor(n * Math.log10(2)); return `$2^{${n}} \\approx ${(10 ** f).toFixed(2)} \\times 10^{${e}}$ · first digit **${Math.floor(10 ** f + 1e-9)}** · bars: first digits so far (black ticks: Benford)`; },
+              },
+              after: r`Each doubling adds $\log_{10} 2 \approx 0.301$ of a turn. Because that number is irrational, the point never lands in the same place twice and spreads itself evenly round the circle. So the share of powers of 2 that start with digit $d$ is just the size of $d$'s arc, $\log_{10}\left(1 + \tfrac1d\right)$: exactly Benford's law. Anything that grows by multiplying, like populations, prices or bank balances, wanders round the log circle in the same way.`,
+            },
             {
               type: 'numeric',
               title: 'Digit one',

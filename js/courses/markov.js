@@ -211,6 +211,24 @@ function sentence({ plot, s }, str) {
   return lines.map((t, i) => s('text', { x: plot.X(5), y: y0 + i * 30, 'text-anchor': 'middle', class: 'lbl', style: FS(22), text: t }));
 }
 
+// one long random surf with d = 0.85: follow a random link, or (15% of the time) jump to a random page
+let SURF = null;
+const surfRun = () => {
+  if (SURF) return SURF;
+  let seed = 5;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pages = [2], counts = [[0, 0, 1, 0, 0]];
+  for (let k = 0; k < 12000; k++) {
+    const at = pages[k], out = WEB.links[at];
+    const nx = rnd() < 0.85 ? out[Math.floor(rnd() * out.length)] : Math.floor(rnd() * 5);
+    pages.push(nx);
+    const c = counts[k].slice(); c[nx]++; counts.push(c);
+  }
+  return (SURF = { pages, counts });
+};
+// slow hops at first, then faster and faster
+const surfHop = (t) => (t < 12 ? t / 0.6 : Math.min(12000, 20 + 25 * (t - 12) ** 2));
+
 export default {
   id: 'markov',
   subject: 'math',
@@ -766,6 +784,25 @@ That's a Markov chain on web pages. A page's **PageRank** is its stationary prob
                 readout: (p) => { const rk = pagerank(WEB.links, p.d); return `highest: page **${WEB.names[rk.indexOf(Math.max(...rk))]}** · ranks add up to ${fix(rk.reduce((a, b) => a + b, 0), 2)}`; },
               },
               after: r`C ranks highest: three pages link to it. A is close behind with just **one** incoming link, because it's from C, the top page, which links nowhere else: C passes all its rank to A. With low damping the surfer mostly jumps at random, and every page approaches $\frac15$.`,
+            },
+            { /*anim:markov*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The random surfer',
+              body: r`A {coral:surfer} wanders the same web: at each step, 85% of the time it clicks a random link on its page, and 15% of the time it jumps to a random page. The number under each page is now the **fraction of its visits** so far. It starts slowly, then speeds up.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 600, ymin: 0, ymax: 260, grid: false, axes: false, height: 260,
+                animate: { param: 't', speed: 1, max: 34, autoplay: true },
+                extra: ({ p, s }) => {
+                  const { pages, counts } = surfRun(), h = surfHop(p.t), k = Math.floor(h), c = counts[k], tot = k + 1;
+                  const els = webDraw(s, WEB.links, c.map((v) => v / tot));
+                  const a = WEB.xy[pages[k]], b = WEB.xy[pages[Math.min(12000, k + 1)]], f = k < 20 ? Math.min(1, Math.max(0, ((h - k) - 0.3) / 0.5)) : 0;
+                  els.push(s('circle', { cx: a[0] + (b[0] - a[0]) * f, cy: a[1] + (b[1] - a[1]) * f - 30, r: 8, class: 'fl-coral' }));
+                  return els;
+                },
+                readout: (p) => { const { counts } = surfRun(), k = Math.floor(surfHop(p.t)), rk = pagerank(WEB.links, 0.85); let gap = 0; counts[k].forEach((v, i) => { gap = Math.max(gap, Math.abs(v / (k + 1) - rk[i])); }); return `${k} clicks · largest difference from the PageRanks: ${fix(gap, 3)}`; },
+              },
+              after: r`At first the visit fractions jump around, but as the clicks pile up they settle onto exactly the PageRanks from before (C about 0.35, A about 0.33). That's the meaning of a stationary distribution: the long-run share of time a random walker spends in each state, whatever page it started on.`,
             },
             {
               type: 'interactive',

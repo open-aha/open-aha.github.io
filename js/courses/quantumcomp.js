@@ -36,6 +36,25 @@ const seeded = (seed) => { let a = seed >>> 0; return () => { a = (a * 1664525 +
 // BB84: 24 photons with random bits and bases; Eve (optionally) measures each in a random basis and resends
 const bb84 = (seed, eve) => { const u = seeded(seed * 7 + 1), rows = []; for (let i = 0; i < 24; i++) { const bit = u() < 0.5 ? 0 : 1, aB = u() < 0.5 ? '+' : '×', bB = u() < 0.5 ? '+' : '×', eB = u() < 0.5 ? '+' : '×'; let sent = bit, basis = aB; if (eve) { const eBit = eB === aB ? bit : u() < 0.5 ? 0 : 1; sent = eBit; basis = eB; } const got = bB === basis ? sent : u() < 0.5 ? 0 : 1; rows.push({ bit, aB, bB, got, keep: aB === bB }); } return rows; };
 
+// 16 items, item 11 is marked. Each Grover round: flip the marked amplitude's sign, then reflect every amplitude about the mean.
+const GROVER = (() => {
+  const st = [new Array(16).fill(0.25)];
+  for (let r = 0; r < 3; r++) {
+    const f = st[st.length - 1].slice(); f[11] = -f[11];
+    const m = f.reduce((a, b) => a + b, 0) / 16;
+    st.push(f, f.map((a) => 2 * m - a));
+  }
+  return st; // [start, flipped 1, after 1, flipped 2, after 2, flipped 3, after 3]
+})();
+const groverAt = (t) => {
+  const r = Math.min(3, Math.floor(t / 4.2)), u = t - 4.2 * r;
+  if (r >= 3) return { amps: GROVER[6], mean: null, round: 3, stage: 'done' };
+  const a = GROVER[2 * r], f = GROVER[2 * r + 1], b = GROVER[2 * r + 2], m = f.reduce((x, y) => x + y, 0) / 16, mix = (x, y, e) => x.map((v, i) => v + (y[i] - v) * e);
+  const e = (lo, hi) => { const q = Math.min(1, Math.max(0, (u - lo) / (hi - lo))); return q * q * (3 - 2 * q); };
+  if (u < 2.1) return { amps: mix(a, f, e(0.6, 1.4)), mean: u > 1.6 ? m : null, round: r, stage: 'flip' };
+  return { amps: mix(f, b, e(2.4, 3.4)), mean: m, round: r, stage: 'reflect' };
+};
+
 export default {
   id: 'quantumcomp',
   subject: 'physics',
@@ -348,6 +367,28 @@ Measure either qubit and you get 0 or 1 with equal probability, but the two resu
                 solution: { k: 3 },
               },
               explain: r`After **3** iterations the arrow sits just past vertical: a 96% chance of success, versus $\frac1{16}$ for a random guess. Keep going and it overshoots: 4 iterations drop to 58%. The optimal count is about $\frac{\pi}{4}\sqrt{N}$, here $\approx 3.1$, because each step rotates by about $\frac{2}{\sqrt N}$ radians.`,
+            },
+            { /*anim:quantumcomp*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Grover, bar by bar',
+              body: r`Sixteen possible answers start with equal amplitudes (bars). One answer is {coral:marked}. Each round has two moves: the oracle **flips the sign** of the marked amplitude, then every amplitude is **reflected about the average** (the {violet:dashed line}).`,
+              widget: {
+                kind: 'graph', xmin: -0.8, xmax: 16, ymin: -0.45, ymax: 1.05, grid: false, height: 300, axes: false,
+                animate: { param: 't', speed: 1, max: 16, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { amps, mean } = groverAt(p.t), els = [];
+                              amps.forEach((a, i) => {
+                    const y0 = plot.Y(Math.max(0, a)), y1 = plot.Y(Math.min(0, a));
+                    els.push(s('rect', { x: plot.X(i - 0.35 + 0.2), y: y0, width: plot.X(0.7) - plot.X(0), height: Math.max(0.5, y1 - y0), class: i === 11 ? 'fl-coral' : 'fl-blue', opacity: 0.8 }));
+                  });
+                  els.push(s('line', { x1: plot.X(-0.6), x2: plot.X(15.8), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
+      if (mean != null) els.push(s('line', { x1: plot.X(-0.6), x2: plot.X(15.8), y1: plot.Y(mean), y2: plot.Y(mean), stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+                  return els;
+                },
+                readout: (p) => { const { amps, round, stage } = groverAt(p.t); return `${stage === 'done' ? 'after 3 rounds' : `round ${round + 1}, ${stage === 'flip' ? 'flip the marked sign' : 'reflect about the average'}`} · chance of measuring the marked answer: ${fix(100 * amps[11] ** 2, 1)}%`; },
+              },
+              after: r`Flipping makes the marked bar stick out below the average; reflecting about the average then throws it far above, while the others shrink a little. Each round is one turn of the same fixed angle in the rotation picture from before, so after about $\frac{\pi}{4}\sqrt{N}$ rounds (here 3, for $N = 16$) it's almost certain to be measured: 96%. A classical search would need 8 guesses on average. One round too many, though, and the amplitude starts falling again.`,
             },
             {
               type: 'numeric',

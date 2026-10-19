@@ -57,6 +57,37 @@ const lineField = (x) => 1 / (x * x) * Math.sign(x) - 9 / ((3 - x) ** 2) * Math.
 const QE = 1.6e-19, MDROP = (3 * QE * 500) / (9.8 * 0.01);
 const dropAccel = (V) => 9.8 - (3 * QE * V) / (MDROP * 0.01);
 
+// 60 charges let loose inside a teardrop-shaped conductor (a flat, two-dimensional model)
+const DROP = (() => {
+  const tipX = 4, al = Math.acos(1 / tipX), poly = [];
+  for (let i = 0; i <= 60; i++) { const a = al + ((2 * Math.PI - 2 * al) * i) / 60; poly.push([Math.cos(a), Math.sin(a)]); }
+  poly.push([tipX, 0]);
+  return poly;
+})();
+let DROP_FRAMES = null;
+const dropFrames = () => DROP_FRAMES || (DROP_FRAMES = (() => {
+  const poly = DROP;
+  const inside = ([x, y]) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; };
+  const nearest = ([x, y]) => { let best = null, bd = 1e9; for (let i = 0; i < poly.length; i++) { const [ax, ay] = poly[i], [bx, by] = poly[(i + 1) % poly.length], dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))), px = ax + t * dx, py = ay + t * dy, d = (px - x) ** 2 + (py - y) ** 2; if (d < bd) { bd = d; best = [px, py]; } } return best; };
+  let a = 3;
+  const rnd = () => (a = (a * 16807) % 2147483647) / 2147483647;
+  let P = Array.from({ length: 60 }, () => [0.2 + 0.6 * (rnd() - 0.5), 0.6 * (rnd() - 0.5)]);
+  const frames = [P];
+  for (let it = 1; it <= 1500; it++) {
+    // each charge is pushed away from all the others (force ∝ 1/r in two dimensions), but can't leave the metal
+    P = P.map((pi, i) => {
+      let fx = 0, fy = 0;
+      P.forEach((pj, j) => { if (i === j) return; const dx = pi[0] - pj[0], dy = pi[1] - pj[1], r2 = dx * dx + dy * dy + 1e-6; fx += dx / r2; fy += dy / r2; });
+      const k = 0.004, m = Math.hypot(fx, fy) * k, sc = m > 0.05 ? 0.05 / m : 1;
+      let q = [pi[0] + fx * k * sc, pi[1] + fy * k * sc];
+      if (!inside(q)) q = nearest(q);
+      return q;
+    });
+    if (it % 10 === 0) frames.push(P);
+  }
+  return frames;
+})());
+
 export default {
   id: 'electrostatics',
   subject: 'physics',
@@ -578,6 +609,27 @@ $$q\frac{V}{d} = mg$$`,
               body: r`On a metal object, charges move until the whole surface is at the same **potential**. For a sphere of radius $r$ carrying charge $Q$, the potential is $V = \frac{kQ}{r}$ and the field at its surface is
 $$E = \frac{kQ}{r^2} = \frac{V}{r}.$$
 So at the same voltage, a **smaller** radius means a **stronger** surface field. A sharp point is like a tiny sphere: the field there is intense.`,
+            },
+            { /*anim:electrostatics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Charges find the edge',
+              body: r`Put 60 extra electrons into the middle of a teardrop-shaped piece of metal (drawn flat). Each one is pushed away by all the others, but none can leave the metal. Watch where they settle.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.3, xmax: 4.3, ymin: -1.3, ymax: 1.3, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 30, max: 190, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const F = dropFrames(), P = F[Math.min(F.length - 1, Math.floor(p.t))];
+                  const els = [s('path', { d: DROP.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' })];
+                  P.forEach(([x, y]) => els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 5, class: 'fl-blue', stroke: 'var(--card)', 'stroke-width': 1 })));
+                  return els;
+                },
+                readout: (p) => {
+                  const F = dropFrames(), P = F[Math.min(F.length - 1, Math.floor(p.t))], n = (x0, x1) => P.filter(([x]) => x >= x0 && x < x1).length;
+                  return `charges on the last 0.6 of the tip: **${n(3.4, 9)}** · on 0.6 of the straight sides: **${n(1.8, 2.4)}**`;
+                },
+              },
+              after: r`Every charge ends up on the **surface**: inside, it would still feel a push and keep moving. And they are not spread evenly. Near the sharp tip, the surface curves away so quickly that a charge there has few neighbours close by pushing it back, so charges pack in tightly. More charge per bit of surface means a stronger field just outside, which is why sparks, St Elmo's fire and lightning rods all favour **points**.`,
             },
             {
               type: 'numeric',

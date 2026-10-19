@@ -3,6 +3,12 @@ import { fix } from '../lib/svg.js';
 
 const r = String.raw;
 
+// a sweep over 0.7 ≤ x ≤ 7.3 that pauses where the two sides balance (x = 5)
+const scanX = (t) => {
+  const d = 4 - 3.6 * Math.cos(t) - 5, a = Math.abs(d);
+  return 5 + Math.sign(d) * (a < 0.3 ? 0 : a < 1.1 ? 0.8 * ((a - 0.3) / 0.8) ** 2 : a - 0.3);
+};
+
 export default {
   id: 'equations',
   subject: 'math',
@@ -576,6 +582,42 @@ The safe way is to move everything to one side: $x^2 - 3x = 0$, which factors as
 ::: key
 Never divide both sides by something that might be zero.
 :::`,
+            },
+            { /*anim:equations*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A balance on a graph',
+              body: r`Solve $\blue{3x - 1} = \coral{x + 9}$ by brute force: try every $x$. Each side is a line. The scanner tries values of $x$ and loads the two sides onto a balance.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 8, ymin: -2, ymax: 26, grid: 1, gridY: 2, height: 340, axes: { xlabel: 'x', yticks: 4, xticks: 1 },
+                animate: { param: 't', speed: 0.3, max: 2 * Math.PI, autoplay: true },
+                curves: [
+                  { f: (x) => 3 * x - 1, color: 'blue' },
+                  { f: (x) => x + 9, color: 'coral' },
+                ],
+                extra: ({ plot, p, s }) => {
+                  const x = scanX(p.t), L = 3 * x - 1, R = x + 9;
+                  const els = [s('line', { x1: plot.X(x), x2: plot.X(x), y1: plot.Y(-2), y2: plot.Y(26), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' })];
+                  els.push(s('circle', { cx: plot.X(x), cy: plot.Y(L), r: 7, class: 'fl-blue', stroke: 'var(--card)', 'stroke-width': 2.5 }));
+                  els.push(s('circle', { cx: plot.X(x), cy: plot.Y(R), r: 7, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 2.5 }));
+                  // the balance, drawn in pixels in the empty top-left corner
+                  const px = plot.X(1.9), py = plot.Y(19.5), half = 66, ang = Math.max(-0.35, Math.min(0.35, (L - R) * 0.03));
+                  const ex = half * Math.cos(ang), ey = half * Math.sin(ang);
+                  const lx = px - ex, ly = py + ey, rx = px + ex, ry = py - ey;
+                  els.push(s('path', { d: `M${px} ${py} L${px - 14} ${py + 34} L${px + 14} ${py + 34} Z`, class: 'fl-muted' }));
+                  els.push(s('line', { x1: lx, y1: ly, x2: rx, y2: ry, stroke: 'var(--ink)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  const pan = (cx, cy, cls, v) => [
+                    s('line', { x1: cx, y1: cy, x2: cx, y2: cy + 16, stroke: 'var(--ink-3)', 'stroke-width': 1.5 }),
+                    s('rect', { x: cx - 26, y: cy + 16, width: 52, height: 10, rx: 4, class: cls }),
+                    s('text', { x: cx, y: cy + 44, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700', text: fix(v, 1) }),
+                  ];
+                  els.push(pan(lx, ly, 'fl-blue', L), pan(rx, ry, 'fl-coral', R));
+                  if (Math.abs(L - R) < 0.03) els.push(s('circle', { cx: plot.X(5), cy: plot.Y(14), r: 13, fill: 'none', stroke: 'var(--success)', 'stroke-width': 3 }));
+                  return els;
+                },
+                readout: (p) => { const x = scanX(p.t), L = 3 * x - 1, R = x + 9; return r`$x = ${fix(x, 1)}$: $\;\blue{3x - 1} = ${fix(L, 1)}$, $\;\coral{x + 9} = ${fix(R, 1)}$ ${Math.abs(L - R) < 0.03 ? '· **balanced!**' : L > R ? '· left is heavier' : '· right is heavier'}`; },
+              },
+              after: r`Left of the crossing, the right pan is heavier; right of it, the left pan is. The scale is level at exactly one $x$, where the lines cross: $x = 5$, with both sides equal to 14. Solving an equation is finding where two graphs meet, which is why lines that never meet give no solution, and lines that coincide give infinitely many.`,
             },
             {
               type: 'interactive',

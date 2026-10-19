@@ -85,6 +85,21 @@ const KERNELS = [
 ];
 const conv = (K) => Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, (_, c) => { let s = 0; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s += K[i][j] * IMG[r + i][c + j]; return s; }));
 
+// loss L = (x² + 25y²)/2, a long narrow valley; plain steps and momentum (β = 0.7), both with learning rate 0.07
+const VALLEY_RUNS = (() => {
+  const eta = 0.07, beta = 0.7, P = [[-9, 1.6]], M = [[-9, 1.6]];
+  let v = [0, 0];
+  for (let n = 0; n < 40; n++) {
+    const [x, y] = P[n];
+    P.push([x - eta * x, y - eta * 25 * y]);
+    const [a, b] = M[n];
+    v = [beta * v[0] - eta * a, beta * v[1] - eta * 25 * b];
+    M.push([a + v[0], b + v[1]]);
+  }
+  return { P, M };
+})();
+const valleyLoss = ([x, y]) => (x * x + 25 * y * y) / 2;
+
 export default {
   id: 'neural',
   subject: 'math',
@@ -438,6 +453,31 @@ The **learning rate** $\eta$ sets the size of each step.`,
               tol: 0.01,
               wrong: [{ v: 1.2, tol: 0.01, why: r`Check the sign: $1 - 2.2$ is negative, so $x$ flips sides each step.` }],
               explain: r`$1 - 2.2 = -1.2$: each step overshoots to the other side and lands 20% farther away, so the "descent" spirals outward and diverges. Any $\eta > 1$ fails here; $\eta = 0.5$ would jump straight to the minimum in one step.`,
+            },
+            { /*anim:neural*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A ball with momentum',
+              body: r`Real loss landscapes often have long, narrow valleys. Here the loss is $L = \frac12(x^2 + 25y^2)$, steep across the valley and gentle along it, with the minimum at the dot. {coral:Plain gradient descent} and {teal:gradient descent with momentum} start from the same place with the same learning rate.`,
+              widget: {
+                kind: 'graph', xmin: -10, xmax: 1.5, ymin: -2.2, ymax: 2.2, grid: false, axes: false, height: 340, pad: 16, maxWidth: 640, clipExtra: true,
+                animate: { param: 't', speed: 4, max: 46, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { P, M } = VALLEY_RUNS, n = Math.min(40, Math.floor(p.t)), els = [];
+                  for (const c of [0.5, 2, 6, 14, 26, 42]) {
+                    const a = Math.sqrt(2 * c), b = Math.sqrt((2 * c) / 25);
+                    els.push(s('ellipse', { cx: plot.X(0), cy: plot.Y(0), rx: plot.X(a) - plot.X(0), ry: plot.Y(0) - plot.Y(b), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.3 }));
+                  }
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: 4, class: 'fl-ink' }));
+                  for (const [pts, col] of [[P, 'coral'], [M, 'teal']]) {
+                    els.push(s('path', { d: pts.slice(0, n + 1).map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+                    els.push(s('circle', { cx: plot.X(pts[n][0]), cy: plot.Y(pts[n][1]), r: 6, class: `fl-${col}` }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const { P, M } = VALLEY_RUNS, n = Math.min(40, Math.floor(p.t)); return `step ${n} · loss: {coral:plain ${fix(valleyLoss(P[n]), 3)}} · {teal:momentum ${fix(valleyLoss(M[n]), 3)}}`; },
+              },
+              after: r`Plain descent bounces from wall to wall, because the steep direction dominates the gradient, and then creeps along the valley floor: after 40 steps it still hasn't arrived. Momentum keeps a running sum of past steps: the side-to-side parts cancel out while the steady push along the valley builds up, like a heavy ball rolling downhill. It gets to the bottom in about 20 steps. Most networks are trained with some form of momentum (the popular **Adam** optimiser uses it too).`,
             },
             {
               type: 'mcq',

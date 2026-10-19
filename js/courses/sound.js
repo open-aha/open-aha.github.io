@@ -627,6 +627,32 @@ So each semitone raises the pitch by about 6%.`,
 
 Our ears merge reflections arriving within about 0.1 s of the original sound. Later ones are heard as separate echoes.`,
             },
+            { /*anim:sound*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A clap in a room',
+              body: r`A clap sends sound out in every direction. Follow 90 bits of it bouncing around a 20 m × 12 m hall (seen from above, slowed down about 25 times). Each time a bit hits a wall, the wall soaks up 15% of its energy, so it fades.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.5, xmax: 20.5, ymin: -0.5, ymax: 12.5, grid: false, axes: false,
+                animate: { param: 't', speed: 1, max: 14, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const W = 20, H = 12, x0 = 5, y0 = 7, d = 14 * Math.min(p.t, 13), els = [];
+                  // unfold the reflections: position along a wall pair is a triangle wave
+                  const fold = (u, L) => { const m = ((u % (2 * L)) + 2 * L) % (2 * L); return m <= L ? m : 2 * L - m; };
+                  const hits = (u, L) => Math.abs(Math.floor(u / L));
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(H), width: plot.X(W) - plot.X(0), height: plot.Y(0) - plot.Y(H), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 4 }));
+                  for (let k = 0; k < 90; k++) {
+                    const a = (2 * Math.PI * k) / 90 + 0.013, ux = x0 + d * Math.cos(a), uy = y0 + d * Math.sin(a);
+                    const n = hits(ux, W) + hits(uy, H), e = 0.85 ** n;
+                    els.push(s('circle', { cx: plot.X(fold(ux, W)), cy: plot.Y(fold(uy, H)), r: 3 + 3 * e, class: 'fl-coral', opacity: (0.15 + 0.85 * e).toFixed(2) }));
+                  }
+                  els.push(s('circle', { cx: plot.X(x0), cy: plot.Y(y0), r: 6, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => { const d = 14 * Math.min(p.t, 13), e = (() => { let tot = 0; for (let k = 0; k < 90; k++) { const a = (2 * Math.PI * k) / 90 + 0.013, n = Math.abs(Math.floor((5 + d * Math.cos(a)) / 20)) + Math.abs(Math.floor((7 + d * Math.sin(a)) / 12)); tot += 0.85 ** n; } return tot / 90; })(); return `${fix((1000 * d) / 343, 0)} ms after the clap · energy left ${fix(100 * e, 1)}% (${fix(10 * Math.log10(e), 1)} dB)`; },
+              },
+              after: r`At first the sound arrives as a few clear reflections, then the bits scatter into a dense, even wash that fills the whole room: **reverberation**. Every bounce removes the same fraction of energy, so the sound level falls by the same number of decibels in each stretch of time. The reverberation time $T_{60}$ is how long it takes to fall by 60 dB: big rooms (long gaps between bounces) and hard walls (little absorbed per bounce) ring longest.`,
+            },
             {
               type: 'numeric',
               title: 'Shouting at a cliff',

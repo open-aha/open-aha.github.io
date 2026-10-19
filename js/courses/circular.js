@@ -435,6 +435,40 @@ The normal force is what you feel as your weight.`,
 To feel Earth-normal weight, the floor must accelerate them at $g$:
 $$\omega^2 r = g \quad\Rightarrow\quad \omega = \sqrt{g/r}$$`,
             },
+            { /*anim:circular*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Dropping a ball in a space station',
+              body: r`An astronaut stands on the floor of a spinning ring and lets go of a ball held at chest height. **Left:** seen from outside, by someone not spinning. **Right:** seen by the astronaut, who spins with the station.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.15, xmax: 3.55, ymin: -1.15, ymax: 1.15, grid: false, axes: false,
+                animate: { param: 't', speed: 0.5, max: 1.6, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const tHit = Math.sqrt(1 - 0.49) / 0.7, t = Math.min(p.t, tHit), els = [];
+                  const ball = (tt) => [0.7 * Math.min(tt, tHit), -0.7]; // straight line in the outside view
+                  const rot = ([x, y], a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+                  [[0, true], [2.4, false]].forEach(([cx, outside]) => {
+                    const turn = outside ? p.t : 0, X = ([x, y]) => [plot.X(cx + x), plot.Y(y)];
+                    els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 4 }));
+                    for (let k = 0; k < 8; k++) { const [x1, y1] = X(rot([0.95, 0], turn + (k * Math.PI) / 4)), [x2, y2] = X(rot([1.05, 0], turn + (k * Math.PI) / 4)); els.push(s('line', { x1, y1, x2, y2, stroke: 'var(--ink-3)', 'stroke-width': 3 })); }
+                    // the astronaut stands on the floor at the bottom of the ring (and turns with it)
+                    const feet = rot([0, -1], turn), head = rot([0, -0.62], turn), [fx, fy] = X(feet), [hx, hy] = X(head);
+                    els.push(s('line', { x1: fx, y1: fy, x2: hx, y2: hy, stroke: 'var(--teal)', 'stroke-width': 7, 'stroke-linecap': 'round' }));
+                    // the ball's path so far
+                    const pts = [];
+                    for (let i = 0; i <= 40; i++) { const tt = (t * i) / 40; pts.push(X(outside ? ball(tt) : rot(ball(tt), -tt))); }
+                    els.push(s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+                    // once it lands, the ball rides round with the floor
+                    const [bx, by] = outside && p.t > tHit ? X(rot(ball(tHit), p.t - tHit)) : pts[pts.length - 1];
+                    els.push(s('circle', { cx: bx, cy: by, r: 7, class: 'fl-coral' }));
+                    els.push(s('text', { x: plot.X(cx), y: plot.Y(0) + 5, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--ink-3)', text: outside ? 'outside view' : 'astronaut’s view' }));
+                  });
+                  return els;
+                },
+                readout: (p) => (p.t < Math.sqrt(1 - 0.49) / 0.7 ? 'the ball is falling…' : 'landed: **behind** the astronaut’s feet'),
+              },
+              after: r`From outside, nothing pulls on the ball at all: once released, it just keeps the sideways speed it had and flies in a **straight line**, while the floor swings round to meet it. The astronaut sees the same event as the ball "falling", but curving backwards to land behind their feet, because their feet, further from the centre, were moving faster than the ball. In a spinning station "gravity" is only the floor pushing you round in a circle.`,
+            },
             {
               type: 'numeric',
               title: 'Design a station',
