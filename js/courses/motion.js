@@ -19,6 +19,15 @@ const stopV = (t, p) => (t < RT ? p.v : Math.max(0, p.v - DEC * (t - RT)));
 const stopD = (v) => v * RT + (v * v) / (2 * DEC);
 const D2R = Math.PI / 180;
 
+// the monkey hangs 20 m away and 10 m up; the dart is aimed straight at it and the monkey lets go the moment the dart fires
+const MONKEY_V = [30, 22, 17];
+const monkeyRound = (t) => {
+  const D = Math.hypot(20, 10);
+  let s = t;
+  for (let k = 0; k < 3; k++) { const hit = D / MONKEY_V[k], len = hit + 1.6; if (s < len) return { k, v: MONKEY_V[k], hit, tau: Math.min(s, hit) }; s -= len; }
+  return { k: 2, v: MONKEY_V[2], hit: D / MONKEY_V[2], tau: D / MONKEY_V[2] };
+};
+
 export default {
   id: 'motion',
   subject: 'physics',
@@ -771,6 +780,39 @@ Press **Launch** and watch the arrows. The {blue:horizontal arrow} never changes
                 readout: ({ angle, speed }) => r`$v_x = ${fix(speed * Math.cos((angle * Math.PI) / 180), 2)}$ m/s, $\quad v_y = ${fix(speed * Math.sin((angle * Math.PI) / 180), 2)}$ m/s`,
                 needLaunch: false,
               },
+            },
+            { /*anim2:motion*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The monkey and the hunter',
+              body: r`A classic puzzle. A hunter aims a dart **straight at** a monkey hanging from a branch. The monkey, startled by the noise, lets go at the very moment the dart is fired. Should the hunter aim lower? Watch three shots at different speeds.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.5, xmax: 23, ymin: -0.6, ymax: 12.5, grid: false, axes: false, maxWidth: 600,
+                animate: { param: 't', speed: 0.8, max: 3 * 1.6 + Math.hypot(20, 10) * (1 / 30 + 1 / 22 + 1 / 17), autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { v, tau, hit } = monkeyRound(p.t), c = 20 / Math.hypot(20, 10), sn = 10 / Math.hypot(20, 10), drop = 4.9 * tau * tau, els = [];
+                  els.push(s('line', { x1: plot.X(-1.5), x2: plot.X(23), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  els.push(s('line', { x1: plot.X(17.5), x2: plot.X(23), y1: plot.Y(10.6), y2: plot.Y(10.6), stroke: 'var(--amber)', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+                  els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(20), y2: plot.Y(10), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
+                  // paths so far
+                  const dart = [], mk = [];
+                  for (let i = 0; i <= 40; i++) { const q = (tau * i) / 40; dart.push(`${i ? 'L' : 'M'}${plot.X(v * c * q).toFixed(1)} ${plot.Y(v * sn * q - 4.9 * q * q).toFixed(1)}`); }
+                  els.push(s('path', { d: dart.join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.5 }));
+                  // where each would be without gravity, and how far both have dropped
+                  const gx = v * c * tau, gy = v * sn * tau;
+                  if (drop > 0.15) {
+                    els.push(s('line', { x1: plot.X(gx), y1: plot.Y(gy), x2: plot.X(gx), y2: plot.Y(gy - drop), stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-dasharray': '3 3' }));
+                    els.push(s('line', { x1: plot.X(20), y1: plot.Y(10), x2: plot.X(20), y2: plot.Y(10 - drop), stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-dasharray': '3 3' }));
+                  }
+                  els.push(s('circle', { cx: plot.X(20), cy: plot.Y(10 - drop), r: 8, class: 'fl-amber', stroke: 'var(--ink-2)', 'stroke-width': 1.5 }));
+                  els.push(s('circle', { cx: plot.X(gx), cy: plot.Y(gy - drop), r: 5, class: 'fl-coral' }));
+                  els.push(s('rect', { x: plot.X(-0.9), y: plot.Y(0.9), width: plot.X(1.2) - plot.X(0), height: plot.Y(0) - plot.Y(0.9), rx: 3, class: 'fl-ink' }));
+                  if (tau >= hit - 1e-9) els.push(s('text', { x: plot.X(20) + 16, y: plot.Y(10 - drop) - 6, class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--coral)', text: 'hit!' }));
+                  return els;
+                },
+                readout: (p) => { const { v, tau, hit } = monkeyRound(p.t); return `dart at ${v} m/s · ${fix(tau, 2)} s · both have fallen ${fix(4.9 * tau * tau, 2)} m below their no-gravity positions${tau >= hit - 1e-9 ? ' · **hit**' : ''}`; },
+              },
+              after: r`Aim straight at it. Without gravity the dart would fly along the dashed line and the monkey would stay put, so the dart would hit. Gravity pulls both down by the same amount, $\frac12 g t^2$, at every moment (the violet drops), so it still hits, whatever the dart's speed. A faster dart just meets the monkey higher up. The only way to miss is a dart so slow that the monkey reaches the ground first.`,
             },
             {
               type: 'interactive',

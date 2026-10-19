@@ -15,6 +15,39 @@ const MODS = [['water (hydrogen)', 1], ['heavy water (deuterium)', 2], ['graphit
 const U_CHAIN = [['U', 238, 92, 'α', '4.5 billion years'], ['Th', 234, 90, 'β', '24 days'], ['Pa', 234, 91, 'β', '1.2 minutes'], ['U', 234, 92, 'α', '245,000 years'], ['Th', 230, 90, 'α', '75,000 years'], ['Ra', 226, 88, 'α', '1,600 years'], ['Rn', 222, 86, 'α', '3.8 days'], ['Po', 218, 84, 'α', '3.1 minutes'], ['Pb', 214, 82, 'β', '27 minutes'], ['Bi', 214, 83, 'β', '20 minutes'], ['Po', 214, 84, 'α', '164 microseconds'], ['Pb', 210, 82, 'β', '22 years'], ['Bi', 210, 83, 'β', '5.0 days'], ['Po', 210, 84, 'α', '138 days'], ['Pb', 206, 82, '', 'stable']];
 const uStep = (t) => Math.min(14, Math.floor(t / 1.1));
 
+// two lumps of uranium, radius 0.9 and 3 (same material). A neutron travels in a straight line and causes a fission after 2 units on
+// average; each fission frees 2 or 3 new neutrons in random directions. Neutrons that leave the lump are lost.
+let CHAIN = null;
+const chainRun = () => {
+  if (CHAIN) return CHAIN;
+  const run = (R, seed) => {
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    let ns = Array.from({ length: 4 }, () => { const a = 2 * Math.PI * rnd(); return { x: 0, y: 0, ux: Math.cos(a), uy: Math.sin(a) }; });
+    const frames = [], flashes = [];
+    let fissions = 0;
+    for (let k = 0; k <= 500; k++) {
+      if (k % 2 === 0) frames.push({ ns: ns.map((n) => [n.x, n.y]), fissions, nflash: flashes.length });
+      const next = [];
+      for (const n of ns) {
+        n.x += 1.5 * 0.02 * n.ux; n.y += 1.5 * 0.02 * n.uy;
+        if (n.x * n.x + n.y * n.y > R * R) continue;
+        if (rnd() < 0.015) {
+          fissions++; flashes.push([n.x, n.y, k]);
+          const kids = rnd() < 0.5 ? 2 : 3;
+          for (let j = 0; j < kids && ns.length + next.length < 400; j++) { const a = 2 * Math.PI * rnd(); next.push({ x: n.x, y: n.y, ux: Math.cos(a), uy: Math.sin(a) }); }
+        } else next.push(n);
+      }
+      ns = next;
+    }
+    return { frames, flashes };
+  };
+  const runs = [run(0.9, 5), run(3, 23)];
+  // stop the picture once the big lump has 240 neutrons in flight (a real one would keep multiplying)
+  const stop = runs[1].frames.findIndex((f) => f.ns.length >= 240);
+  return (CHAIN = { runs, stop: stop < 0 ? 250 : stop });
+};
+const chainFrame = (t) => Math.min(chainRun().stop, Math.floor(t * 25));
+
 export default {
   id: 'nuclear',
   subject: 'physics',
@@ -419,6 +452,33 @@ $$N = N_0 \left(\tfrac12\right)^{t/T_{1/2}}$$`,
                 solution: { k: 1 },
               },
               explain: r`At $k = 1$ exactly, each generation is the same size: a steady power output. Reactor operators keep $k$ at 1 with control rods; a bomb is designed for $k$ near 2. Even $k = 1.01$ grows a thousandfold in under 700 generations.`,
+            },
+            { /*anim2:nuclear*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Too small, big enough',
+              body: r`Two lumps of the same uranium, one small and one large, each starting with four stray neutrons (black dots). An {amber:amber flash} is a nucleus splitting, which frees 2 or 3 new neutrons. Neutrons that reach the edge escape and are lost.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -5, xmax: 5.9, ymin: -3.3, ymax: 3.3, grid: false, axes: false, maxWidth: 600,
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const C = chainRun().runs, k = chainFrame(p.t), els = [], R = (q) => plot.X(q) - plot.X(0);
+                  [[-3.8, 0.9, C[0]], [2.7, 3, C[1]]].forEach(([cx, rad, run]) => {
+                    els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(0), r: R(rad), class: 'fl-teal-soft', stroke: 'var(--teal)', 'stroke-width': 2 }));
+                    const f = run.frames[k];
+                    // recent flashes fade out over 0.4 s
+                    for (let i = 0; i < f.nflash; i++) {
+                      const [x, y, born] = run.flashes[i], age = (2 * k - born) / 50;
+                      if (age < 0.4) els.push(s('circle', { cx: plot.X(cx + x), cy: plot.Y(y), r: 9 * (1 - age), class: 'fl-amber', opacity: 1 - age / 0.4 }));
+                    }
+                    const d = f.ns.map(([x, y]) => `M${plot.X(cx + x).toFixed(1)} ${plot.Y(y).toFixed(1)}h0`).join('');
+                    if (d) els.push(s('path', { d, stroke: 'var(--ink)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  });
+                  return els;
+                },
+                readout: (p) => { const C = chainRun().runs, k = chainFrame(p.t), a = C[0].frames[k], b = C[1].frames[k]; const pl = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`; return `small lump: ${pl(a.fissions, 'fission')}, ${pl(a.ns.length, 'neutron')} left · large lump: ${pl(b.fissions, 'fission')}, ${pl(b.ns.length, 'neutron')}${k === chainRun().stop ? ' and still multiplying' : ''}`; },
+              },
+              after: r`In the small lump, most neutrons reach the surface and escape before they hit anything, so each fission leads to fewer than one more on average ($k < 1$) and the reaction fizzles. In the big lump a neutron has to travel much further to get out, so more of them cause fissions: $k > 1$, and the numbers multiply generation after generation. The size at which $k$ reaches exactly 1 is the **critical mass**, about 52 kg for a bare sphere of uranium-235.`,
             },
             {
               type: 'numeric',

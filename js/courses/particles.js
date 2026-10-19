@@ -380,7 +380,7 @@ Every force you've ever felt (friction, tension, a push) is electromagnetism bet
                 },
                 readout: (p) => (p.t < 1.2 ? 'a gamma ray, invisible in the chamber' : 'two tracks, curling opposite ways and tightening as they slow'),
               },
-              after: r`The two particles have equal mass, so the field bends them equally hard, but in **opposite** directions, because their charges are opposite. As they plough through the liquid they lose energy, and a slower particle curls more tightly, so each track winds into a spiral. Curling tracks like these were the evidence that antimatter is real: Carl Anderson spotted the first positron in 1932, and pairs like this one were photographed the following year. The light's energy has become mass, $E = mc^2$ run in reverse, which needs a gamma ray of at least $2 \times 0.511$ MeV.`,
+              after: r`The two particles have opposite charges, so the field bends them in **opposite** directions (how tightly depends on each one's momentum). As they plough through the liquid they lose energy, and a slower particle curls more tightly, so each track winds into a spiral. Curling tracks like these were the evidence that antimatter is real: Carl Anderson spotted the first positron in 1932, and pairs like this one were photographed the following year. The light's energy has become mass, $E = mc^2$ run in reverse, which needs a gamma ray of at least $2 \times 0.511$ MeV.`,
             },
             {
               type: 'mcq',

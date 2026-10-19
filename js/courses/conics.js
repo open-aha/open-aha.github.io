@@ -12,6 +12,9 @@ const conicName = (th) => (th === 0 ? 'a circle' : th < SIDE ? 'an ellipse' : th
 // eccentricity of the cut when the plane is tilted th degrees from horizontal (cone sides at 60°)
 const eccOf = (th) => Math.sin((th * Math.PI) / 180) / Math.cos(((90 - SIDE) * Math.PI) / 180);
 
+// trammel of Archimedes with a = 3, b = 1.6: sliders at A = ((a − b) cos θ, 0) and B = (0, −(a − b) sin θ); the rod's end P = (a cos θ, b sin θ)
+const TRAM_A = 3, TRAM_B = 1.6;
+
 export default {
   id: 'conics',
   subject: 'math',
@@ -163,6 +166,32 @@ The Greek mathematician Apollonius studied these "conic sections" over 2,000 yea
               body: r`An ellipse centred at the origin, with semi-axes $a$ (along $x$) and $b$ (along $y$):
 $$\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1$$
 The foci sit at $(\pm c, 0)$, where $c^2 = a^2 - b^2$, and the eccentricity is $e = c/a$.`,
+            },
+            { /*anim2:conics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Drawing an ellipse with a stick',
+              body: r`A rod slides with one point in a horizontal groove and another in a vertical groove (a **trammel**, said to go back to Archimedes). Its end is 1.6 from the first slider and 3 from the second. Watch what the {blue:end of the rod} draws, and the {violet:point halfway} between the sliders.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.5, xmax: 3.5, ymin: -2.1, ymax: 2.1, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 0.7, max: 4 * Math.PI, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const th = p.t, d = TRAM_A - TRAM_B, A = [d * Math.cos(th), 0], B = [0, -d * Math.sin(th)], P = [TRAM_A * Math.cos(th), TRAM_B * Math.sin(th)], M = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], els = [];
+                  const sw = plot.Y(0) - plot.Y(0.18);
+                  els.push(s('rect', { x: plot.X(-3.4), y: plot.Y(0.09), width: plot.X(3.4) - plot.X(-3.4), height: sw, class: 'fl-surface', stroke: 'var(--line-2)' }));
+                  els.push(s('rect', { x: plot.X(-0.09), y: plot.Y(2.0), width: sw, height: plot.Y(-2.0) - plot.Y(2.0), class: 'fl-surface', stroke: 'var(--line-2)' }));
+                  const trace = (f, col, dash) => { const pts = []; const n = Math.min(160, Math.ceil((160 * Math.min(th, 2 * Math.PI)) / (2 * Math.PI))); for (let i = 0; i <= n; i++) { const a = (Math.min(th, 2 * Math.PI) * i) / Math.max(1, n); const [x, y] = f(a); pts.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`); } return s('path', { d: pts.join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-dasharray': dash }); };
+                  els.push(trace((a) => [TRAM_A * Math.cos(a), TRAM_B * Math.sin(a)], 'blue'));
+                  els.push(trace((a) => [(d * Math.cos(a)) / 2, (-d * Math.sin(a)) / 2], 'violet', '5 4'));
+                  els.push(s('line', { x1: plot.X(B[0]), y1: plot.Y(B[1]), x2: plot.X(P[0]), y2: plot.Y(P[1]), stroke: 'var(--ink-2)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  for (const [x, y] of [A, B]) els.push(s('rect', { x: plot.X(x) - 7, y: plot.Y(y) - 7, width: 14, height: 14, rx: 2, class: 'fl-amber', stroke: 'var(--ink-2)', 'stroke-width': 1.5 }));
+                  els.push(s('circle', { cx: plot.X(M[0]), cy: plot.Y(M[1]), r: 4.5, class: 'fl-violet' }));
+                  els.push(s('circle', { cx: plot.X(P[0]), cy: plot.Y(P[1]), r: 6, class: 'fl-blue' }));
+                  return els;
+                },
+                readout: (p) => { const x = TRAM_A * Math.cos(p.t), y = TRAM_B * Math.sin(p.t); return `end of rod at $(${fix(x, 2)}, ${fix(y, 2)})$ · $\\frac{x^2}{3^2} + \\frac{y^2}{1.6^2} = ${fix((x * x) / 9 + (y * y) / 2.56, 3)}$`; },
+              },
+              after: r`Wherever the rod is, its end sits at $(3\cos\theta,\ 1.6\sin\theta)$, so $\frac{x^2}{3^2} + \frac{y^2}{1.6^2} = \cos^2\theta + \sin^2\theta = 1$: an ellipse whose semi-axes are the end's distances to the two sliders. Every point on the rod draws an ellipse, and the one exactly halfway between the sliders draws a **circle**. Carpenters still use this to cut elliptical table tops.`,
             },
             {
               type: 'numeric',

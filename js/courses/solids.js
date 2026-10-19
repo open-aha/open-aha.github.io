@@ -390,7 +390,7 @@ Using Cavalieri's principle: at every height, a slice of the hemisphere has the 
                 },
                 readout: (p) => { const z = -0.98 * Math.cos(p.t); return `$z = ${fix(z, 2)}$ · {blue:sphere} **${fix(Math.PI * (1 - z * z), 2)}** + {coral:cone} **${fix(Math.PI * z * z, 2)}** = {amber:cylinder} **3.14**`; },
               },
-              after: r`At every height, the sphere's slice (radius $\sqrt{1 - z^2}$) plus the cone's slice (radius $|z|$) has area $\pi(1 - z^2) + \pi z^2 = \pi$: exactly the cylinder's slice. Stack all the slices and the volumes must match too: sphere + double cone = cylinder. The cylinder is $2\pi$ and the double cone is a third of it, $\frac{2\pi}{3}$, so the sphere is $2\pi - \frac{2\pi}{3} = \frac43\pi$. This was Archimedes' own argument (with a balance instead of slices), the one he wanted on his tomb.`,
+              after: r`At every height, the sphere's slice (radius $\sqrt{1 - z^2}$) plus the cone's slice (radius $|z|$) has area $\pi(1 - z^2) + \pi z^2 = \pi$: exactly the cylinder's slice. Stack all the slices and the volumes must match too: sphere + double cone = cylinder. The cylinder is $2\pi$ and the double cone is a third of it, $\frac{2\pi}{3}$, so the sphere is $2\pi - \frac{2\pi}{3} = \frac43\pi$. This was Archimedes' own argument (with a balance instead of slices), and a sphere inside a cylinder is the figure he wanted on his tomb.`,
             },
             {
               type: 'numeric',

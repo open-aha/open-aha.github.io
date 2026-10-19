@@ -44,6 +44,12 @@ function reuleaux(th) {
 }
 const ngonArea = (n, P) => (P * P) / (4 * n * Math.tan(Math.PI / n));
 
+// square of side 2 (axle at height 0); road made of arches y = −cosh(x − centre), each 2·asinh(1) wide
+const SQW_A = Math.asinh(1);
+const sqwRoad = (x) => { const X = ((((x + SQW_A) % (2 * SQW_A)) + 2 * SQW_A) % (2 * SQW_A)) - SQW_A; return -Math.cosh(X); };
+// over arch n the wheel turns by −atan(sinh X), and by a further quarter turn per arch already passed
+const sqwAngle = (x) => { const n = Math.floor((x + SQW_A) / (2 * SQW_A)), X = x - 2 * SQW_A * n; return -Math.atan(Math.sinh(X)) - (n * Math.PI) / 2; };
+
 export default {
   id: 'curves',
   subject: 'math',
@@ -308,6 +314,32 @@ Compare it with the parabola through the same three points. Change how tightly t
                 { t: 'A flat road', why: 'On a flat road a square wheel makes the axle bob up and down.' },
               ],
               explain: r`An inverted catenary is exactly the shape that lets a rolling square keep its centre at a constant height, with each corner fitting into the dip between arches. There's a working square-wheeled tricycle at the Museum of Mathematics in New York.`,
+            },
+            { /*anim2:curves*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Riding on square wheels',
+              body: r`A square wheel of side 2 rolls without slipping along a road of upside-down catenary arches, $y = -\cosh x$, one arch per side of the square. Watch the {coral:axle}.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.6, xmax: 9.6, ymin: -2.0, ymax: 1.6, grid: false, axes: false, maxWidth: 640,
+                animate: { param: 't', speed: 0.9, max: 8 * SQW_A, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const x = p.t, th = sqwAngle(x), els = [], road = [];
+                  for (let i = 0; i <= 400; i++) { const xx = -1.6 + (11.2 * i) / 400; road.push(`${i ? 'L' : 'M'}${plot.X(xx).toFixed(1)} ${plot.Y(sqwRoad(xx)).toFixed(1)}`); }
+                  els.push(s('path', { d: road.join('') + `L${plot.X(9.6)} ${plot.Y(-2)}L${plot.X(-1.6)} ${plot.Y(-2)}Z`, class: 'fl-surface', stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  const c = Math.cos(th), sn = Math.sin(th), corner = (u, v) => [x + c * u - sn * v, sn * u + c * v];
+                  const sq = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([u, v]) => corner(u, v));
+                  els.push(s('path', { d: sq.map(([a, b], i) => `${i ? 'L' : 'M'}${plot.X(a).toFixed(1)} ${plot.Y(b).toFixed(1)}`).join('') + 'Z', class: 'fl-blue-soft', stroke: 'var(--blue)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  // a spoke, so the turning shows
+                  const [sx, sy] = corner(0, 1);
+                  els.push(s('line', { x1: plot.X(x), y1: plot.Y(0), x2: plot.X(sx), y2: plot.Y(sy), stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  els.push(s('line', { x1: plot.X(-1.6), x2: plot.X(9.6), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--coral)', 'stroke-width': 1.3, 'stroke-dasharray': '5 5' }));
+                  els.push(s('circle', { cx: plot.X(x), cy: plot.Y(0), r: 6, class: 'fl-coral' }));
+                  return els;
+                },
+                readout: (p) => `axle height: ${fix(0, 3)} · the wheel has turned ${fix((-sqwAngle(p.t) * 180) / Math.PI, 0)}°`,
+              },
+              after: r`The axle glides along perfectly level. Each arch is exactly as long as a side of the square ($2\sinh(\operatorname{asinh} 1) = 2$), and the arch's shape is just right so that, as the square rocks over it, the centre neither rises nor falls. In the dip between arches a corner slots in neatly. Some science museums have a square-wheeled tricycle that rides smoothly over a road of just these arches.`,
             },
             {
               type: 'numeric',

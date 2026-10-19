@@ -37,6 +37,12 @@ const HUBBLE_GAL = (() => {
 })();
 const HUBBLE_HOME = [[0, 0], [2, 1], [-2, -1]].map(([i, j]) => (i + 6) * 9 + (j + 4));
 
+// seen from above the Sun (at the origin): Earth on a circle of radius 7 (1 turn in 365.25 days), the Moon on a circle of radius 1.5 round Earth
+// (1 turn among the stars in 27.32 days, both anticlockwise), starting at new moon. Sizes are not to scale.
+// 2.4 days a second, a pause at 27.32 days, then slower to 29.53
+const lunarDay = (t) => { const t1 = 0.5 + 27.32 / 2.4; return t < t1 ? Math.max(0, (t - 0.5) * 2.4) : t < t1 + 1.8 ? 27.32 : Math.min(29.53, 27.32 + (t - t1 - 1.8) * 1.2); };
+const lunarPos = (d) => { const ea = -0.25 + (2 * Math.PI * d) / 365.25, E = [7 * Math.cos(ea), 7 * Math.sin(ea)], ma = -0.25 + Math.PI + (2 * Math.PI * d) / 27.32; return { E, M: [E[0] + 1.5 * Math.cos(ma), E[1] + 1.5 * Math.sin(ma)], ea, ma }; };
+
 export default {
   id: 'astronomy',
   subject: 'physics',
@@ -191,6 +197,37 @@ Looking far away means looking back in time: we see Andromeda as it was 2.5 mill
                 },
               },
               after: r`When the Moon is between Earth and the Sun, we face its dark side: **new moon**. On the far side of Earth from the Sun, we see the whole lit face: **full moon**. A full cycle takes about 29.5 days.`,
+            },
+            { /*anim2:astronomy*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two kinds of month',
+              body: r`Earth and the Moon seen from far above the Sun, starting at **new moon** (the Moon between Earth and the Sun). The {violet:violet arrow} always points the same way, towards a distant star; the {amber:amber line} points to the Sun.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.2, xmax: 9.6, ymin: -3.9, ymax: 3.7, grid: false, axes: false, maxWidth: 560,
+                animate: { param: 't', speed: 1, max: 18, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const d = lunarDay(p.t), { E, M } = lunarPos(d), els = [], R = (q) => plot.X(q) - plot.X(0);
+                  const orbit = [];
+                  for (let i = 0; i <= 40; i++) { const a = -0.55 + (0.95 * i) / 40; orbit.push(`${i ? 'L' : 'M'}${plot.X(7 * Math.cos(a)).toFixed(1)} ${plot.Y(7 * Math.sin(a)).toFixed(1)}`); }
+                  els.push(s('path', { d: orbit.join(''), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }));
+                  els.push(s('circle', { cx: plot.X(0), cy: plot.Y(0), r: R(0.8), class: 'fl-amber' }));
+                  els.push(s('line', { x1: plot.X(E[0]), y1: plot.Y(E[1]), x2: plot.X(E[0] * 0.62), y2: plot.Y(E[1] * 0.62), stroke: 'var(--amber)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+                  els.push(s('circle', { cx: plot.X(E[0]), cy: plot.Y(E[1]), r: R(1.5), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.2 }));
+                  // the fixed star direction, drawn from Earth: the direction the Moon was in at the start
+                  const sa = -0.25 + Math.PI, X1 = plot.X(E[0] + 2.4 * Math.cos(sa)), Y1 = plot.Y(E[1] + 2.4 * Math.sin(sa)), an = Math.atan2(Y1 - plot.Y(E[1]), X1 - plot.X(E[0]));
+                  els.push(s('path', { d: `M${plot.X(E[0])} ${plot.Y(E[1])}L${X1} ${Y1}M${X1 - 9 * Math.cos(an - 0.45)} ${Y1 - 9 * Math.sin(an - 0.45)}L${X1} ${Y1}L${X1 - 9 * Math.cos(an + 0.45)} ${Y1 - 9 * Math.sin(an + 0.45)}`, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-linecap': 'round' }));
+                  // the Moon's path so far
+                  const trail = [];
+                  for (let i = 0; i <= 60; i++) { const q = lunarPos((d * i) / 60).M; trail.push(`${i ? 'L' : 'M'}${plot.X(q[0]).toFixed(1)} ${plot.Y(q[1]).toFixed(1)}`); }
+                  els.push(s('path', { d: trail.join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  els.push(s('circle', { cx: plot.X(E[0]), cy: plot.Y(E[1]), r: 8, class: 'fl-blue' }));
+                  els.push(s('circle', { cx: plot.X(M[0]), cy: plot.Y(M[1]), r: 5, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => { const d = lunarDay(p.t); return `day ${fix(d, 1)}${d === 27.32 ? ' · back in line with the same star, but not yet with the Sun' : d >= 29.53 ? ' · **new moon again**' : ''}`; },
+              },
+              after: r`After 27.3 days the Moon has gone once round Earth: it's back in line with the same distant star (the **sidereal month**). But meanwhile Earth has carried it about 27° further round the Sun, so the Sun is now in a different direction, and the Moon needs about 2.2 more days to catch up with it. The cycle of phases, from new moon to new moon, takes 29.5 days (the **synodic month**). Earth's day works the same way: it turns once relative to the stars in 23 h 56 min, but needs about 4 more minutes to face the Sun again.`,
             },
             {
               type: 'mcq',

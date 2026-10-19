@@ -77,6 +77,10 @@ const stringAt = (x, t, free) => pulse(x - (2 + t)) + (free ? 1 : -1) * pulse(20
 const w2 = (k) => W0 * Math.sqrt(1 + 2 * k);
 const transferTime = (k) => Math.PI / (w2(k) - W0);
 
+// θ1 = ½(cos ω1t + cos ω2t), θ2 = ½(cos ω1t − cos ω2t), with ω1 = 2π (1 Hz) and ω2 = ω1·√(1 + 2κ), κ = 0.2
+const CP_W1 = 2 * Math.PI, CP_W2 = 2 * Math.PI * Math.sqrt(1.4);
+const cpAngles = (t) => [0.5 * (Math.cos(CP_W1 * t) + Math.cos(CP_W2 * t)), 0.5 * (Math.cos(CP_W1 * t) - Math.cos(CP_W2 * t))];
+
 export default {
   id: 'waves',
   subject: 'physics',
@@ -907,6 +911,39 @@ In 1665, Christiaan Huygens noticed that two pendulum clocks hanging from the sa
 - **Out of phase**: they swing in opposite directions; the spring adds a restoring force, so the frequency is higher, $\omega_0\sqrt{1 + 2\kappa}$, where $\kappa$ measures the spring's strength.
 
 Starting one pendulum alone is a 50–50 mix of both modes. The two frequencies drift in and out of step, making **beats**: the energy moves from one pendulum to the other.`,
+            },
+            { /*anim2:waves*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The handover',
+              body: r`Two identical pendulums joined by a spring ($\kappa = 0.2$). The {blue:left one} starts swinging; the {coral:right one} starts at rest. The bars show how the energy is shared.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.6, xmax: 2.6, ymin: -3.9, ymax: 0.3, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 1, max: 2 * Math.PI / ((CP_W2 - CP_W1) / 2), autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const [a1, a2] = cpAngles(p.t), L = 2.6, amp = 0.35, els = [];
+                  els.push(s('line', { x1: plot.X(-2), x2: plot.X(2), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-2)', 'stroke-width': 4 }));
+                  const bob = (x0, a) => [x0 + L * Math.sin(amp * a), -L * Math.cos(amp * a)];
+                  const b1 = bob(-0.9, a1), b2 = bob(0.9, a2);
+                  // the spring joins the two rods 60% of the way down
+                  const s1 = [-0.9 + 0.6 * (b1[0] + 0.9), 0.6 * b1[1]], s2 = [0.9 + 0.6 * (b2[0] - 0.9), 0.6 * b2[1]], zig = [];
+                  for (let i = 0; i <= 12; i++) { const f = i / 12, x = s1[0] + (s2[0] - s1[0]) * f, y = s1[1] + (s2[1] - s1[1]) * f + (i % 12 && i % 2 ? 0.07 : i % 12 ? -0.07 : 0); zig.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`); }
+                  els.push(s('path', { d: zig.join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.8 }));
+                  for (const [x0, b, col] of [[-0.9, b1, 'blue'], [0.9, b2, 'coral']]) {
+                    els.push(s('line', { x1: plot.X(x0), y1: plot.Y(0), x2: plot.X(b[0]), y2: plot.Y(b[1]), stroke: 'var(--ink-2)', 'stroke-width': 2 }));
+                    els.push(s('circle', { cx: plot.X(b[0]), cy: plot.Y(b[1]), r: 11, class: `fl-${col}` }));
+                  }
+                  // energy shares: cos² and sin² of half the difference of the mode frequencies
+                  const e1 = Math.cos(((CP_W2 - CP_W1) / 2) * p.t) ** 2, bw = plot.X(1.6) - plot.X(0);
+                  for (const [y, e, col] of [[-3.35, e1, 'blue'], [-3.7, 1 - e1, 'coral']]) {
+                    els.push(s('rect', { x: plot.X(-0.8), y: plot.Y(y + 0.1), width: bw, height: plot.Y(0) - plot.Y(0.2), rx: 3, class: 'fl-surface', stroke: 'var(--line-2)' }));
+                    els.push(s('rect', { x: plot.X(-0.8), y: plot.Y(y + 0.1), width: bw * e, height: plot.Y(0) - plot.Y(0.2), rx: 3, class: `fl-${col}`, opacity: 0.8 }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const e1 = Math.cos(((CP_W2 - CP_W1) / 2) * p.t) ** 2; return `${fix(p.t, 1)} s · energy: {blue:left ${fix(100 * e1, 0)}%} · {coral:right ${fix(100 * (1 - e1), 0)}%}`; },
+              },
+              after: r`The energy drains completely from one pendulum into the other and back again. Neither pendulum on its own swings at a single frequency, but each is a sum of the two normal modes, in phase (1 Hz) and out of phase (here 1.18 Hz). The modes slowly drift out of step, and the swing moves to whichever pendulum they currently reinforce: a beat. With these numbers the full handover takes $\frac{1}{2 \times 0.18}$, about 2.7 seconds; a weaker spring would make it slower.`,
             },
             {
               type: 'interactive',

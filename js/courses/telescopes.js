@@ -133,7 +133,7 @@ Big research telescopes use curved **mirrors** instead of a large objective lens
                   els.push(s('circle', { cx: plot.X(F[0]), cy: plot.Y(F[1]), r: 4, class: 'fl-coral' }));
                   return els;
                 },
-                readout: (p) => { const th = 3.2 * Math.sin(p.t), out = (Math.atan(4 * Math.tan((th * Math.PI) / 180)) * 180) / Math.PI; return `starlight arrives at ${fix(th, 2)}° · leaves the eyepiece at ${fix(-out, 2)}° · 4 times the angle (and flipped)`; },
+                readout: (p) => { const th = 3.2 * Math.sin(p.t), out = (Math.atan(4 * Math.tan((th * Math.PI) / 180)) * 180) / Math.PI; return `starlight arrives at ${fix(th, 2)}° · leaves the eyepiece at ${fix(-out, 2)}° · about 4 times the angle (and flipped)`; },
               },
               after: r`The rays from one star all meet at a single point in the focal plane, and how far that point sits from the axis depends on the star's angle. The short-focus eyepiece sends the light on at a much steeper angle: $\frac{f_o}{f_e} = 4$ times steeper here. Everything the telescope shows is spread out by that same factor, which is its **magnification**. (The image is also upside down, which astronomers don't mind.)`,
             },

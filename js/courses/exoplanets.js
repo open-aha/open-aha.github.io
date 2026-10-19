@@ -173,7 +173,7 @@ In 1995, Michel Mayor and Didier Queloz found **51 Pegasi b** this way: the firs
                 },
                 readout: (p) => { const v = -Math.cos(p.t); return Math.abs(v) < 0.15 ? 'star moving across our view: no shift' : `star moving ${v > 0 ? 'away from' : 'towards'} us at ${fix(12.5 * Math.abs(v), 1)} m/s: lines shifted ${v > 0 ? '{coral:redder}' : '{blue:bluer}'}`; },
               },
-              after: r`We can't see the planet, but the star's lines slide back and forth once per orbit. The size of the swing gives the star's speed (for the Sun pulled by Jupiter, about 12.5 m/s, a brisk cycling pace), and its period is the planet's year. The shifts are tiny, about 4 parts in 100 million of the wavelength, which is why it took until 1995 to find the first planet around a Sun-like star this way.`,
+              after: r`We can't see the planet, but the star's lines slide back and forth once per orbit. The size of the swing gives the star's speed (for the Sun pulled by Jupiter, about 12.5 m/s, a racing cyclist's speed), and its period is the planet's year. The shifts are tiny, about 4 parts in 100 million of the wavelength, which is why it took until 1995 to find the first planet around a Sun-like star this way.`,
             },
             {
               type: 'numeric',

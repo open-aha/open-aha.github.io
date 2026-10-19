@@ -459,7 +459,7 @@ Operators watch the frequency constantly and adjust generation to hold it steady
                     // the coil itself, as a block on its axis
                     const cx = 1.85 * Math.cos(ax), cy = 1.85 * Math.sin(ax);
                     els.push(s('circle', { cx: plot.X(cx), cy: plot.Y(cy), r: 9, class: `fl-${col}`, opacity: 0.8 }));
-                  els.push(s('text', { x: plot.X(cx) + 13, y: plot.Y(cy) - 8, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text: 'ABC'[Math.round(ph / ((2 * Math.PI) / 3))] }));
+                    els.push(s('text', { x: plot.X(cx) + 13, y: plot.Y(cy) - 8, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${col})`, text: 'ABC'[Math.round(ph / ((2 * Math.PI) / 3))] }));
                     els.push(s('line', { x1: plot.X(-1.7 * Math.cos(ax)), y1: plot.Y(-1.7 * Math.sin(ax)), x2: plot.X(cx), y2: plot.Y(cy), stroke: `var(--${col})`, 'stroke-width': 1, opacity: 0.35 }));
                     const b = Math.cos(w - ph);
                     sx += b * Math.cos(ax); sy += b * Math.sin(ax);
@@ -471,7 +471,7 @@ Operators watch the frequency constantly and adjust generation to hold it steady
                 },
                 readout: (p) => { const w = p.t; let sx = 0, sy = 0; [[Math.PI / 2, 0], [Math.PI / 2 + (2 * Math.PI) / 3, (2 * Math.PI) / 3], [Math.PI / 2 + (4 * Math.PI) / 3, (4 * Math.PI) / 3]].forEach(([ax, ph]) => { const b = Math.cos(w - ph); sx += b * Math.cos(ax); sy += b * Math.sin(ax); }); const deg = ((Math.atan2(sy, sx) * 180) / Math.PI + 360) % 360; return `{coral:A} ${fix(Math.cos(w), 2)} · {teal:B} ${fix(Math.cos(w - (2 * Math.PI) / 3), 2)} · {violet:C} ${fix(Math.cos(w - (4 * Math.PI) / 3), 2)} · sum: length ${fix(Math.hypot(sx, sy), 2)}, pointing at ${fix(deg, 0)}°`; },
               },
-              after: r`None of the three fields turns: each just swings back and forth along its own line. Yet their sum keeps a constant length, $\frac32$ of one coil's peak, and sweeps steadily round the circle, once per cycle of the mains. Put a magnet (or a metal cage, in which the field induces currents) in the middle and it gets dragged round. That is the **induction motor**, Nikola Tesla's design from 1888, which still drives most of the world's machinery with no brushes or switches at all.`,
+              after: r`None of the three fields turns: each just swings back and forth along its own line. Yet their sum keeps a constant length, $\frac32$ of one coil's peak, and sweeps steadily round the circle, once per cycle of the mains. Put a magnet in the middle and it gets dragged round. A plain metal cage works too, because the turning field induces currents in it: that is the **induction motor**, Nikola Tesla's design from 1888, which still drives most of the world's machinery with no brushes or switches at all.`,
             },
           ],
           recap: [

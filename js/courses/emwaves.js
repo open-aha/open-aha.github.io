@@ -30,7 +30,7 @@ const fmtFreq = (f) => {
 const arrayGain = (thDeg, phiDeg, N = 8) => { const psi = Math.PI * Math.sin((thDeg * Math.PI) / 180) + (phiDeg * Math.PI) / 180; let re = 0, im = 0; for (let n = 0; n < N; n++) { re += Math.cos(n * psi); im += Math.sin(n * psi); } return Math.hypot(re, im) / N; };
 const beamDir = (phiDeg) => { let best = 0, bg = -1; for (let t = -90; t <= 90; t += 0.25) { const g = arrayGain(t, phiDeg); if (g > bg) { bg = g; best = t; } } return best; };
 
-// phase difference between the two components: held at 0°, 45°, 90°, 135°, 180°, sliding between
+// phase difference between the two components: held at 0°, 45°, 90°, … 315°, sliding between
 const polPhi = (t) => { const k = Math.floor(t / 5), u = Math.min(1, Math.max(0, ((t % 5) - 3.6) / 1.4)); return (Math.PI / 4) * (k + u * u * (3 - 2 * u)); };
 
 export default {

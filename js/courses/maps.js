@@ -453,7 +453,6 @@ But the shortest route, the great circle, **starts off heading north of west** a
                   };
                   for (let lo = 0; lo < 360; lo += 30) els.push(curve(Array.from({ length: 61 }, (_, i) => [(-90 + 3 * i) * D, lo * D]), { stroke: 'var(--blue)', 'stroke-width': 0.8, opacity: 0.45 }));
                   for (let la = -60; la <= 60; la += 30) els.push(curve(Array.from({ length: 121 }, (_, i) => [la * D, 3 * i * D]), { stroke: 'var(--blue)', 'stroke-width': la ? 0.8 : 1.6, opacity: la ? 0.45 : 0.8 }));
-                  // the rhumb line at 45°: longitude = (Mercator height of the latitude)
                   // at bearing 075°: longitude = tan 75° × (Mercator height of the latitude), latitude = distance × cos 75°
                   const phiNow = Math.min(89.9, 8 * p.t) * D, track = [];
                   for (let i = 0; i <= 900; i++) { const la = (phiNow * i) / 900; track.push([la, tb * Math.log(Math.tan(Math.PI / 4 + la / 2))]); }

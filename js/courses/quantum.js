@@ -14,6 +14,11 @@ const atomE = (r, m = 1) => 0.0381 / (m * r * r) - 1.44 / r;
 const sloshP = (x, ph) => { const a = Math.sin(Math.PI * x), b = Math.sin(2 * Math.PI * x); return a * a + b * b + 2 * a * b * Math.cos(ph); };
 const sloshLeft = (ph) => { let s = 0; for (let i = 0; i < 200; i++) s += sloshP((i + 0.5) / 400, ph) / 400; return s; };
 
+// 41 waves with wavenumbers 10 ± 3 (steps of 0.15), weighted by a bell curve of width σ
+const PACKET_K = Array.from({ length: 41 }, (_, j) => 10 + 0.15 * (j - 20));
+const packetSigma = (t) => 0.12 * Math.exp(Math.log(20) * (1 - Math.cos((Math.PI * t) / 7)) / 2); // 0.12 up to 2.4 and back, every 14 s
+const packetW = (sg) => PACKET_K.map((k) => Math.exp(-((k - 10) ** 2) / (2 * sg * sg)));
+
 export default {
   id: 'quantum',
   subject: 'physics',
@@ -320,6 +325,35 @@ $$\Delta x \, \Delta p \ge \frac{\hbar}{2}, \qquad \hbar = \frac{h}{2\pi}$$
 This isn't a flaw in our instruments. It's built into nature, because particles are waves. The more precisely you pin down where something is, the less precisely its momentum can be defined.
 
 It's also why atoms don't collapse: squeezing an electron into the nucleus would give it a huge momentum, and so a huge energy.`,
+            },
+            { /*anim2:quantum*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Building a wave packet',
+              body: r`A pure wave with one exact wavelength (one exact momentum) stretches on forever: it's nowhere in particular. To make a **lump**, add waves of slightly different wavelengths. The bottom bars show how much of each wavelength goes in; the top shows their sum.`,
+              widget: {
+                kind: 'graph', xmin: -10, xmax: 10, ymin: -3.4, ymax: 1.25, grid: false, axes: false, height: 340, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 14, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const sg = packetSigma(p.t), w = packetW(sg), tot = w.reduce((a, b) => a + b, 0), pts = [], env = [], els = [];
+                  for (let i = 0; i <= 500; i++) {
+                    const x = -10 + (20 * i) / 500;
+                    let y = 0;
+                    PACKET_K.forEach((k, j) => { y += w[j] * Math.cos(k * x); });
+                    pts.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y / tot).toFixed(1)}`);
+                  }
+                  els.push(s('line', { x1: plot.X(-10), x2: plot.X(10), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1 }));
+                  els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 2 }));
+                  // the mixture of wavenumbers, drawn along the bottom (k from 7 to 13 across the width)
+                  const base = -3.1, top = -1.7;
+                  els.push(s('line', { x1: plot.X(-9.5), x2: plot.X(9.5), y1: plot.Y(base), y2: plot.Y(base), stroke: 'var(--axis)', 'stroke-width': 1 }));
+                  PACKET_K.forEach((k, j) => { const x = -9.5 + (19 * j) / 40, h = base + (top - base) * w[j]; els.push(s('line', { x1: plot.X(x), x2: plot.X(x), y1: plot.Y(base), y2: plot.Y(h), stroke: 'var(--coral)', 'stroke-width': 3 })); });
+                  els.push(s('text', { x: plot.X(0), y: plot.Y(base) + 16, 'text-anchor': 'middle', class: 'tick', text: 'wavelengths mixed in (momentum)' }));
+                  return els;
+                },
+                readout: (p) => { const sg = packetSigma(p.t); return `spread of wavelengths (momentum) ${fix(sg, 2)} · width of the lump about ${fix(1 / sg, 1)}`; },
+              },
+              after: r`A narrow spread of wavelengths gives a long, spread-out wave; a wide spread gives a short, sharp lump. The waves agree only near the middle and cancel everywhere else, and the more different they are, the sooner they fall out of step. Width in position times width in momentum stays about the same: you can't make both small. That's Heisenberg's principle, as a fact about waves.`,
             },
             {
               type: 'mcq',

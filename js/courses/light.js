@@ -143,6 +143,11 @@ function mirrorDiagram() {
 // Malus: fraction of polarised light through a polariser at angle th
 const malus = (th) => Math.cos((th * Math.PI) / 180) ** 2;
 
+// light from A = (0, 3) in air to B = (6, −3) in glass (n = 1.5), crossing the surface y = 0 at x: time ∝ AP + 1.5·PB
+const fermatT = (x) => Math.hypot(x, 3) + 1.5 * Math.hypot(6 - x, 3);
+const FERMAT_BEST = (() => { let best = 0; for (let x = 0; x <= 6; x += 0.0005) if (fermatT(x) < fermatT(best)) best = x; return best; })();
+const fermatX = (t) => { const u = (1 - Math.cos((Math.PI * t) / 6)) / 2; return 0.2 + 5.6 * u; };
+
 export default {
   id: 'light',
   subject: 'physics',
@@ -308,6 +313,38 @@ Why does slowing down cause bending? Picture a column of marching soldiers walki
                 readout: () => r`crests are $1.5\times$ closer together in the glass · the light turns from $40°$ to $25.4°$ from the normal`,
               },
               after: r`The end of each crest that reaches the glass first slows down first, while the rest is still racing along in the air, so the whole crest swivels, like a line of marchers wheeling as one end steps into mud. The crests keep their timing, so in the slower glass they bunch closer together. Matching the crests along the surface gives exactly Snell's law: $\frac{\sin\theta_1}{v_1} = \frac{\sin\theta_2}{v_2}$.`,
+            },
+            { /*anim2:light*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The quickest path',
+              body: r`Another way to see it, found by Pierre de Fermat in 1662. Light goes from $A$ in air to $B$ in glass, where it travels 1.5 times more slowly. Try different crossing points on the surface; on the right is the {violet:travel time} for each.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.6, xmax: 14.2, ymin: -3.6, ymax: 3.6, grid: false, axes: false, maxWidth: 660,
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const x = fermatX(p.t), els = [];
+                  const T = (x0, y0, text, col = 'ink-2', anchor = 'middle') => s('text', { x: plot.X(x0), y: plot.Y(y0), 'text-anchor': anchor, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--${col})`, text });
+                  els.push(s('rect', { x: plot.X(-0.6), y: plot.Y(0), width: plot.X(6.6) - plot.X(-0.6), height: plot.Y(-3.6) - plot.Y(0), class: 'fl-blue-soft' }));
+                  els.push(s('line', { x1: plot.X(-0.6), x2: plot.X(6.6), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                  // the quickest path, faint, and the path being tried
+                  els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(3)}L${plot.X(FERMAT_BEST)} ${plot.Y(0)}L${plot.X(6)} ${plot.Y(-3)}`, fill: 'none', stroke: 'var(--teal)', 'stroke-width': 2, 'stroke-dasharray': '5 4' }));
+                  els.push(s('path', { d: `M${plot.X(0)} ${plot.Y(3)}L${plot.X(x)} ${plot.Y(0)}L${plot.X(6)} ${plot.Y(-3)}`, fill: 'none', stroke: 'var(--amber)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  for (const [px, py, lab] of [[0, 3, 'A'], [6, -3, 'B']]) { els.push(s('circle', { cx: plot.X(px), cy: plot.Y(py), r: 5.5, class: 'fl-ink' })); els.push(T(px + 0.35, py + 0.2, lab, 'ink', 'start')); }
+                  els.push(T(5.6, 2.6, 'air'), T(0.9, -2.6, 'glass', 'blue'));
+                  // travel time against crossing point: x from 0 to 6 maps to 7.6 to 13.8; time from 10 to 13.5 maps to −3 to 3
+                  const GX = (q) => plot.X(7.6 + q * (6.2 / 6)), GY = (tm) => plot.Y(-3 + ((tm - 10) * 6) / 3.5), curve = [];
+                  for (let i = 0; i <= 120; i++) { const q = (6 * i) / 120; curve.push(`${i ? 'L' : 'M'}${GX(q).toFixed(1)} ${GY(fermatT(q)).toFixed(1)}`); }
+                  els.push(s('line', { x1: GX(0), x2: GX(6), y1: GY(10), y2: GY(10), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('path', { d: curve.join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 2.5 }));
+                  els.push(s('line', { x1: GX(FERMAT_BEST), x2: GX(FERMAT_BEST), y1: GY(10), y2: GY(fermatT(FERMAT_BEST)), stroke: 'var(--teal)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  els.push(s('circle', { cx: GX(x), cy: GY(fermatT(x)), r: 6, class: 'fl-amber' }));
+                  els.push(T(10.7, -3.45, 'crossing point'), T(7.6, 3.25, 'travel time', 'violet', 'start'));
+                  return els;
+                },
+                readout: (p) => { const x = fermatX(p.t), s1 = x / Math.hypot(x, 3), s2 = (6 - x) / Math.hypot(6 - x, 3); return `crossing at $x = ${fix(x, 2)}$ · time ${fix(fermatT(x), 3)} (quickest ${fix(fermatT(FERMAT_BEST), 3)}) · $\\sin\\theta_1 / \\sin\\theta_2 = ${fix(s1 / s2, 2)}$`; },
+              },
+              after: r`The straight line from $A$ to $B$ isn't quickest: it spends too long in the slow glass. Light takes the path of **least time**, bending at the surface so it travels a bit further in fast air and less in slow glass. At the quickest crossing, $\frac{\sin\theta_1}{\sin\theta_2}$ comes out at exactly 1.5, the ratio of the speeds: Snell's law again. It's also how a lifeguard should run to a swimmer: further along the beach, then a shorter swim.`,
             },
             {
               type: 'numeric',

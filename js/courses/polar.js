@@ -315,7 +315,7 @@ In the 1850s Jules Lissajous reflected light off two vibrating tuning forks set 
                 extra: ({ plot, s }) => [s('rect', { x: plot.X(-1), y: plot.Y(1), width: plot.X(1) - plot.X(-1), height: plot.Y(-1) - plot.Y(1), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 })],
                 readout: (p) => `phase shift $\\delta = ${fix((p.t * 180) / Math.PI, 0)}°$`,
               },
-              after: r`The curve seems to rotate like a solid object turning in 3D. It comes back to exactly the same shape each time $\delta$ grows by $360°$, and $\delta$ grows by $360°$ every second for each hertz by which the signal is off. So if the pattern takes 2 seconds to come back round, the signal is off by just 0.5 Hz. Technicians tuned oscillators exactly this way: adjust until the figure stops turning.`,
+              after: r`The curve seems to rotate like a solid object turning in 3D. It comes back to exactly the same shape each time $\delta$ grows by $180°$, and $\delta$ grows by $360°$ every second for each hertz by which the signal is off. So if the pattern takes 2 seconds to come back round, the signal is off by just 0.25 Hz. Technicians tuned oscillators exactly this way: adjust until the figure stops turning.`,
             },
             {
               type: 'mcq',

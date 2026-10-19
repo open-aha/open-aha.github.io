@@ -63,6 +63,18 @@ const LSQ_FIT = (() => { const n = LSQ.length, mx = LSQ.reduce((s, q) => s + q[0
 // A = [[2,1],[1,2]] has eigenvectors (1,1)/√2 (λ = 3) and (1,−1)/√2 (λ = 1), so A^s v = 3^s (v·e1) e1 + (v·e2) e2
 const eigenPow = (t) => Math.min(5, Math.max(0, (t - 0.8) / 1.2));
 
+// A = R(60°) · diag(3, 1.5) · R(−30°): rotate, stretch along the axes, rotate again
+const svdStage = (t) => {
+  const e = (lo) => { const q = Math.min(1, Math.max(0, (t - lo) / 1.6)); return q * q * (3 - 2 * q); };
+  return { a: e(1), b: e(3.6), c: e(6.2) };
+};
+const svdMap = ({ a, b, c }, [x, y]) => {
+  const r1 = (-Math.PI / 6) * a, x1 = Math.cos(r1) * x - Math.sin(r1) * y, y1 = Math.sin(r1) * x + Math.cos(r1) * y;
+  const x2 = x1 * (1 + 2 * b), y2 = y1 * (1 + 0.5 * b);
+  const r3 = (Math.PI / 3) * c;
+  return [Math.cos(r3) * x2 - Math.sin(r3) * y2, Math.sin(r3) * x2 + Math.cos(r3) * y2];
+};
+
 export default {
   id: 'linalg',
   subject: 'math',
@@ -686,6 +698,32 @@ The **singular values** $\sigma_i$ measure how much each layer contributes, and 
                 { t: 'Only stretch along the eigenvectors', why: 'That works only for special (symmetric) matrices. The SVD works for every matrix.' },
               ],
               explain: r`$A = U\Sigma V^{\mathsf T}$: rotate by $V^{\mathsf T}$, stretch by $\Sigma$ (the singular values), rotate by $U$. So every matrix turns the unit circle into an ellipse whose semi-axes are the singular values. Unlike eigenvectors, the SVD always exists, even for non-square matrices.`,
+            },
+            { /*anim2:linalg*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Rotate, stretch, rotate',
+              body: r`The matrix $A \approx \begin{pmatrix} 1.95 & -0.38 \\ 1.88 & 1.95 \end{pmatrix}$ acts on the {blue:unit circle} and a grid. Instead of applying it in one go, we apply its SVD one piece at a time. The {coral:coral} and {violet:violet} arrows start along $A$'s two special input directions, $\mathbf v_1$ and $\mathbf v_2$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.4, xmax: 3.4, ymin: -3.4, ymax: 3.4, grid: false, axes: false, maxWidth: 400,
+                animate: { param: 't', speed: 1, max: 10.5, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const st = svdStage(p.t), els = [], M = (q) => svdMap(st, q);
+                  const P = (pts) => pts.map((q, i) => { const [x, y] = M(q); return `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`; }).join('');
+                  for (let k = -2; k <= 2; k++) {
+                    els.push(s('path', { d: P([[k / 2, -1], [k / 2, 1]]), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.2 }));
+                    els.push(s('path', { d: P([[-1, k / 2], [1, k / 2]]), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.2 }));
+                  }
+                  const circ = [];
+                  for (let i = 0; i <= 90; i++) { const a = (2 * Math.PI * i) / 90; circ.push([Math.cos(a), Math.sin(a)]); }
+                  els.push(s('path', { d: P(circ) + 'Z', class: 'fl-blue', opacity: 0.18, stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  const arrow = (q, col) => { const [x, y] = M(q), X1 = plot.X(x), Y1 = plot.Y(y), an = Math.atan2(Y1 - plot.Y(0), X1 - plot.X(0)); return s('path', { d: `M${plot.X(0)} ${plot.Y(0)}L${X1} ${Y1}M${X1 - 10 * Math.cos(an - 0.45)} ${Y1 - 10 * Math.sin(an - 0.45)}L${X1} ${Y1}L${X1 - 10 * Math.cos(an + 0.45)} ${Y1 - 10 * Math.sin(an + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); };
+                  els.push(arrow([Math.cos(Math.PI / 6), Math.sin(Math.PI / 6)], 'coral'), arrow([-Math.sin(Math.PI / 6), Math.cos(Math.PI / 6)], 'violet'));
+                  return els;
+                },
+                readout: (p) => { const { a, b, c } = svdStage(p.t); return c > 0 ? `3. rotate by 60° ($U$): the ellipse ends up with semi-axes ${fix(1 + 2 * b, 2)} and ${fix(1 + 0.5 * b, 2)}` : b > 0 ? `2. stretch along the axes by 3 and 1.5 ($\\Sigma$): ×${fix(1 + 2 * b, 2)} and ×${fix(1 + 0.5 * b, 2)}` : a > 0 ? `1. rotate by −30° ($V^{\\mathsf T}$): $\\mathbf v_1$ and $\\mathbf v_2$ swing onto the axes` : 'the unit circle and its grid'; },
+              },
+              after: r`The first rotation, $V^{\mathsf T}$, lines the special directions up with the axes; $\Sigma$ stretches along the axes by the singular values 3 and 1.5; and $U$ turns the result into place. So every matrix turns circles into ellipses, whose semi-axes are the singular values, and its strongest stretching happens along $\mathbf v_1$. Rotations change nothing about lengths or areas: all of the distortion lives in $\Sigma$.`,
             },
             {
               type: 'numeric',

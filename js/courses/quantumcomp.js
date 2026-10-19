@@ -378,17 +378,17 @@ Measure either qubit and you get 0 or 1 with equal probability, but the two resu
                 animate: { param: 't', speed: 1, max: 16, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const { amps, mean } = groverAt(p.t), els = [];
-                              amps.forEach((a, i) => {
+                  amps.forEach((a, i) => {
                     const y0 = plot.Y(Math.max(0, a)), y1 = plot.Y(Math.min(0, a));
                     els.push(s('rect', { x: plot.X(i - 0.35 + 0.2), y: y0, width: plot.X(0.7) - plot.X(0), height: Math.max(0.5, y1 - y0), class: i === 11 ? 'fl-coral' : 'fl-blue', opacity: 0.8 }));
                   });
                   els.push(s('line', { x1: plot.X(-0.6), x2: plot.X(15.8), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--axis)', 'stroke-width': 1.3 }));
-      if (mean != null) els.push(s('line', { x1: plot.X(-0.6), x2: plot.X(15.8), y1: plot.Y(mean), y2: plot.Y(mean), stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+                  if (mean != null) els.push(s('line', { x1: plot.X(-0.6), x2: plot.X(15.8), y1: plot.Y(mean), y2: plot.Y(mean), stroke: 'var(--violet)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
                   return els;
                 },
                 readout: (p) => { const { amps, round, stage } = groverAt(p.t); return `${stage === 'done' ? 'after 3 rounds' : `round ${round + 1}, ${stage === 'flip' ? 'flip the marked sign' : 'reflect about the average'}`} · chance of measuring the marked answer: ${fix(100 * amps[11] ** 2, 1)}%`; },
               },
-              after: r`Flipping makes the marked bar stick out below the average; reflecting about the average then throws it far above, while the others shrink a little. Each round is one turn of the same fixed angle in the rotation picture from before, so after about $\frac{\pi}{4}\sqrt{N}$ rounds (here 3, for $N = 16$) it's almost certain to be measured: 96%. A classical search would need 8 guesses on average. One round too many, though, and the amplitude starts falling again.`,
+              after: r`Flipping makes the marked bar stick out below the average; reflecting about the average then throws it far above, while the others shrink a little. Each round is one turn of the same fixed angle in the rotation picture from before, so after about $\frac{\pi}{4}\sqrt{N}$ rounds (here 3, for $N = 16$) it's almost certain to be measured: 96%. A classical search would need about 8 guesses on average. One round too many, though, and the amplitude starts falling again.`,
             },
             {
               type: 'numeric',

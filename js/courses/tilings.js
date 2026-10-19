@@ -315,7 +315,7 @@ Every repeating wallpaper pattern has one of exactly **17** combinations of thes
                 },
                 readout: (p) => ['**Translation**: slide one step along', '**Reflection**: flip in the dashed mirror line', '**Rotation**: a half-turn about the dot', '**Glide reflection**: flip in the dashed line *and* slide half a step'][Math.floor(p.t / 3) % 4],
               },
-              after: r`Each pattern lands exactly on itself after its own kind of move, and only after that kind: the glide pattern, like a trail of footprints, has no plain mirror line at all, yet flipping **and** sliding works. Patterns along a strip can only use these four moves (with half-turns as the only rotations), which is why there are just seven kinds of frieze.`,
+              after: r`Each pattern lands exactly on itself after its own kind of move (and, like every border pattern, after a plain slide too). The glide pattern, like a trail of footprints, has no plain mirror line at all, yet flipping **and** sliding works. Patterns along a strip can only use these four moves (with half-turns as the only rotations), which is why there are just seven kinds of frieze.`,
             },
             {
               type: 'mcq',

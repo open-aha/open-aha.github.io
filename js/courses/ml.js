@@ -154,7 +154,7 @@ function cosine(a, b) { let d = 0, na = 0, nb = 0; for (let i = 0; i < 4; i++) {
 function centred(v) { const m = v.slice(0, 4).reduce((a, b) => a + b, 0) / 4; return v.slice(0, 4).map((x) => x - m); }
 const corrSim = (a, b) => { const x = centred(a), y = centred(b), nx = Math.hypot(...x), ny = Math.hypot(...y); return nx && ny ? x.reduce((s, v, i) => s + v * y[i], 0) / (nx * ny) : 0; };
 
-// standard normal: density and cumulative (Abramowitz and Stegun 7.1.26, error below 1e-7)
+// standard normal: density and cumulative (Abramowitz and Stegun 7.1.26, error below 1.5e-7)
 const rocPdf = (z) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
 const rocCdf = (z) => { const x = Math.abs(z) / Math.SQRT2, t = 1 / (1 + 0.3275911 * x), e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return z >= 0 ? (1 + e) / 2 : (1 - e) / 2; };
 const rocTau = (t) => 4.6 - Math.min(7.2, Math.max(0, t - 0.5));

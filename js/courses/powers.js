@@ -10,6 +10,10 @@ const SCALE = [
 ];
 const nearest = (n) => SCALE.reduce((a, b) => (Math.abs(b[0] - n) < Math.abs(a[0] - n) ? b : a));
 
+// Babylonian (Heron's) method for √50: replace a rectangle a × 50/a by one whose side is the average of a and 50/a
+const HERON = (() => { const out = [5]; for (let i = 0; i < 4; i++) { const a = out[out.length - 1]; out.push((a + 50 / a) / 2); } return out; })();
+const heronAt = (t) => { const k = Math.min(3, Math.floor(t / 3.2)), u = Math.min(1, Math.max(0, ((t - 3.2 * k) - 1.4) / 1.4)), e = u * u * (3 - 2 * u); return { k, a: HERON[k] + (HERON[k + 1] - HERON[k]) * e }; };
+
 export default {
   id: 'powers',
   subject: 'math',
@@ -181,7 +185,7 @@ The king laughed and agreed. Square $n$ gets $2^{n-1}$ grains. The first row is 
               type: 'explain',
               kicker: 'Explore',
               title: 'More than all the rest',
-              body: r`Here are the squares drawn to scale, one after another. On the right, the {amber:stack} piles up all the squares so far. Watch each {coral:new square} arrive and compare it with the stack. Watch each new square arrive.`,
+              body: r`Here are the squares drawn to scale, one after another. On the right, the {amber:stack} piles up all the squares so far. Watch each {coral:new square} arrive and compare it with the stack.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 23.6, ymin: -0.12, ymax: 1.12, grid: false, axes: false, height: 300,
                 animate: { param: 't', speed: 0.6, max: 20, autoplay: true },
@@ -384,6 +388,26 @@ So we estimate. Since $7^2 = 49$ and $8^2 = 64$, $\sqrt{50}$ lies between 7 and 
               answer: 7 + 1 / 14,
               tol: 0.001,
               explain: r`$7 + \frac{1}{14} \approx 7.071$, and the true value is $7.0711$. Nudging the root up by a small $\epsilon$ raises the square by about $2 \times 7 \times \epsilon$: $(7 + \epsilon)^2 \approx 49 + 14\epsilon$, so $\epsilon \approx \frac{1}{14}$.`,
+            },
+            { /*anim2:powers*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Squaring the rectangle',
+              body: r`A method from ancient Babylon. Start with any rectangle of area 50, say $5 \times 10$. It isn't a square: one side is too short, the other too long. So make a new rectangle whose width is the **average** of the two sides, and whose height keeps the area at 50. Repeat.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.6, xmax: 11, ymin: -0.8, ymax: 10.6, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 1, max: 13.5, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const { a } = heronAt(p.t), h = 50 / a, r = Math.sqrt(50), els = [];
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(r), width: plot.X(r) - plot.X(0), height: plot.Y(0) - plot.Y(r), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }));
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(h), width: plot.X(a) - plot.X(0), height: plot.Y(0) - plot.Y(h), class: 'fl-blue', opacity: 0.35, stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  els.push(s('text', { x: plot.X(a / 2), y: plot.Y(0) + 17, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--blue)', text: fix(a, 4) }));
+                  els.push(s('text', { x: plot.X(a) + 6, y: plot.Y(h / 2) + 4, class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--blue)', text: fix(h, 4) }));
+                  return els;
+                },
+                readout: (p) => { const { k, a } = heronAt(p.t); return `step ${k + 1}: ${fix(a, 5)} × ${fix(50 / a, 5)} · aiming for $\\sqrt{50} = ${fix(Math.sqrt(50), 5)}\\ldots$`; },
+              },
+              after: r`Each new side, $\frac12\left(a + \frac{50}{a}\right)$, lies between the old width and height, and the rectangle snaps towards a square astonishingly fast: $5$, then $7.5$, $7.0833$, $7.07108$, and after four steps it's right to 9 decimal places. (Start from $7$ instead, and the very first step gives $\frac{7 + 50/7}{2} = 7 + \frac{1}{14}$: the estimate from the last question.) The number of correct digits roughly **doubles** every step, which is why calculators still use this idea.`,
             },
             {
               type: 'numeric',

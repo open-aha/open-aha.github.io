@@ -17,6 +17,12 @@ const bldgPeriod = (n) => 0.1 * n;
 // response of a lightly damped building (damping 5%) to ground shaking with period 2 s
 const bldgResp = (n) => { const r = 2 / bldgPeriod(n); return 1 / Math.sqrt((1 - r * r) ** 2 + (0.1 * r) ** 2); };
 
+// Rayleigh wave in a Poisson solid (wavelength 6, moving right). At depth z, horizontal ∝ e^(−0.85kz) − 0.58e^(−0.39kz) and
+// vertical ∝ −0.85e^(−0.85kz) + 1.47e^(−0.39kz), scaled so the surface's vertical swing is 1.
+const RAY_K = (2 * Math.PI) / 6;
+const rayAmp = (z) => { const a = Math.exp(-0.85 * RAY_K * z), b = Math.exp(-0.39 * RAY_K * z); return [(a - 0.58 * b) / 0.62, (-0.85 * a + 1.47 * b) / 0.62]; };
+const rayPos = (x0, z, t) => { const ph = RAY_K * x0 - 2 * Math.PI * 0.4 * t, [h, v] = rayAmp(z), A = 0.6; return [x0 + A * h * Math.sin(ph), -z + A * v * Math.cos(ph)]; };
+
 export default {
   id: 'earthquakes',
   subject: 'physics',
@@ -110,6 +116,39 @@ When they reach the surface, they also set off slower **surface waves**, which r
               tol: 0.06,
               wrong: [{ v: 140 / 6, tol: 0.1, why: 'That’s the P-wave arrival. Subtract it from the S-wave arrival.' }],
               explain: r`$\frac{140}{3.5} - \frac{140}{6} = 40 - 23.3 \approx 16.7$ s. Count the seconds between the jolt and the shaking, multiply by about 8, and you have the distance in kilometres.`,
+            },
+            { /*anim2:earthquakes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The rolling ground',
+              body: r`After the P- and S-waves, the biggest shaking usually comes from **surface waves**. In one kind, the **Rayleigh wave** (moving to the right here), each bit of ground goes round in an ellipse. Follow the {coral:coral dot} near the surface and the {violet:violet dot} deeper down.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.6, xmax: 12.6, ymin: -4.8, ymax: 1.0, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 10, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const t = p.t, els = [];
+                  // the ground's surface
+                  const top = [];
+                  for (let i = 0; i <= 60; i++) { const [x, y] = rayPos(-0.5 + (13 * i) / 60, 0, t); top.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`); }
+                  els.push(s('path', { d: top.join(''), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  // the ellipse each tracked bit follows
+                  for (const [x0, z, col] of [[6, 0, 'coral'], [6, 2.4, 'violet']]) {
+                    const pts = [];
+                    for (let i = 0; i <= 40; i++) { const [x, y] = rayPos(x0, z, (2.5 * i) / 40); pts.push(`${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`); }
+                    els.push(s('path', { d: pts.join('') + 'Z', fill: 'none', stroke: `var(--${col})`, 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }));
+                    // which way round: an arrowhead at the top of the loop, pointing the way the ground moves there
+                    const [tx, ty] = rayPos(x0, z, 0), dir = rayAmp(z)[0] > 0 ? -1 : 1, X = plot.X(tx), Y = plot.Y(ty) - 1;
+                    els.push(s('path', { d: `M${X - 5 * dir} ${Y - 5}L${X + 3 * dir} ${Y}L${X - 5 * dir} ${Y + 5}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                  }
+                  const dots = [];
+                  for (let x0 = 0; x0 <= 12.01; x0 += 0.5) for (let z = 0; z <= 4.01; z += 0.5) { if (x0 === 6 && (z === 0 || Math.abs(z - 2.5) < 0.01)) continue; const [x, y] = rayPos(x0, z, t); dots.push(`M${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}h0`); }
+                  els.push(s('path', { d: dots.join(''), stroke: 'var(--ink-3)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  for (const [x0, z, col] of [[6, 0, 'coral'], [6, 2.4, 'violet']]) { const [x, y] = rayPos(x0, z, t); els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 6, class: `fl-${col}` })); }
+                  return els;
+                },
+                readout: (p) => { const ph = ((RAY_K * 6 - 2 * Math.PI * 0.4 * p.t) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI), top = Math.cos(ph) > 0.7; return top ? 'coral dot at the top of its loop: moving **backwards**, against the wave' : 'the wave moves right; near the surface the ground circles backwards, deeper down forwards'; },
+              },
+              after: r`Near the surface, the ground goes round **backwards**: at the top of each loop it moves against the wave's direction, the opposite of a cork on a water wave. Below about a fifth of a wavelength the sideways motion reverses, and the deeper loops turn the other way, while all the motion fades with depth. Rayleigh waves travel a little slower than S-waves (about 92% of their speed), so they arrive last, but they shake the surface hardest, which is where the buildings are.`,
             },
           ],
           recap: [

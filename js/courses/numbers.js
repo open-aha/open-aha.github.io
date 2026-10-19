@@ -46,6 +46,20 @@ const powMod = (a, e, m) => { let x = 1; for (let i = 0; i < e; i++) x = (x * a)
 const ISBN = [9, 7, 8, 0, 3, 0, 6, 4, 0, 6, 1, 5];
 const isbnSum = (d) => ISBN.reduce((t, x, i) => t + x * (i % 2 ? 3 : 1), 0) + d;
 
+// cut the biggest possible squares off a 1071 × 462 rectangle, again and again: [x, y, side, stage]
+const EUCLID_SQ = (() => {
+  const out = [];
+  let x = 0, y = 0, w = 1071, h = 462, stage = 0;
+  while (w > 0 && h > 0) {
+    if (w >= h) { while (w >= h) { out.push([x, y, h, stage]); x += h; w -= h; } }
+    else { while (h >= w) { out.push([x, y, w, stage]); y += w; h -= w; } }
+    stage++;
+  }
+  return out;
+})();
+const EUCLID_LINES = ['$1071 = 2 \\times 462 + 147$', '$462 = 3 \\times 147 + 21$', '$147 = 7 \\times 21$, nothing left over'];
+const euclidN = (t) => Math.min(EUCLID_SQ.length, Math.floor(Math.max(0, t - 0.6) / 0.7));
+
 export default {
   id: 'numbers',
   subject: 'math',
@@ -338,6 +352,34 @@ Geometrically: keep cutting the largest possible squares off a rectangle. The la
               answer: 21,
               wrong: [{ v: 7, why: r`$1071 \bmod 462 = 147$, $462 \bmod 147 = 21$, $147 \bmod 21 = 0$. The last nonzero remainder is the answer.` }, { v: 3, why: 'Keep going until the remainder is 0. The last nonzero remainder is the gcd.' }],
               explain: r`$1071 = 2 \cdot 462 + 147$. Then $462 = 3 \cdot 147 + 21$. Then $147 = 7 \cdot 21 + 0$. So $\gcd = 21$.`,
+            },
+            { /*anim2:numbers*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Euclid with scissors',
+              body: r`Here is Euclid's algorithm as a picture. Take a 1071 × 462 rectangle and keep cutting off the **biggest square** that fits. Each stage of cutting is one line of the algorithm.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -15, xmax: 1086, ymin: -20, ymax: 477, grid: false, axes: false, maxWidth: 640,
+                animate: { param: 't', speed: 1, max: 14, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = euclidN(p.t), cols = ['blue', 'coral', 'teal'], els = [];
+                  els.push(s('rect', { x: plot.X(0), y: plot.Y(462), width: plot.X(1071) - plot.X(0), height: plot.Y(0) - plot.Y(462), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 2 }));
+                  EUCLID_SQ.slice(0, n).forEach(([x, y, a, st]) => {
+                    els.push(s('rect', { x: plot.X(x), y: plot.Y(y + a), width: plot.X(a) - plot.X(0), height: plot.Y(0) - plot.Y(a), class: `fl-${cols[st]}`, opacity: 0.45, stroke: `var(--${cols[st]})`, 'stroke-width': 1.5 }));
+                    if (a > 100) els.push(s('text', { x: plot.X(x + a / 2), y: plot.Y(y + a / 2) + 5, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--ink)', text: String(a) }));
+                  });
+                  if (n === EUCLID_SQ.length && p.t > 12) {
+                    // the last square's side measures everything: a 21 grid fits the whole rectangle
+                    let d = '';
+                    for (let x = 21; x < 1071; x += 21) d += `M${plot.X(x).toFixed(1)} ${plot.Y(0).toFixed(1)}V${plot.Y(462).toFixed(1)}`;
+                    for (let y = 21; y < 462; y += 21) d += `M${plot.X(0).toFixed(1)} ${plot.Y(y).toFixed(1)}H${plot.X(1071).toFixed(1)}`;
+                    els.push(s('path', { d, stroke: 'var(--ink-3)', 'stroke-width': 0.6, opacity: 0.6 }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const n = euclidN(p.t); if (n === 0) return 'a 1071 × 462 rectangle'; const st = EUCLID_SQ[n - 1][3]; return n === EUCLID_SQ.length && p.t > 12 ? 'the 21 × 21 square tiles the whole rectangle: $\\gcd(1071, 462) = 21$' : EUCLID_LINES[st]; },
+              },
+              after: r`Cutting off a square of side $b$ from an $a \times b$ rectangle is subtracting $b$ from $a$; cutting off as many as fit is dividing and keeping the **remainder**. The process stops when the last squares fit exactly. That last square tiles the final strip, so it also tiles the strip before, and so on back up: it measures both 1071 and 462 exactly, and nothing larger can. That's why the last nonzero remainder is the greatest common divisor.`,
             },
             {
               type: 'numeric',

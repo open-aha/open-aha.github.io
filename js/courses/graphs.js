@@ -102,6 +102,27 @@ const KRUSKAL = (() => {
   return { P, steps };
 })();
 
+// a maze of squares ('#' is a wall); breadth-first search from S, one ring of neighbours at a time
+const BFS_MAZE = ['S..#.......#..', '.#.#.###.#.#..', '.#...#...#...#', '.####.#.####..', '......#....#..', '.##.###.##.#.#', '..#...#..#...G', '#...#...#..#..'];
+const bfsRun = (() => {
+  const H = BFS_MAZE.length, W = BFS_MAZE[0].length, dist = BFS_MAZE.map((r) => [...r].map(() => -1)), prev = {};
+  let goal = null, q = [];
+  BFS_MAZE.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === 'S') { dist[y][x] = 0; q.push([x, y]); } if (ch === 'G') goal = [x, y]; }));
+  while (q.length) {
+    const nq = [];
+    for (const [x, y] of q) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H || BFS_MAZE[ny][nx] === '#' || dist[ny][nx] >= 0) continue;
+      dist[ny][nx] = dist[y][x] + 1; prev[`${nx},${ny}`] = [x, y]; nq.push([nx, ny]);
+    }
+    q = nq;
+  }
+  const path = [goal];
+  while (prev[`${path[0][0]},${path[0][1]}`]) path.unshift(prev[`${path[0][0]},${path[0][1]}`]);
+  return { W, H, dist, goal, path, max: Math.max(...dist.flat()) };
+})();
+const bfsRing = (t) => Math.floor(Math.max(0, t - 0.6) / 0.45);
+
 export default {
   id: 'graphs',
   subject: 'math',
@@ -340,6 +361,33 @@ Map apps run (much refined) versions of this on graphs with millions of junction
               answer: 3,
               wrong: [{ v: 5, why: 'That’s the fastest route, but it uses many roads. Ignore the numbers and count roads.' }, { v: 2, why: 'No point is joined to both A and E.' }],
               explain: r`A → B → D → E or A → C → F → E both use 3 roads. Without weights, a simpler method works: label A's neighbours "1", their new neighbours "2", and so on, spreading out in rings (**breadth-first search**). Social networks use this to find "degrees of separation".`,
+            },
+            { /*anim2:graphs*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A wave through the maze',
+              body: r`Breadth-first search on a maze, where each step to a neighbouring square is one "road". Starting from {coral:S}, label every square 1 step away, then every unlabelled square next to those, and so on: the labels spread like a ripple. When the ripple reaches {coral:G}, follow the labels back down.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.2, xmax: 14.2, ymin: -0.2, ymax: 8.2, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 0.6 + 0.45 * 24 + 4, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const B = bfsRun, ring = bfsRing(p.t), gd = B.dist[B.goal[1]][B.goal[0]], w = plot.X(1) - plot.X(0), els = [];
+                  for (let y = 0; y < B.H; y++) for (let x = 0; x < B.W; x++) {
+                    const X = plot.X(x), Y = plot.Y(B.H - y), ch = BFS_MAZE[y][x], d = B.dist[y][x];
+                    if (ch === '#') { els.push(s('rect', { x: X, y: Y, width: w, height: w, class: 'fl-ink', opacity: 0.75 })); continue; }
+                    const reached = d >= 0 && d <= ring;
+                    els.push(s('rect', { x: X + 1, y: Y + 1, width: w - 2, height: w - 2, rx: 3, class: reached ? (d === ring ? 'fl-amber' : 'fl-teal') : 'fl-card', opacity: reached ? (d === ring ? 0.9 : 0.25 + 0.5 * (1 - d / B.max)) : 1, stroke: 'var(--line-2)' }));
+                    if (reached || ch !== '.') els.push(s('text', { x: X + w / 2, y: Y + w / 2 + 4, 'text-anchor': 'middle', style: `font-size:max(calc(11px * var(--fs, 1)), var(--fmin, 0px));font-weight:700;fill:var(--${reached && d === ring ? 'night' : 'ink'})`, text: ch === '.' ? String(d) : ch }));
+                  }
+                  if (ring > gd) {
+                    const n = Math.min(B.path.length, Math.floor((p.t - (0.6 + 0.45 * (gd + 1))) / 0.12) + 1);
+                    els.push(s('path', { d: B.path.slice(-n).reverse().map(([x, y], i) => `${i ? 'L' : 'M'}${(plot.X(x) + w / 2).toFixed(1)} ${(plot.Y(B.H - y) + w / 2).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.85 }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const B = bfsRun, ring = bfsRing(p.t), gd = B.dist[B.goal[1]][B.goal[0]]; return ring < gd ? `ring ${ring}: every square ${ring} steps from S` : `G reached at ${gd} steps · trace back through ${gd - 1}, ${gd - 2}, … to S`; },
+              },
+              after: r`Every square gets labelled with its true distance from S, because the ripple reaches nearer squares before farther ones. Walking back from G, always to a square labelled one less, traces a shortest route. This is what Dijkstra's algorithm does when every road has the same length; it's also how a flood-fill tool, a game character finding its way, or a "degrees of separation" search works.`,
             },
             {
               type: 'numeric',

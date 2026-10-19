@@ -11,6 +11,20 @@ const balanceAfter = (P, months) => { let b = 100000; for (let i = 0; i < months
 // Leibniz series partial sums ×4
 const LEIB = (() => { const out = [0]; let sum = 0; for (let n = 0; n < 400; n++) { sum += (n % 2 ? -1 : 1) / (2 * n + 1); out.push(4 * sum); } return out; })();
 
+// split an equilateral triangle into four: colour the bottom-left, bottom-right and middle quarters, then repeat inside the top quarter
+const QUARTER_TRIS = (() => {
+  const out = [];
+  let a = [0, 0], b = [1, 0], c = [0.5, Math.sqrt(3) / 2];
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  for (let k = 0; k < 8; k++) {
+    const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
+    out.push([[a, ab, ca], [ab, b, bc], [ab, bc, ca]]);
+    [a, b, c] = [ca, bc, c];
+  }
+  return out;
+})();
+const quarterN = (t) => Math.min(8, Math.floor(Math.max(0, t - 0.5) / 1.1));
+
 export default {
   id: 'series',
   subject: 'math',
@@ -261,6 +275,25 @@ When $|r| \ge 1$ the terms don't shrink, and the sum blows up. It **diverges**.`
               answer: 0.5,
               tol: 0.001,
               explain: r`First term $a = \frac13$, ratio $r = \frac13$: $\frac{a}{1 - r} = \frac{1/3}{2/3} = \frac12$.`,
+            },
+            { /*anim2:series*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A quarter, and a quarter of a quarter',
+              body: r`Here's a picture of $\frac14 + \frac1{16} + \frac1{64} + \cdots$. Cut a triangle of area 1 into four quarters. Colour three of them {blue:blue}, {coral:coral} and {amber:amber}; then do the same inside the fourth, and so on.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.06, xmax: 1.06, ymin: -0.05, ymax: 0.92, grid: false, axes: false, maxWidth: 380,
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const n = quarterN(p.t), cols = ['blue', 'coral', 'amber'], els = [];
+                  const P = (tri) => tri.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z';
+                  els.push(s('path', { d: P([[0, 0], [1, 0], [0.5, Math.sqrt(3) / 2]]), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+                  QUARTER_TRIS.slice(0, n).forEach((stage) => stage.forEach((tri, j) => els.push(s('path', { d: P(tri), class: `fl-${cols[j]}`, opacity: 0.7, stroke: 'var(--card)', 'stroke-width': 1, 'stroke-linejoin': 'round' }))));
+                  return els;
+                },
+                readout: (p) => { const n = quarterN(p.t); let sum = 0; for (let k = 1; k <= n; k++) sum += 0.25 ** k; return n === 0 ? 'a triangle of area 1' : `{blue:blue area} so far $= ${fix(sum, 6)}$ · each colour has the same area`; },
+              },
+              after: r`At every stage the three colours get identical triangles, so the blue, coral and amber areas are always equal, and together they fill the whole triangle (whatever is left uncoloured shrinks to a point). Three equal parts of 1: so the blue area, $\frac14 + \frac1{16} + \frac1{64} + \cdots$, must be exactly $\frac13$. The formula agrees: $\frac{1/4}{1 - 1/4} = \frac13$.`,
             },
             {
               type: 'mcq',

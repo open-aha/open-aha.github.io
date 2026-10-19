@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const f2 = (v) => (Math.round(v * 100) / 100).toString();
 
@@ -27,6 +28,17 @@ const clackAt = (M, t) => {
   else while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ev[m].t <= t) lo = m; else hi = m; }
   const e = ev[lo], dt = t - e.t;
   return { x1: e.x1 + e.v1 * dt, x2: e.x2 + e.v2 * dt, n: e.n };
+};
+
+// launched at (12, 16) m/s; at the top it bursts into 8 pieces of different masses, each with the same momentum kick (6 kg·m/s) in its own direction
+const FW_M = [1, 2, 1, 3, 2, 1, 1, 2];
+const FW_TOP = 16 / 9.8;
+const fireworkAt = (t) => {
+  const tEnd = FW_TOP + 1.13;
+  const tt = Math.min(t, tEnd);
+  if (tt <= FW_TOP) return { burst: false, tt, pieces: [[12 * tt, 16 * tt - 4.9 * tt * tt]] };
+  const tau = tt - FW_TOP, x0 = 12 * FW_TOP, y0 = 16 * FW_TOP - 4.9 * FW_TOP * FW_TOP;
+  return { burst: true, tt, tau, pieces: FW_M.map((m, k) => { const a = (k * Math.PI) / 4, dvx = (6 / m) * Math.cos(a), dvy = (6 / m) * Math.sin(a); return [x0 + (12 + dvx) * tau, y0 + dvy * tau - 4.9 * tau * tau]; }) };
 };
 
 export default {
@@ -585,6 +597,39 @@ The total momentum of a system equals its total mass times the velocity of its c
                 { t: 'It shoots upwards', why: 'Only external forces (here, gravity) affect the centre of mass.' },
               ],
               explain: r`Internal forces come in equal and opposite pairs, so they cancel in the total. Gravity alone acts on the system, so the centre of mass carries on along its parabola, even as the pieces scatter.`,
+            },
+            { /*anim2:momentum*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The burst and the balance point',
+              body: r`A firework shell flies up and bursts at the top into eight pieces of **different** masses (bigger dots are heavier), flung in all directions. The {violet:violet ring} marks the pieces' centre of mass.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1, xmax: 41, ymin: -0.6, ymax: 17, grid: false, axes: false, maxWidth: 640,
+                animate: { param: 't', speed: 0.9, max: FW_TOP + 1.13 + 1.8, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const f = fireworkAt(p.t), els = [], tot = FW_M.reduce((a, b) => a + b, 0);
+                  els.push(s('line', { x1: plot.X(-1), x2: plot.X(41), y1: plot.Y(0), y2: plot.Y(0), stroke: 'var(--ink-2)', 'stroke-width': 2.5 }));
+                  // the shell's original parabola, all the way to the ground
+                  const par = [];
+                  for (let i = 0; i <= 80; i++) { const q = (2 * FW_TOP * i) / 80; par.push(`${i ? 'L' : 'M'}${plot.X(12 * q).toFixed(1)} ${plot.Y(16 * q - 4.9 * q * q).toFixed(1)}`); }
+                  els.push(s('path', { d: par.join(''), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
+                  if (!f.burst) { const [x, y] = f.pieces[0]; els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 7, class: 'fl-amber' })); }
+                  else {
+                    let cx = 0, cy = 0;
+                    // faint trails of the pieces since the burst
+                    FW_M.forEach((m, k) => {
+                      const pts = [];
+                      for (let i = 0; i <= 24; i++) { const g = fireworkAt(FW_TOP + 1e-9 + (f.tau * i) / 24); pts.push(`${i ? 'L' : 'M'}${plot.X(g.pieces[k][0]).toFixed(1)} ${plot.Y(g.pieces[k][1]).toFixed(1)}`); }
+                      els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--amber)', 'stroke-width': 1.5, opacity: 0.45 }));
+                    });
+                    f.pieces.forEach(([x, y], k) => { cx += FW_M[k] * x; cy += FW_M[k] * y; els.push(s('circle', { cx: plot.X(x), cy: plot.Y(y), r: 2.5 + 2.5 * Math.sqrt(FW_M[k]), class: 'fl-amber', opacity: 0.9 })); });
+                    els.push(s('circle', { cx: plot.X(cx / tot), cy: plot.Y(cy / tot), r: 9, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  }
+                  return els;
+                },
+                readout: (p) => { const f = fireworkAt(p.t); return f.burst ? `${fix(f.tau, 2)} s after the burst · the centre of mass is still exactly on the dashed curve` : 'rising shell'; },
+              },
+              after: r`The burst is all **internal** forces: every push one piece gets, another gets an equal and opposite push, so the total momentum doesn't change. Gravity still pulls on the total mass just as before. So the centre of mass carries on along the shell's original parabola as if nothing had happened, at least until the first piece hits the ground and a new outside force joins in.`,
             },
             {
               type: 'numeric',

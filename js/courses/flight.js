@@ -196,7 +196,7 @@ $$v_t = \sqrt{\frac{2mg}{\rho C_D A}}$$`,
                 animate: { param: 't', speed: 2.5, max: 40, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const st = SKY[Math.min(SKY.length - 1, Math.round(p.t / 0.01))], els = [], open = p.t >= 20;
-                  // the diver, with force arrows (1 kN = 30 units)
+                  // the diver, with force arrows (0.12 px per newton, capped at 150 px)
                   const cx = plot.X(-7), cy = plot.Y(34);
                   if (open) els.push(s('path', { d: `M${cx - 50} ${cy - 70}Q${cx} ${cy - 120} ${cx + 50} ${cy - 70}Z`, class: 'fl-amber', opacity: Math.min(1, (p.t - 20) / 3) }), s('path', { d: `M${cx - 50} ${cy - 70}L${cx} ${cy - 10}L${cx + 50} ${cy - 70}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1 }));
                   els.push(s('rect', { x: cx - 22, y: cy - 6, width: 44, height: 12, rx: 6, class: 'fl-ink' }));

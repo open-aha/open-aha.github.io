@@ -40,6 +40,17 @@ const rot = ([x, y], deg0) => {
 const SSA_C = (t) => [t * Math.cos(rad(30)), t * Math.sin(rad(30))];
 const SSA_BC = (t) => Math.hypot(SSA_C(t)[0] - 5, SSA_C(t)[1]);
 
+// a ring of radius r, cut at the top and unrolled about its lowest point: an arc of length 2πr and curvature (1 − u)/r
+const ringPts = (r, u, cx) => {
+  const L = 2 * Math.PI * r, k = (1 - u) / r, out = [];
+  for (let i = 0; i <= 60; i++) {
+    const sv = -L / 2 + (L * i) / 60, ph = sv * k;
+    out.push(k < 1e-6 ? [cx + sv, -r] : [cx + Math.sin(ph) / k, -r + (1 - Math.cos(ph)) / k]);
+  }
+  return out;
+};
+const onionU = (t) => { const v = Math.min(1, Math.max(0, (t - 1) / 4.5)); return v * v * (3 - 2 * v); };
+
 export default {
   id: 'geometry',
   subject: 'math',
@@ -763,6 +774,32 @@ So $C = \pi d = 2\pi r$. Change the size: the ratio never changes.`,
               },
               after: r`With more slices, the shape becomes a **rectangle**. Its height is the radius $r$. Its width is half the circumference, $\pi r$, because half the crust is along the top and half along the bottom. So
 $$A = \pi r \times r = \pi r^2.$$`,
+            },
+            { /*anim2:geometry*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Peeling the onion',
+              body: r`Another way in. Think of the circle (radius 1) as many thin **rings**, like an onion. Cut every ring at the top and straighten it out, keeping its bottom point fixed.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.4, xmax: 3.4, ymin: -1.25, ymax: 1.15, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 10, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const u = onionU(p.t), N = 14, w = (plot.X(1) - plot.X(0)) / N, els = [];
+                  for (let i = 0; i < N; i++) {
+                    const r = (i + 0.5) / N, pts = ringPts(r, u, 0);
+                    els.push(s('path', { d: pts.map(([x, y], j) => `${j ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: i % 2 ? 'var(--teal)' : 'var(--blue)', 'stroke-width': w * 1.02, opacity: 0.75 }));
+                  }
+                  if (u > 0.98) {
+                    const tri = [[0, 0], [Math.PI, -1], [-Math.PI, -1]];
+                    els.push(s('path', { d: tri.map(([x, y], j) => `${j ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join('') + 'Z', fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+                    els.push(s('text', { x: plot.X(0), y: plot.Y(-1) + 18, 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-2)', text: 'base 2πr' }));
+                    els.push(s('text', { x: plot.X(0.12), y: plot.Y(-0.45), class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-2)', text: 'height r' }));
+                  }
+                  return els;
+                },
+                readout: (p) => (onionU(p.t) < 0.98 ? `unrolling: ${fix(100 * onionU(p.t), 0)}%` : 'a triangle: area $= \\frac12 \\times 2\\pi r \\times r = \\pi r^2$'),
+              },
+              after: r`Each ring becomes a thin strip as long as its circumference, $2\pi \times$ (its radius). The outermost strip is $2\pi r$ long, and they shrink steadily to nothing at the centre, so together they make a **triangle** with base $2\pi r$ and height $r$. Its area, $\frac12 \times 2\pi r \times r = \pi r^2$, is the circle's area. With thinner and thinner rings the stepped edges vanish and the match becomes exact; this is the idea of integration, centuries before calculus.`,
             },
             {
               type: 'numeric',

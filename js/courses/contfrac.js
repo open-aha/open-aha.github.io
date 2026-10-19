@@ -114,6 +114,8 @@ const KLEIN_HULL = (N, above) => {
   }
   return hull;
 };
+// the taut strings, found from a much bigger grid so that their far ends don't drag them out of shape near the start
+const KLEIN_STRINGS = [false, true].map((above) => KLEIN_HULL(400, above));
 
 export default {
   id: 'contfrac',
@@ -254,18 +256,20 @@ We abbreviate this **continued fraction** as $[1; 2, 3, 4]$. The steps are exact
               type: 'explain',
               kicker: 'Explore',
               title: 'A string pulled tight',
-              body: r`Felix Klein's picture of the convergents. Draw the line $y = \sqrt2\,x$ through a grid of dots (each dot $(q, p)$ stands for the fraction $\frac pq$). Imagine pegs at all the dots, and a string on each side of the line, anchored at the corner and pulled taut towards infinity. Watch where the strings bend as more of the grid comes in.`,
+              body: r`Felix Klein's picture of the convergents. Draw the line $y = \sqrt2\,x$ through a grid of dots (each dot $(q, p)$ stands for the fraction $\frac pq$). Imagine pegs at all the dots, and a string on each side of the line, anchored near the corner and pulled taut far off towards infinity. Watch where the strings bend as they are drawn out across the grid.`,
               widget: {
                 kind: 'graph', xmin: -1, xmax: 31, ymin: -1.5, ymax: 44, grid: false, axes: false, height: 360,
                 animate: { param: 't', speed: 2.2, max: 34, autoplay: true },
                 extra: ({ plot, p, s }) => {
-                  const N = Math.max(1, Math.min(30, Math.floor(p.t))), els = [];
+                  const N = Math.max(1, Math.min(30, p.t)), els = [];
                   let dots = '';
                   for (let q = 0; q <= 30; q++) for (let pp = 0; pp <= 43; pp++) dots += `M${plot.X(q).toFixed(1)} ${plot.Y(pp).toFixed(1)}h0.1`;
                   els.push(s('path', { d: dots, stroke: 'var(--ink-3)', 'stroke-width': 2.5, 'stroke-linecap': 'round', opacity: 0.4 }));
                   els.push(s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(30.5), y2: plot.Y(30.5 * Math.SQRT2), stroke: 'var(--ink)', 'stroke-width': 1.5 }));
                   for (const [above, col] of [[false, 'blue'], [true, 'coral']]) {
-                    const H = KLEIN_HULL(N, above);
+                    // the string's corners so far, then on along its next stretch to the edge of what is drawn
+                    const S = KLEIN_STRINGS[above ? 1 : 0], H = S.filter(([q]) => q <= N), [q0, p0] = H[H.length - 1], [q1, p1] = S[H.length];
+                    H.push([N, p0 + ((p1 - p0) * (N - q0)) / (q1 - q0)]);
                     els.push(s('path', { d: H.map(([q, pp], i) => `${i ? 'L' : 'M'}${plot.X(q).toFixed(1)} ${plot.Y(pp).toFixed(1)}`).join(''), fill: 'none', stroke: `var(--${col})`, 'stroke-width': 3, 'stroke-linejoin': 'round' }));
                     H.slice(1, -1).forEach(([q, pp]) => {
                       if (!['1/1', '3/2', '7/5', '17/12', '41/29'].includes(`${pp}/${q}`)) return;
@@ -275,7 +279,7 @@ We abbreviate this **continued fraction** as $[1; 2, 3, 4]$. The steps are exact
                   }
                   return els;
                 },
-                readout: (p) => `grid up to denominator ${Math.max(1, Math.min(30, Math.floor(p.t)))} · the strings bend only at convergents of $\\sqrt2$: $\\tfrac11, \\tfrac32, \\tfrac75, \\tfrac{17}{12}, \\tfrac{41}{29}, \\ldots$`,
+                readout: (p) => `strings drawn out to denominator ${Math.max(1, Math.min(30, Math.floor(p.t)))} · they bend only at convergents of $\\sqrt2$: $\\tfrac11, \\tfrac32, \\tfrac75, \\tfrac{17}{12}, \\tfrac{41}{29}, \\ldots$`,
               },
               after: r`The corners of the {blue:lower string} are $\frac11, \frac75, \frac{41}{29}, \dots$ (just below $\sqrt2$) and the corners of the {coral:upper string} are $\frac32, \frac{17}{12}, \dots$ (just above). Together they are exactly the convergents of $\sqrt2 = [1; 2, 2, 2, \dots]$. That's why convergents are the best approximations: a fraction closer to the line, with a smaller denominator, would be a peg poking through the taut string.`,
             },

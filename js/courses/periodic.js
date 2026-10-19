@@ -286,7 +286,7 @@ In 1925, Wolfgang Pauli stated the **exclusion principle**: no two electrons in 
                 },
                 readout: (p) => { const Z = ptZ(p.t), [, , b, sub] = PT_POS[Z - 1]; return `$Z = ${Z}$, **${PT_SYM[Z - 1]}**: newest electron goes into {${PT_COL[b]}:${sub}} (by the filling order)`; },
               },
-              after: r`The table's odd shape is just the filling order made visible. Each row starts a new $s$ subshell and ends when a $p$ subshell is full; the $d$ subshells (10 electrons) open up the middle from row 4, and the $f$ subshells (14 electrons) would make rows 6 and 7 far too wide, so they're usually printed separately underneath. The row lengths 2, 8, 8, 18, 18, 32, 32 all come from subshells holding 2, 6, 10 and 14 electrons. (A few elements, like chromium and lanthanum, bend the order slightly, but not the shape.)`,
+              after: r`The table's odd shape is just the filling order made visible. Each row starts a new $s$ subshell and (after the first) ends when a $p$ subshell is full; the $d$ subshells (10 electrons) open up the middle from row 4, and the $f$ subshells (14 electrons) would make rows 6 and 7 far too wide, so they're usually printed separately underneath. The row lengths 2, 8, 8, 18, 18, 32, 32 all come from subshells holding 2, 6, 10 and 14 electrons. (A few elements, like chromium and lanthanum, bend the order slightly, but not the shape.)`,
             },
             {
               type: 'numeric',

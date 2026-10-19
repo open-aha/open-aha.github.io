@@ -600,7 +600,7 @@ Faster than that, you'd lift off the ground: you have to **run**.`,
                 },
                 readout: (p) => { const need = (p.v * p.v) / 0.9; return `needed $v^2/L$ = ${fix(need, 1)} m/s² · gravity $g$ = 9.8 m/s² · ${need > 9.8 ? '**not enough gravity: the walker would take off, so this has to be a run**' : 'gravity can hold the hips on the arc'}`; },
               },
-              after: r`To move along a circle of radius $L$ at speed $v$, the hips need a downward acceleration of $v^2/L$ at the top, and only gravity supplies it: the leg can push but never pull. So walking only works while $v^2/L \le g$, that is $v \le \sqrt{gL} \approx 3$ m/s for a 0.9 m leg. In practice people switch to running well before that, at around half of the limit, but the limit explains why children break into a run sooner than adults, and why astronauts on the Moon, with a sixth of the gravity, bounded instead of walking.`,
+              after: r`To move along a circle of radius $L$ at speed $v$, the hips need a downward acceleration of $v^2/L$ at the top, and only gravity supplies it: the leg can push but never pull. So walking only works while $v^2/L \le g$, that is $v \le \sqrt{gL} \approx 3$ m/s for a 0.9 m leg. In practice people switch to running a little before that, at about 70% of the limit (around 2 m/s), but the limit explains why children break into a run sooner than adults, and why astronauts on the Moon, with a sixth of the gravity, bounded instead of walking.`,
             },
             {
               type: 'numeric',

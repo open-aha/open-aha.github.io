@@ -53,6 +53,33 @@ const BRANCH = (() => {
   });
 })();
 
+// two towns of 150 people in 10 × 10 boxes. Anyone within 0.2 of a sick person catches it; the sick recover after 4 time units.
+// In the first town everyone wanders; in the second, three people in four stay put.
+let TOWNS = null;
+const townRun = () => {
+  if (TOWNS) return TOWNS;
+  const make = (seed, still) => {
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const P = Array.from({ length: 150 }, (_, i) => { const a = 2 * Math.PI * rnd(), moving = i === 0 || rnd() >= still; return { x: 0.3 + 9.4 * rnd(), y: 0.3 + 9.4 * rnd(), vx: moving ? 1.2 * Math.cos(a) : 0, vy: moving ? 1.2 * Math.sin(a) : 0, st: i === 0 ? 1 : 0, sick: 0 }; });
+    const frames = [];
+    for (let f = 0; f <= 600; f++) {
+      if (f % 2 === 0) frames.push({ pos: P.map((q) => [q.x, q.y, q.st]), counts: [0, 1, 2].map((s) => P.filter((q) => q.st === s).length) });
+      const dt = 0.05;
+      for (const q of P) {
+        q.x += q.vx * dt; q.y += q.vy * dt;
+        if (q.x < 0.2 || q.x > 9.8) q.vx = -q.vx;
+        if (q.y < 0.2 || q.y > 9.8) q.vy = -q.vy;
+        if (q.st === 1 && (q.sick += dt) > 4) q.st = 2;
+      }
+      const sick = P.filter((q) => q.st === 1);
+      for (const q of P) if (q.st === 0 && sick.some((r) => Math.hypot(r.x - q.x, r.y - q.y) < 0.2)) { q.st = 1; q.sick = 0; }
+    }
+    return frames;
+  };
+  return (TOWNS = [make(7, 0), make(7, 0.75)]);
+};
+const townFrame = (t) => Math.min(300, Math.floor(t * 10));
+
 export default {
   id: 'epidemics',
   subject: 'math',
@@ -365,6 +392,41 @@ $\beta$ measures how easily the infection spreads, and $\gamma$ is the recovery 
                 solution: { x: 0.45 },
               },
               explain: r`A 45% cut gives $R = 1.65$ and a peak of about 9%. The curve is flatter **and** later, buying time for treatments and vaccines, and the total infected falls from 94% to about 67%.`,
+            },
+            { /*anim2:epidemics*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two towns, one infection',
+              body: r`A toy simulation. Each dot is a person: {blue:healthy}, {coral:sick} or {teal:recovered}. Bumping into a sick person passes it on, and the sick recover after a while. In the left town everyone moves around; in the right town, three people in four stay at home. Below, the number sick at once in each town.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -0.3, xmax: 21.3, ymin: -7.6, ymax: 10.3, grid: false, axes: false, maxWidth: 620,
+                animate: { param: 't', speed: 1, max: 32, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const T = townRun(), k = townFrame(p.t), cols = ['blue', 'coral', 'teal'], els = [];
+                  T.forEach((frames, side) => {
+                    const x0 = side ? 11 : 0;
+                    els.push(s('rect', { x: plot.X(x0), y: plot.Y(10), width: plot.X(10) - plot.X(0), height: plot.Y(0) - plot.Y(10), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                    for (let st = 0; st < 3; st++) {
+                      const d = frames[k].pos.filter((q) => q[2] === st).map(([x, y]) => `M${plot.X(x0 + x).toFixed(1)} ${plot.Y(y).toFixed(1)}h0`).join('');
+                      if (d) els.push(s('path', { d, stroke: `var(--${cols[st]})`, 'stroke-width': 6, 'stroke-linecap': 'round' }));
+                    }
+                  });
+                  // number sick at once, over time (time 0 to 30 across, 0 to 150 people up)
+                  const CX = (f) => plot.X(0.5 + (20 * f) / 300), CY = (n) => plot.Y(-7 + (5.5 * n) / 150);
+                  els.push(s('line', { x1: CX(0), x2: CX(300), y1: CY(0), y2: CY(0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  els.push(s('line', { x1: CX(0), x2: CX(0), y1: CY(0), y2: CY(150), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  T.forEach((frames, side) => {
+                    const pts = [];
+                    for (let j = 0; j <= k; j++) pts.push(`${j ? 'L' : 'M'}${CX(j).toFixed(1)} ${CY(frames[j].counts[1]).toFixed(1)}`);
+                    els.push(s('path', { d: pts.join(''), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2.5, 'stroke-dasharray': side ? '6 4' : null }));
+                  });
+                  els.push(s('text', { x: CX(300), y: CY(0) + 16, 'text-anchor': 'end', class: 'tick', text: 'time' }));
+                  els.push(s('text', { x: CX(0) + 6, y: CY(150) + 4, class: 'tick', text: 'sick at once (solid: left town, dashed: right town)' }));
+                  return els;
+                },
+                readout: (p) => { const T = townRun(), k = townFrame(p.t), c = T.map((fr) => fr[k].counts); return `left town: ${c[0][1]} sick, ${150 - c[0][0]} infected so far · right town: ${c[1][1]} sick, ${150 - c[1][0]} infected so far`; },
+              },
+              after: r`In the left town the infection explodes: most people catch it within a short time, and a big share are sick **at once**, far more than any hospital could treat. When most people stay put, each sick person meets far fewer others, so $R$ falls. The outbreak creeps along instead, with a low, flat peak, and many people never catch it at all. That's what "flattening the curve" means. (It's a toy: real people don't bounce around like gas molecules.)`,
             },
             {
               type: 'numeric',

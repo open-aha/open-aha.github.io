@@ -13,6 +13,27 @@ const assist = (deg) => {
 // mass ratio needed for Δv = 4 km/s at exhaust speed ve (km/s)
 const massRatio = (ve) => Math.exp(4 / ve);
 
+// a flyby in the planet's frame (GM = 1): arriving straight up, passing behind (to the left of) the planet.
+// In the Sun's frame the planet moves right at speed 1, so we just add (t, 0).
+let FLYBY = null;
+const flybyRun = () => {
+  if (FLYBY) return FLYBY;
+  let x = -1, y = -4.5, vx = 0, vy = 1;
+  // start a little way out, with the speed raised to match energy (v² − 2/r = 1)
+  const r0 = Math.hypot(x, y); vy = Math.sqrt(1 + 2 / r0);
+  const dt = 0.005, out = [];
+  const acc = (px, py) => { const r3 = Math.hypot(px, py) ** 3; return [-px / r3, -py / r3]; };
+  for (let k = 0; k < 4000; k++) {
+    if (k % 4 === 0) out.push({ t: k * dt, x, y, vx, vy });
+    const [ax, ay] = acc(x, y);
+    vx += 0.5 * dt * ax; vy += 0.5 * dt * ay; x += dt * vx; y += dt * vy;
+    const [bx, by] = acc(x, y);
+    vx += 0.5 * dt * bx; vy += 0.5 * dt * by;
+    if (k > 10 && Math.hypot(x, y) > r0) break; // stop as far out as it started, so the two speeds compare fairly
+  }
+  return (FLYBY = out);
+};
+
 export default {
   id: 'rockets',
   subject: 'physics',
@@ -391,6 +412,36 @@ $$v = \sqrt{\frac{GM}{r}}$$
               body: r`A spacecraft flying past a planet swings around it. **In the planet's frame**, the craft leaves with the same speed it arrived with: gravity just bends its path. But the planet is moving around the Sun. If the craft swings around **behind** the planet, it comes out carrying some of the planet's motion, gaining speed in the Sun's frame.
 
 It's like a tennis ball bouncing off the front of a moving train: it leaves faster than it arrived.`,
+            },
+            { /*anim2:rockets*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'One flyby, two points of view',
+              body: r`The same flyby, seen twice. On the left, from the {amber:planet}: the craft swings round and leaves. On the right, from the Sun, with the planet moving to the right. The arrows are the craft's velocity.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -10.4, xmax: 15.4, ymin: -5, ymax: 5, grid: false, axes: false, maxWidth: 680,
+                animate: { param: 't', speed: 1.4, max: 13, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const F = flybyRun(), n = Math.min(F.length - 1, Math.floor(p.t / 0.02)), f = F[n], els = [], R = (q) => plot.X(q) - plot.X(0);
+                  const T = (x, y, text) => s('text', { x: plot.X(x), y: plot.Y(y), 'text-anchor': 'middle', class: 'halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--ink-2)', text });
+                  const arrow = (x, y, dx, dy, col) => { const X0 = plot.X(x), Y0 = plot.Y(y), X1 = plot.X(x + dx), Y1 = plot.Y(y + dy), a = Math.atan2(Y1 - Y0, X1 - X0); return s('path', { d: `M${X0} ${Y0}L${X1} ${Y1}M${X1 - 9 * Math.cos(a - 0.45)} ${Y1 - 9 * Math.sin(a - 0.45)}L${X1} ${Y1}L${X1 - 9 * Math.cos(a + 0.45)} ${Y1 - 9 * Math.sin(a + 0.45)}`, fill: 'none', stroke: `var(--${col})`, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); };
+                  els.push(s('line', { x1: plot.X(-0.8), x2: plot.X(-0.8), y1: plot.Y(-5), y2: plot.Y(5), stroke: 'var(--line-2)', 'stroke-width': 1.5 }));
+                  els.push(T(-5.8, 4.4, 'the planet’s view'), T(7.3, 4.4, 'the Sun’s view'));
+                  // left: planet frame, centred at (−6.4, 0)
+                  const L0 = -6.4, path = (sx, shift) => F.slice(0, n + 1).filter((_, i) => i % 3 === 0 || i === n).map((q, i) => `${i ? 'L' : 'M'}${plot.X(sx + q.x + (shift ? q.t : 0)).toFixed(1)} ${plot.Y(q.y).toFixed(1)}`).join('');
+                  els.push(s('circle', { cx: plot.X(L0), cy: plot.Y(0), r: R(0.3), class: 'fl-amber' }));
+                  els.push(s('path', { d: path(L0, false), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  els.push(arrow(L0 + f.x, f.y, f.vx * 0.8, f.vy * 0.8, 'blue'));
+                  // right: Sun frame, planet starts at x = 1.8 and moves right at speed 1
+                  const R0 = 1.8;
+                  els.push(s('circle', { cx: plot.X(R0 + f.t), cy: plot.Y(0), r: R(0.3), class: 'fl-amber' }));
+                  els.push(s('path', { d: path(R0, true), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 2 }));
+                  els.push(arrow(R0 + f.x + f.t, f.y, (f.vx + 1) * 0.8, f.vy * 0.8, 'coral'));
+                  return els;
+                },
+                readout: (p) => { const F = flybyRun(), f = F[Math.min(F.length - 1, Math.floor(p.t / 0.02))], v0 = F[0]; return `{blue:planet’s view}: speed ${fix(Math.hypot(f.vx, f.vy), 2)} (it arrived at ${fix(Math.hypot(v0.vx, v0.vy), 2)}) · {coral:Sun’s view}: speed ${fix(Math.hypot(f.vx + 1, f.vy), 2)} (arrived at ${fix(Math.hypot(v0.vx + 1, v0.vy), 2)})`; },
+              },
+              after: r`In the planet's frame the flyby is like a perfectly elastic bounce: the craft leaves exactly as fast as it came, only turned (here by about 80°). But the planet is itself moving, and the craft has swung round **behind** it and been flung forwards. Adding the planet's velocity back on, the Sun sees the craft arrive at about 1.6 times the planet's speed and leave at about **2.2** times it. The extra energy is borrowed from the planet's orbit, which slows by an immeasurably tiny amount.`,
             },
             {
               type: 'mcq',

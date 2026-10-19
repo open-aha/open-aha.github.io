@@ -460,7 +460,7 @@ For a regular polygon with $n$ sides, each turn is $\dfrac{360°}{n}$, and each 
                 },
                 readout: (p) => { const [n, k] = [[5, 1], [5, 2], [7, 3], [8, 3]][p.sh]; return `${n} turns of ${(360 * k / n).toFixed(1).replace('.0', '')}° = ${360 * k}° in total = **${k} full turn${k > 1 ? 's' : ''}** (the turtle circles the middle ${k === 1 ? 'once' : k + ' times'})`; },
               },
-              after: r`A simple polygon always adds up to exactly one full turn, 360°. A star that crosses itself winds around its centre more than once, so its turns add up to 2, 3, … full turns: $5 \times 144° = 720°$. Either way the total is a whole number of turns, because the turtle ends up facing the way it started. That's why only turns like $360°/n$ or $720°/n$ make closed shapes.`,
+              after: r`A simple polygon always adds up to exactly one full turn, 360°. A star that crosses itself winds around its centre more than once, so its turns add up to 2, 3, … full turns: $5 \times 144° = 720°$. Either way the total is a whole number of turns, because the turtle ends up facing the way it started. That's why a shape of $n$ equal turns closes up when each turn is $360°$, or $720°$, or any whole number of full turns, divided by $n$.`,
             },
             {
               type: 'numeric',

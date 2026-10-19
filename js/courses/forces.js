@@ -84,7 +84,7 @@ export default {
                   els.push(s('circle', { cx: bx + rr * sx, cy: by - rr * Math.cos(ang), r: rr, class: 'fl-coral' }));
                   return els;
                 },
-                readout: (p) => (p.b < 4 ? `start 1 m up: it rolls ${fix(1 / Math.tan(([30, 15, 8, 4][p.b] * Math.PI) / 180), 1)} m along the floor before it is back at that height` : '**flat**: it never gets back up to its starting height, so it **never stops**'),
+                readout: (p) => (p.b < 4 ? `start 1 m up: it rolls ${fix(1 / Math.sin(([30, 15, 8, 4][p.b] * Math.PI) / 180), 1)} m up the second ramp before it's back at that height` : '**flat**: it never gets back up to its starting height, so it **never stops**'),
               },
               after: r`The shallower the second ramp, the farther the ball must roll to climb back up. Make it perfectly flat and nothing ever slows it down: it rolls on forever. Galileo concluded that motion doesn't need a push to keep going; only **changes** in motion need a cause. Newton turned that into his first law.`,
             },

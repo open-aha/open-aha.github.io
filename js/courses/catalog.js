@@ -138,8 +138,8 @@ export const courses = [
       "title": "Estimating Roots",
       "summary": "Between the perfect squares",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -519,8 +519,8 @@ export const courses = [
       "title": "Projectiles",
       "summary": "Two motions at once",
       "icon": "target",
-      "nSteps": 8,
-      "minutes": 7
+      "nSteps": 9,
+      "minutes": 8
      }
     ]
    },
@@ -610,8 +610,8 @@ export const courses = [
       "title": "Circles & π",
       "summary": "Where πr² comes from",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "scaling",
@@ -884,8 +884,8 @@ export const courses = [
       "title": "Euclid’s Algorithm",
       "summary": "Greatest common divisor",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "coins",
@@ -2010,8 +2010,8 @@ export const courses = [
       "title": "The Ellipse",
       "summary": "Two foci and a string",
       "icon": "target",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -3455,8 +3455,8 @@ export const courses = [
       "title": "Flattening the Curve",
       "summary": "What interventions do",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -3587,8 +3587,8 @@ export const courses = [
       "title": "Coupled Oscillators",
       "summary": "Energy that swaps back and forth",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -3885,8 +3885,8 @@ export const courses = [
       "title": "P-Waves & S-Waves",
       "summary": "Push and shake",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "locating",
@@ -5692,8 +5692,8 @@ export const courses = [
       "title": "Centre of Mass",
       "summary": "The point that moves simply",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "stacked",
@@ -5764,8 +5764,8 @@ export const courses = [
       "title": "Gravity Assists",
       "summary": "Stealing speed from planets",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -5834,8 +5834,8 @@ export const courses = [
       "title": "Zeno’s Paradox",
       "summary": "Infinite sums with finite answers",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "harmonic",
@@ -6006,8 +6006,8 @@ export const courses = [
       "title": "Refraction",
       "summary": "Snell’s law",
       "icon": "pencil",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "tir",
@@ -7067,8 +7067,8 @@ export const courses = [
       "title": "Shortest Paths",
       "summary": "How maps find routes",
       "icon": "target",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "coloring",
@@ -7505,8 +7505,8 @@ export const courses = [
       "title": "Phases & Seasons",
       "summary": "Geometry in the sky",
       "icon": "reset",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -8615,8 +8615,8 @@ export const courses = [
       "title": "The Hanging Chain",
       "summary": "Catenary, not parabola",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "soap",
@@ -9605,8 +9605,8 @@ export const courses = [
       "title": "Compressing with the SVD",
       "summary": "A picture as a sum of simple layers",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    }
@@ -10875,8 +10875,8 @@ export const courses = [
       "title": "Uncertainty & Tunnelling",
       "summary": "Limits and loopholes",
       "icon": "question",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -11227,8 +11227,8 @@ export const courses = [
       "title": "Fission & Fusion",
       "summary": "Reactors and stars",
       "icon": "bolt",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },

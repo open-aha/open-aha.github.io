@@ -105,7 +105,7 @@ This **limit** is the slope of the tangent line, the **instantaneous rate of cha
                 },
                 readout: (p) => { const u = Math.min(1, Math.max(0, (p.t - 0.6) / 6)), w = 1.5 * 1000 ** -u; return `zoom ×${fix(1.5 / w, 0)} · showing $t$ from ${fix(1 - w, 4)} to ${fix(1 + w, 4)}`; },
               },
-              after: r`At first the curve bends visibly away from the line. Zoom in 10 times and it's hard to tell them apart; at 1000 times they're the same line. A smooth curve, looked at closely enough, **is** a straight line, and the derivative is that line's slope. Not every graph does this: $|t|$ has a corner at 0 that stays a corner however far you zoom, so it has no derivative there.`,
+              after: r`At first the curve bends visibly away from the line. Zoom in 100 times and it's hard to tell them apart; at 1000 times they're the same line. A smooth curve, looked at closely enough, **is** a straight line, and the derivative is that line's slope. Not every graph does this: $|t|$ has a corner at 0 that stays a corner however far you zoom, so it has no derivative there.`,
             },
             {
               type: 'numeric',
