@@ -67,11 +67,8 @@
   width: 100%;
   max-width: calc(var(--prose) + 2 * var(--gutter));
   margin: 0 auto;
-  padding: 20px var(--gutter) 180px;
-}
-@media (max-width: 520px) {
-  /* the action bar wraps onto two rows on phones: keep the last card clear of it */
-  .stage { padding-bottom: 240px; }
+  /* room under the last line for the fixed action bar, whose height lesson.js keeps in --bar-h */
+  padding: 20px var(--gutter) calc(var(--bar-h, 150px) + 40px);
 }
 .step {
   animation: step-in 360ms var(--ease-out) both;
@@ -420,8 +417,12 @@
   margin: 0 auto;
   padding: 16px var(--gutter) calc(16px + env(safe-area-inset-bottom));
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 12px 14px;
+}
+.actionbar .btn {
+  flex: none;
 }
 .actionbar .fb {
   flex: 1;
@@ -434,14 +435,6 @@
 .actionbar .btn-main {
   min-width: 160px;
 }
-@media (max-width: 520px) {
-  .actionbar .inner {
-    flex-wrap: wrap;
-  }
-  .actionbar .btn-main {
-    flex: 1;
-  }
-}
 .actionbar.is-correct {
   background: var(--success-tint);
   border-color: var(--success-edge);
@@ -450,21 +443,24 @@
   background: var(--error-tint);
   border-color: var(--error-edge);
 }
+/* the feedback sits on a row of its own above the buttons, so it never squeezes between them */
 .actionbar.is-correct .fb,
 .actionbar.is-wrong .fb {
+  order: -1;
+  flex-basis: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
+  /* a faint rule, tinted like the bar, between the message and the buttons */
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--fb-rule) 18%, transparent);
   animation: fb-in 380ms var(--spring) both;
 }
-.actionbar.is-correct .grow,
-.actionbar.is-wrong .grow {
-  display: none;
+.actionbar.is-correct {
+  --fb-rule: var(--success);
 }
-@media (max-width: 520px) {
-  .actionbar .fb {
-    flex-basis: 100%;
-  }
+.actionbar.is-wrong {
+  --fb-rule: var(--error);
 }
 @keyframes fb-in {
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
@@ -827,15 +823,58 @@
   width: 20px;
   height: 20px;
 }
+/* share, offered beside "Why?" after a right answer */
+.actionbar .share-bar-btn {
+  padding: 0 20px 0 16px;
+}
+.actionbar .share-bar-btn svg {
+  width: 19px;
+  height: 19px;
+}
+/* narrower screens: Share shrinks to its icon, so the four buttons stay on one row */
+@media (max-width: 640px) {
+  .actionbar .share-bar-btn {
+    padding: 0 14px;
+  }
+  .actionbar .share-bar-btn span {
+    display: none;
+  }
+}
+/* phones: Back shrinks to its arrow too, and the other buttons share the rest of the row */
 @media (max-width: 520px) {
-  .actionbar .fb {
-    order: -1;
+  .actionbar .inner {
+    gap: 10px;
+    padding-top: 12px;
+  }
+  .actionbar .grow {
+    display: none;
   }
   .actionbar .back-btn {
     padding: 0 14px;
   }
   .actionbar .back-btn span {
     display: none;
+  }
+  .actionbar .btn-main,
+  .actionbar .btn-secondary:not(.back-btn, .share-bar-btn) {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 16px;
+    font-size: 16px;
+  }
+}
+@media (max-width: 360px) {
+  .actionbar .inner {
+    column-gap: 8px;
+  }
+  .actionbar .back-btn,
+  .actionbar .share-bar-btn {
+    padding: 0 12px;
+  }
+  .actionbar .btn-main,
+  .actionbar .btn-secondary:not(.back-btn, .share-bar-btn) {
+    padding: 0 12px;
+    font-size: 15px;
   }
 }
 
@@ -961,7 +1000,9 @@
 }
 .dialog.share {
   position: relative;
-  max-width: 460px;
+  max-width: 700px; /* wide enough for the longest lesson link (68 characters) on one line */
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
 }
 .share-close {
   position: absolute;
@@ -997,8 +1038,7 @@
   line-height: 1.3;
   color: var(--ink);
 }
-.share-label {
-  display: block;
+.dialog .share-label {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -1007,24 +1047,25 @@
 .share-link {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 5px 5px 14px;
+  gap: 12px;
+  padding: 7px 7px 7px 16px;
   border: 2px solid var(--line);
-  border-radius: var(--r-pill);
+  border-radius: 28px;
   background: var(--bg);
   transition: border-color var(--t-fast) var(--ease);
 }
 .share-link:has(.share-url:focus) {
   border-color: var(--blue);
 }
+/* the whole link, never cut off: it wraps (at any character) when the line is too short */
 .share-url {
   flex: 1;
   min-width: 0;
-  border: 0;
-  background: none;
   font-size: 15px;
+  line-height: 1.45;
   color: var(--ink-2);
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  cursor: text;
 }
 .share-url:focus {
   outline: none;
@@ -1077,14 +1118,27 @@
   width: 19px;
   height: 19px;
 }
-@media (max-width: 420px) {
+/* phones: the link gets the full width, with a full-width Copy button underneath */
+@media (max-width: 560px) {
   .dialog.share {
-    padding: 22px 18px;
+    padding: 22px 18px 20px;
   }
-  .share-copy span:last-child {
-    display: none;
+  .share-link {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 12px 14px;
+    border-radius: var(--r-md);
+  }
+  .share-url {
+    padding: 0 4px;
   }
   .share-copy {
-    padding: 0 13px;
+    justify-content: center;
+    height: 46px;
+  }
+  .share-app {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }

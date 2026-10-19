@@ -15,7 +15,16 @@ export function openShare({ course, lesson, step, total }) {
   const message = `${what} on OpenAha: ${link}`;
   const opener = document.activeElement;
 
-  const url = h('input.share-url#share-url', { type: 'text', value: link, readonly: true, spellcheck: 'false', onFocus: () => url.select(), onClick: () => url.select() });
+  // the whole link, wrapping if it must, so it's never cut off; clicking it selects all of it
+  const selectUrl = () => {
+    const r = document.createRange();
+    r.selectNodeContents(url);
+    getSelection().removeAllRanges();
+    getSelection().addRange(r);
+  };
+  const url = h('div.share-url#share-url', { role: 'textbox', 'aria-readonly': 'true', 'aria-labelledby': 'share-label', tabindex: 0, onFocus: selectUrl, onClick: selectUrl },
+    // a line break is allowed after each slash or question mark, so a wrapped link splits between its parts
+    link.split(/(?<=[/?])/).flatMap((part) => [part, h('wbr')]));
   const copyLabel = h('span', 'Copy');
   const copyBtn = h('button.btn.share-copy', { type: 'button', onClick: copy }, h('span.share-copy-icon', { html: icons.link }), copyLabel);
   let reset = 0;
@@ -23,7 +32,7 @@ export function openShare({ course, lesson, step, total }) {
     // the clipboard API can be missing, refused, or left waiting on a permission prompt: then copy the selected field
     const wrote = await Promise.race([navigator.clipboard?.writeText(link).then(() => true, () => false) ?? false, new Promise((ok) => setTimeout(() => ok(false), 600))]);
     if (!wrote) {
-      url.select();
+      selectUrl();
       document.execCommand('copy');
     }
     copyBtn.classList.add('btn-success', 'is-copied');
@@ -62,9 +71,9 @@ export function openShare({ course, lesson, step, total }) {
       h('button.icon-btn.share-close', { type: 'button', 'aria-label': 'Close', html: icons.x, onClick: close }),
       h('h3#share-t', step ? 'Share this step' : 'Share this lesson'),
       h('div.share-card', { style: { '--cc': `var(--${course.subject === 'physics' ? 'coral' : 'blue'})` } },
-        h('div.share-where', step ? `${course.title} · ${lesson.title} · step ${step} of ${total}` : course.title),
+        h('div.share-where', step ? `${course.title} · ${lesson.title} · step\u00a0${step}\u00a0of\u00a0${total}` : course.title),
         h('div.share-title', title || lesson.title)),
-      h('label.share-label', { for: 'share-url' }, 'Anyone with this link lands right here:'),
+      h('p.share-label#share-label', 'Anyone with this link lands right here:'),
       h('div.share-link', url, copyBtn),
       h('div.share-apps', apps),
       status));

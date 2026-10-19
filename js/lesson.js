@@ -35,11 +35,11 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
       hideTip();
       openSuggest({ course, lesson, step: finished ? null : i + 1, total: steps.length });
     } });
-  const shareBtn = h('button.icon-btn.share-btn', { type: 'button', 'aria-label': 'Share this step', title: 'Share this step', html: icons.share,
-    onClick: () => {
-      hideTip();
-      openShare({ course, lesson, step: finished ? null : i + 1, total: steps.length });
-    } });
+  const share = () => {
+    hideTip();
+    openShare({ course, lesson, step: finished ? null : i + 1, total: steps.length });
+  };
+  const shareBtn = h('button.icon-btn.share-btn', { type: 'button', 'aria-label': 'Share this step', title: 'Share this step', html: icons.share, onClick: share });
   const top = h('header.player-top', closeBtn, h('div.player-title', lesson.title), seg, shareBtn, suggestBtn, progressLabel);
   let tip = null;
   const stage = h('main.stage', { id: 'stage' });
@@ -53,10 +53,15 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   const secondary = h('button.btn.btn-secondary', { type: 'button', hidden: true });
   const main = h('button.btn.btn-main', { type: 'button' });
   const back = h('button.btn.btn-secondary.back-btn', { type: 'button', 'aria-label': 'Previous step', title: 'Previous step', html: `${icons.left}<span>Back</span>`, hidden: true });
-  const bar = h('footer.actionbar', h('div.inner', back, fb, grow, secondary, main));
+  // after a right answer, a nudge to pass the step on (it opens the same dialog as the top bar's share button)
+  const shareBar = h('button.btn.btn-secondary.share-bar-btn', { type: 'button', 'aria-label': 'Share this step', html: `${icons.share}<span>Share</span>`, hidden: true, onClick: share });
+  const bar = h('footer.actionbar', h('div.inner', back, fb, grow, shareBar, secondary, main));
 
   player.append(top, stage, bar);
   root.append(player);
+  // the bar is fixed over the page and its height changes (feedback rows, wrapping on phones): keep the stage clear of it
+  const barSize = new ResizeObserver(() => player.style.setProperty('--bar-h', `${bar.offsetHeight}px`));
+  barSize.observe(bar);
 
   main.addEventListener('click', onMain);
   secondary.addEventListener('click', onSecondary);
@@ -86,6 +91,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   document.addEventListener('keydown', keyHandler);
   root._cleanup = () => {
     document.removeEventListener('keydown', keyHandler);
+    barSize.disconnect();
     ctrl?.destroy?.();
   };
 
@@ -150,6 +156,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
   function setBar() {
     bar.classList.remove('is-correct', 'is-wrong');
     secondary.hidden = true;
+    shareBar.hidden = true;
     back.hidden = finished || i === 0;
     main.className = 'btn btn-main';
     const step = steps[i];
@@ -215,6 +222,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
       main.textContent = 'Continue';
       main.className = 'btn btn-main btn-success';
       main.disabled = false;
+      shareBar.hidden = false;
       if (step.explain) {
         secondary.hidden = false;
         secondary.textContent = 'Why?';
@@ -317,6 +325,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
     updateSeg();
 
     bar.classList.remove('is-correct', 'is-wrong');
+    shareBar.hidden = true;
     secondary.hidden = false;
     secondary.textContent = 'Back to course';
     secondary.onclick = () => go(paths.course(course.id));
