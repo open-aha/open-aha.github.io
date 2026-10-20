@@ -70,6 +70,10 @@ const FLAG = [[0.15, 0.1], [0.15, 0.9], [0.8, 0.72], [0.38, 0.56], [0.38, 0.1]];
 // all domino tilings of a 2 × n strip, as strings of V (one upright) and H (two lying flat)
 const dominoTilings = (n) => (n === 0 ? [''] : n === 1 ? ['V'] : [...dominoTilings(n - 1).map((t) => 'V' + t), ...dominoTilings(n - 2).map((t) => 'H' + t)]);
 
+// corners of three regular polygons that close up exactly, and whether each extends to a whole tiling
+const cornerFits = (ns) => Math.abs(ns.reduce((t, n) => t + interior(n), 0) - 360) < 1e-6;
+const cornerTiles = (ns) => ['3.12.12', '4.6.12', '4.8.8', '6.6.6'].includes([...ns].sort((a, b) => a - b).join('.'));
+
 export default {
   id: 'tilings',
   subject: 'math',
@@ -216,6 +220,53 @@ export default {
               wrong: [{ v: 6, why: r`The gap is $360° - 90° - 120° = 150°$, larger than a hexagon's $120°$.` }, { v: 150, why: r`$150°$ is the angle. Which regular polygon has angles of $150°$?` }, { v: 8, why: r`An octagon's angle is $135°$, but the gap is $150°$.` }],
               hint: r`The gap is $150°$, so the exterior angle is $30°$.`,
               explain: r`The gap is $150°$, the angle of a regular 12-gon (exterior angle $30°$, and $360 / 30 = 12$). The corner **4.6.12** really does extend to a beautiful semi-regular tiling of squares, hexagons and 12-gons.`,
+            },
+            { /*ix:tilings.semiregular*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Build a corner',
+              body: r`Pick three regular polygons to meet at one corner. They are laid side by side around the black dot; a gap shows in amber, and an overlap in dashed coral. Find a corner that closes up exactly and uses a **pentagon**.`,
+              widget: {
+                kind: 'graph', stackSliders: true, equal: true, xmin: -3.9, xmax: 3.9, ymin: -3.9, ymax: 3.9, grid: false, axes: false, maxWidth: 420,
+                params: {
+                  a: { min: 3, max: 12, step: 1, value: 4, label: 'blue: sides', color: 'blue', format: (v) => `${v}` },
+                  b: { min: 3, max: 12, step: 1, value: 5, label: 'teal: sides', color: 'teal', format: (v) => `${v}` },
+                  c: { min: 3, max: 12, step: 1, value: 6, label: 'violet: sides', color: 'violet', format: (v) => `${v}` },
+                },
+                extra: ({ plot, p, s }) => {
+                  const ns = [p.a, p.b, p.c], total = ns.reduce((t, n) => t + interior(n), 0), cls = ['fl-blue-soft', 'fl-teal-soft', 'fl-violet-soft'];
+                  let th = 0;
+                  const polys = ns.map((n) => { const pts = ngon(n, (th * Math.PI) / 180); th += interior(n); return pts; });
+                  // zoom so the three polygons fill the picture (sides of 1 are tiny next to a 12-gon's reach)
+                  const all = polys.flat().concat([[0, 0]]), xs = all.map((q) => q[0]), ys = all.map((q) => q[1]);
+                  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+                  const k = Math.min(1.7, 3.2 / (Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) / 2));
+                  const T = ([x, y]) => [plot.X((x - cx) * k), plot.Y((y - cy) * k)];
+                  const path = (pts) => pts.map((q, i) => { const [x, y] = T(q); return `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`; }).join('') + 'Z';
+                  const els = polys.map((pts, j) => s('path', j === 2 && total > 360 + 1e-6
+                    ? { d: path(pts), fill: 'var(--coral)', 'fill-opacity': 0.25, stroke: 'var(--coral)', 'stroke-width': 2.5, 'stroke-dasharray': '6 5' }
+                    : { d: path(pts), class: cls[j], stroke: 'var(--ink)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+                  // the gap left at the corner, as an amber wedge
+                  if (total < 360 - 1e-6) {
+                    const wedge = [[0, 0]];
+                    for (let i = 0; i <= 24; i++) { const a = ((total + ((360 - total) * i) / 24) * Math.PI) / 180; wedge.push([0.55 * Math.cos(a), 0.55 * Math.sin(a)]); }
+                    els.push(s('path', { d: path(wedge), fill: 'var(--amber)', opacity: 0.55 }));
+                  }
+                  const [ox, oy] = T([0, 0]);
+                  els.push(s('circle', { cx: ox, cy: oy, r: 5, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => {
+                  const ns = [p.a, p.b, p.c], total = ns.reduce((t, n) => t + interior(n), 0);
+                  const sum = r`$${ns.map((n) => f2(interior(n))).join(' + ')} = ${f2(total)}^\circ$`;
+                  if (!cornerFits(ns)) return `${sum} · ${total < 360 ? 'a gap of' : 'an overlap of'} ${f2(Math.abs(total - 360))}°`;
+                  return `${sum} · it closes up! ${cornerTiles(ns) ? 'And this corner extends to a whole tiling.' : 'But can the pattern continue?'}`;
+                },
+                goal: (p) => cornerFits([p.a, p.b, p.c]) && [p.a, p.b, p.c].includes(5),
+                hint: r`A pentagon's angle is $108°$. Two of them leave $144°$: which polygon has that angle?`,
+                solution: { a: 5, b: 5, c: 10 },
+              },
+              explain: r`$108° + 108° + 144° = 360°$: two pentagons and a decagon close up around one point. Yet **5.5.10 can't tile the plane**. Look at one pentagon: at each of its corners, the two neighbours across its edges must be one pentagon and one decagon. So walking round the pentagon, its edge neighbours alternate pentagon, decagon, pentagon, decagon… which is impossible around **five** edges. Adding to 360° is necessary but not enough; the corners also have to fit together everywhere.`,
             },
             {
               type: 'mcq',

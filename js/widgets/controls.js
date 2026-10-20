@@ -21,7 +21,7 @@ export function slider({ label, min, max, step = 0.1, value, color = 'blue', for
   let longest = 0;
   const n = Math.round((max - min) / step);
   for (let k = 0; k <= Math.min(n, 400); k++) {
-    const v = min + (n <= 400 ? k * step : ((max - min) * k) / 400);
+    const v = min + (n <= 400 ? k : Math.round((n * k) / 400)) * step;
     try { longest = Math.max(longest, String(fmtv(+v.toFixed(9))).replace(/[$*\\{}]|\\[a-z]+/gi, '').length); } catch (e) {}
   }
   // long labels (named options) go on their own line under the track instead

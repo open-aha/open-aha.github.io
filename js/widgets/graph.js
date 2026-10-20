@@ -2,7 +2,8 @@
 // spec: { xmin,xmax,ymin,ymax, width,height, grid, axes:{...}, params:{name:{min,max,step,value,label,color,slider}},
 //   curves:[{f:(x,p)=>y, color, dash, width, from:(p)=>x, to:(p)=>x, param:{x:(t,p),y:(t,p),t0,t1}}],
 //   points:[{x:(p)=>, y:(p)=>, color, label:(p)=>str|str, drag:{x:'param', y:'param'}, r}],
-//   under:(ctx)=>[svg elements below the curves], extra:(ctx)=>[svg elements above the curves], readout:(p)=>md string, goal:(p)=>bool|{ok,msg}, solution:{...}, hint }
+//   under:(ctx)=>[svg elements below the curves], extra:(ctx)=>[svg elements above the curves], readout:(p)=>md string, goal:(p)=>bool|{ok,msg}, solution:{...}, hint,
+//   stackSliders: true puts each slider on its own row }
 
 import { h } from '../lib/dom.js';
 import { mdi } from '../lib/md.js';
@@ -125,7 +126,8 @@ export function graph(box, spec, api) {
 
   const extraLayer = plot.layers.over;
   const sliders = {};
-  const controls = h('div.w-controls');
+  // stackSliders: one slider per row, for sliders that need a long track to be set precisely
+  const controls = h(`div.w-controls${spec.stackSliders ? '.stack' : ''}`);
   for (const [k, d] of Object.entries(defs)) {
     if (d.slider === false) continue;
     sliders[k] = slider({

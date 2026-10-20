@@ -221,6 +221,55 @@ $$\theta_\text{in} = \theta_\text{out}$$`,
               ],
               explain: r`Extend the reflected rays backwards: they meet at a point 2 m **behind** the mirror. That's a **virtual image**: light doesn't really come from there, it just looks that way. To photograph yourself in a mirror, you focus the camera 4 m away.`,
             },
+            { /*ix:light.reflection*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Half your height',
+              body: r`You are 1.80 m tall with your eyes at 1.68 m, facing a wall mirror. Slide the mirror's bottom and top edges to make it as **short** as possible while you can still see both the top of your head and your toes. Then try a different distance.`,
+              widget: {
+                kind: 'graph', stackSliders: true, equal: true, xmin: -2.85, xmax: 2.85, ymin: -0.35, ymax: 2.1, grid: false, axes: false, maxWidth: 560,
+                params: {
+                  d: { min: 0.5, max: 2.5, step: 0.1, value: 1.5, label: 'distance', color: 'blue', format: (v) => `${fix(v, 1)} m` },
+                  lo: { min: 0.3, max: 1.2, step: 0.02, value: 0.3, label: 'bottom', color: 'teal', format: (v) => `${fix(v, 2)} m` },
+                  hi: { min: 1.4, max: 2.1, step: 0.02, value: 1.9, label: 'top', color: 'teal', format: (v) => `${fix(v, 2)} m` },
+                },
+                extra: ({ plot, p, s }) => {
+                  const eye = 1.68, X = (v) => plot.X(v), Y = (v) => plot.Y(v), lw = { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+                  const ln = (x1, y1, x2, y2, st) => s('line', { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y2), ...lw, ...st });
+                  const person = (x, st) => [
+                    ln(x - 0.12, 0, x, 0.85, st), ln(x + 0.12, 0, x, 0.85, st), ln(x, 0.85, x, 1.52, st),
+                    ln(x, 1.4, x - 0.2, 0.95, st), ln(x, 1.4, x + 0.2, 0.95, st),
+                    s('circle', { cx: X(x), cy: Y(1.66), r: X(0.14) - X(0), fill: 'var(--card)', ...st }),
+                  ];
+                  const els = [
+                    s('line', { x1: X(-2.85), y1: Y(0), x2: X(2.85), y2: Y(0), stroke: 'var(--line-2)', 'stroke-width': 2 }),
+                    s('text', { x: X(-p.d), y: Y(-0.25), 'text-anchor': 'middle', class: 'lbl halo-text', style: 'fill: var(--ink-3); font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px))', text: 'your image' }),
+                    s('text', { x: X(p.d), y: Y(-0.25), 'text-anchor': 'middle', class: 'lbl halo-text', style: 'font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px))', text: 'you' }),
+                    s('line', { x1: X(0), y1: Y(0), x2: X(0), y2: Y(2.1), stroke: 'var(--line-2)', 'stroke-width': 1.5, 'stroke-dasharray': '4 5' }),
+                    ...person(-p.d, { stroke: 'var(--ink-3)', 'stroke-width': 2.5, 'stroke-dasharray': '5 5', opacity: 0.6 }),
+                  ];
+                  // a ray from a point at height y on you to your eye bounces off the mirror halfway up between them
+                  for (const y of [1.8, 0]) {
+                    const m = (y + eye) / 2, hit = m >= p.lo - 1e-9 && m <= p.hi + 1e-9, col = y ? 'var(--amber)' : 'var(--coral)';
+                    els.push(ln(0, m, -p.d, y, { stroke: col, 'stroke-width': 1.5, 'stroke-dasharray': '3 5', opacity: 0.6 }));
+                    els.push(ln(p.d, y, 0, m, { stroke: col, 'stroke-width': 3, opacity: hit ? 1 : 0.25 }));
+                    els.push(ln(0, m, p.d, eye, { stroke: col, 'stroke-width': 3, opacity: hit ? 1 : 0.25 }));
+                  }
+                  els.push(s('rect', { x: X(0) - 5, y: Y(p.hi), width: 10, height: Math.max(0, Y(p.lo) - Y(p.hi)), rx: 3, class: 'fl-teal' }));
+                  els.push(...person(p.d, { stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  els.push(s('circle', { cx: X(p.d), cy: Y(eye), r: 4, class: 'fl-blue' }));
+                  return els;
+                },
+                readout: (p) => {
+                  const head = 1.74 >= p.lo - 1e-9 && 1.74 <= p.hi + 1e-9, toes = 0.84 >= p.lo - 1e-9 && 0.84 <= p.hi + 1e-9;
+                  return `mirror **${fix(Math.max(0, p.hi - p.lo), 2)} m** long · head ${head ? '✓' : '✗'} · toes ${toes ? '✓' : '✗'}`;
+                },
+                goal: (p) => p.lo <= 0.84 + 1e-9 && p.hi >= 1.74 - 1e-9 && p.hi - p.lo <= 0.9 + 1e-9,
+                hint: 'Raise the bottom edge until the coral ray from your toes is just about to miss, then lower the top edge until the amber ray from your head is about to miss.',
+                solution: { d: 1.5, lo: 0.84, hi: 1.74 },
+              },
+              explain: r`The shortest mirror runs from 0.84 m to 1.74 m: **0.90 m**, exactly half your height. Your image stands as far behind the glass as you stand in front, so every ray from your eye to a point on the image crosses the mirror **halfway** across, and therefore halfway up between your eye and that point. Change the distance and the rays tilt, but they still hit the glass at 0.84 m and 1.74 m. Where the mirror hangs matters as much as its length: put a tall mirror too high and your toes disappear.`,
+            },
             {
               type: 'numeric',
               title: 'Two mirrors at right angles',

@@ -1742,8 +1742,8 @@ export const courses = [
       "title": "Cutting in Half",
       "summary": "Midpoints and bisectors",
       "icon": "grip",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "perp",
@@ -1802,8 +1802,8 @@ export const courses = [
       "title": "Constructible Numbers",
       "summary": "Lengths built from square roots",
       "icon": "sigma",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "impossible",
@@ -2740,8 +2740,8 @@ export const courses = [
       "title": "Eratosthenes’ Shadow",
       "summary": "Measuring a planet with a stick",
       "icon": "sun",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      },
      {
       "id": "latlon",
@@ -2762,8 +2762,8 @@ export const courses = [
       "title": "Great Circles",
       "summary": "The straightest lines on a sphere",
       "icon": "right",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "routes",
@@ -2965,8 +2965,8 @@ export const courses = [
       "title": "Testing Positive",
       "summary": "Conditional probability and Bayes",
       "icon": "eye",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "birthday",
@@ -4344,8 +4344,8 @@ export const courses = [
       "title": "Sharing a Secret in Public",
       "summary": "Diffie–Hellman key exchange",
       "icon": "hand",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "hashes",
@@ -5998,8 +5998,8 @@ export const courses = [
       "title": "Reflection",
       "summary": "Mirrors and images",
       "icon": "eye",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "refraction",
@@ -6630,8 +6630,8 @@ export const courses = [
       "title": "Melting & Boiling",
       "summary": "Latent heat",
       "icon": "reset",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7325,8 +7325,8 @@ export const courses = [
       "title": "Mixing Polygons",
       "summary": "Semi-regular tilings",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7791,8 +7791,8 @@ export const courses = [
       "title": "Reading Shapes",
       "summary": "What f′ says about f",
       "icon": "eye",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -7905,8 +7905,8 @@ export const courses = [
       "title": "Integrals at Work",
       "summary": "Averages, areas between curves, work",
       "icon": "trophy",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },
@@ -8937,8 +8937,8 @@ export const courses = [
       "title": "Magnets & Fields",
       "summary": "Poles and field lines",
       "icon": "atom",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "currents-fields",
@@ -8975,8 +8975,8 @@ export const courses = [
       "title": "Generators & Transformers",
       "summary": "Powering the world",
       "icon": "bolt",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      }
     ]
    },

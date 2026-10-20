@@ -33,6 +33,14 @@ function riemann(plot, s, f, a, b, n, method = 'left', cls = 'fl-blue') {
 
 const diskSum = (n) => { const dx = 4 / n; let V = 0; for (let i = 1; i <= n; i++) V += Math.PI * (i * dx) * dx; return V; };
 
+// sin x on [0, π] against a level h: area of the hump above h, and of the hollows below it
+const levelAreas = (h) => {
+  let up = 0, down = 0;
+  const n = 600, dx = Math.PI / n;
+  for (let i = 0; i < n; i++) { const y = Math.sin((i + 0.5) * dx) - h; if (y > 0) up += y * dx; else down -= y * dx; }
+  return { up, down };
+};
+
 export default {
   id: 'integrals',
   subject: 'math',
@@ -435,6 +443,28 @@ $$\bar f = \frac{1}{b - a}\int_a^b f(x)\,dx$$`,
                 { v: 4.5, why: r`$\frac{f(0) + f(3)}{2} = 4.5$ only works for straight lines. Use the integral.` },
               ],
               explain: r`$\frac{1}{3}\int_0^3 x^2\,dx = \frac{9}{3} = 3$. A $3 \times 3$ rectangle has the same area as the region under the curve.`,
+            },
+            { /*ix:integrals.integral-applications*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Level it out',
+              body: r`Think of the area under $y = \sin x$, from $0$ to $\pi$, as a pile of sand. The average value is the height of the pile once it's raked flat. Move the level until the sand above it ({coral:coral}) would exactly fill the hollows below it ({blue:blue}).`,
+              widget: {
+                kind: 'graph', xmin: -0.2, xmax: 3.4, ymin: -0.15, ymax: 1.2, grid: false, height: 260, axes: { xticks: 1, yticks: 0.5, ...XY },
+                params: { h: { min: 0.3, max: 0.9, step: 0.005, value: 0.4, label: 'level', color: 'amber', format: (v) => fix(v, 3) } },
+                curves: [{ f: (x) => Math.sin(x), color: 'ink', width: 3, from: () => 0, to: () => Math.PI }, { f: (x, p) => p.h, color: 'amber', width: 2.5, dash: true, from: () => 0, to: () => Math.PI }],
+                under: ({ plot, p, s }) => {
+                  // the region between the curve and the level: coral where the curve is above it, blue where below
+                  const n = 200, xs = Array.from({ length: n + 1 }, (_, i) => (Math.PI * i) / n);
+                  const region = (pick) => xs.map((x, i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(pick(Math.sin(x), p.h)).toFixed(1)}`).join('') + `L${plot.X(Math.PI).toFixed(1)} ${plot.Y(p.h).toFixed(1)}L${plot.X(0).toFixed(1)} ${plot.Y(p.h).toFixed(1)}Z`;
+                  return [s('path', { d: region(Math.max), class: 'fl-coral-soft' }), s('path', { d: region(Math.min), class: 'fl-blue-soft' })];
+                },
+                readout: (p) => { const { up, down } = levelAreas(p.h); return `{coral:sand above the level} ${f3(up)} · {blue:hollows below it} ${f3(down)}`; },
+                goal: (p) => { const { up, down } = levelAreas(p.h); return Math.abs(up - down) < 0.012; },
+                hint: 'The total area under the arch is 2, and it is spread over a width of π.',
+                solution: { h: 0.635 },
+              },
+              explain: r`The two match at $h \approx 0.637$, which is $\frac{2}{\pi}$: the area under the arch is $\int_0^\pi \sin x\,dx = 2$, spread over a width of $\pi$. That's the average value. Raking flat moves sand sideways without changing the total, so the flat level is always the area divided by the width. Notice the average is well below the peak of 1, and well above half of it: the arch is fatter than a triangle.`,
             },
             {
               type: 'explain',

@@ -109,6 +109,9 @@
 .w-controls.center {
   justify-content: center;
 }
+.w-controls.stack .slider {
+  flex-basis: 100%;
+}
 .w-btn {
   display: inline-flex;
   align-items: center;

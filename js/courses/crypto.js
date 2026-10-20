@@ -61,6 +61,9 @@ function sha256(text) {
 const AVALANCHE = ['Pay Bob £100', 'Pay Bob £900', 'Pay Bob £100.', 'pay Bob £100', 'Pay Rob £100', 'Pay Bob £100'];
 const avalancheBits = (m) => sha256(m).flatMap((b) => Array.from({ length: 8 }, (_, i) => (b >> (7 - i)) & 1));
 
+// a 23-hour clock: position of the number v (0 at the top, clockwise)
+const clock23 = (v, rad = 1) => [rad * Math.sin((2 * Math.PI * v) / 23), rad * Math.cos((2 * Math.PI * v) / 23)];
+
 export default {
   id: 'crypto',
   subject: 'math',
@@ -384,6 +387,40 @@ Both equal $g^{ab} \bmod p$. Computing $g^a \bmod p$ is fast. Going backwards, f
               answer: 10,
               wrong: [{ v: 125, why: r`That's $5^3$ itself. Reduce it mod 23: subtract multiples of 23.` }],
               explain: r`$5^3 = 125 = 5 \times 23 + 10$, so $B = 10$. Eve now knows 5, 23, Alice's $A$ and Bob's $B = 10$, but not $a$ or $b$.`,
+            },
+            { /*ix:crypto.diffiehellman*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Times versus powers',
+              body: r`A clock with 23 hours shows arithmetic mod 23. Step $a$ up and watch where the answer lands. **Multiples** $5a$ march round in even strides of 5. **Powers** $5^a$ jump about. Switch to powers and find the first $a > 0$ where $5^a$ comes back to 1.`,
+              widget: {
+                kind: 'graph', stackSliders: true, equal: true, xmin: -1.3, xmax: 1.3, ymin: -1.3, ymax: 1.3, grid: false, axes: false, maxWidth: 440,
+                params: {
+                  m: { min: 0, max: 1, step: 1, value: 0, label: 'operation', color: 'violet', format: (v) => (v ? 'powers' : 'multiples') },
+                  a: { min: 0, max: 22, step: 1, value: 4, label: r`$a$`, color: 'coral', format: (v) => `${v}` },
+                },
+                extra: ({ plot, p, s }) => {
+                  const val = (k) => (p.m ? powmod(5, k, 23) : (5 * k) % 23), P = (v, rad) => { const [x, y] = clock23(v, rad); return [plot.X(x), plot.Y(y)]; };
+                  const els = [s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), fill: 'none', stroke: 'var(--line-2)', 'stroke-width': 2 })];
+                  for (let k = 1; k <= p.a; k++) {
+                    const [x1, y1] = P(val(k - 1), 1), [x2, y2] = P(val(k), 1);
+                    els.push(s('line', { x1, y1, x2, y2, stroke: 'var(--violet)', 'stroke-width': 2, opacity: 0.35 + (0.65 * k) / Math.max(1, p.a) }));
+                  }
+                  for (let v = 0; v < 23; v++) {
+                    const [x, y] = P(v, 1), [tx, ty] = P(v, 1.15);
+                    els.push(s('circle', { cx: x, cy: y, r: 4, class: 'fl-muted' }));
+                    els.push(s('text', { x: tx, y: ty + 5, 'text-anchor': 'middle', class: 'lbl halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px))', text: String(v) }));
+                  }
+                  const [hx, hy] = P(val(p.a), 1);
+                  els.push(s('circle', { cx: hx, cy: hy, r: 9, class: 'fl-coral', stroke: 'var(--card)', 'stroke-width': 3 }));
+                  return els;
+                },
+                readout: (p) => (p.m ? r`$5^{${p.a}} \bmod 23 = ${powmod(5, p.a, 23)}$` : r`$5 \times ${p.a} \bmod 23 = ${(5 * p.a) % 23}$`),
+                goal: (p) => p.m === 1 && p.a === 22,
+                hint: r`The powers start at $5^0 = 1$. Keep stepping until the coral dot lands on 1 again.`,
+                solution: { m: 1, a: 22 },
+              },
+              explain: r`$5^{22} \equiv 1$, and on the way the powers of 5 land on **every** hour from 1 to 22 exactly once, in a scrambled order. That's what makes 5 a good base: $g^a$ could be anything. The two operations feel similar but are worlds apart for Eve. Undoing a multiple is easy: since $5 \times 14 = 70 \equiv 1$, multiplying by 14 recovers $a$ from $5a$ in one step. Undoing a power (the **discrete logarithm**) has no known shortcut of that kind; for a prime hundreds of digits long, the best known methods on ordinary computers are hopelessly slow.`,
             },
             {
               type: 'numeric',

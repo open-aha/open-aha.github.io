@@ -8,6 +8,15 @@ const realCOP = (tc) => (0.5 * 308.15) / (308.15 - (tc + 273.15));
 // adiabatic compression of air (γ = 1.4) from 300 K by volume ratio r
 const adiabaticT = (rr) => 300 * rr ** 0.4;
 
+// 1 kg of ice from −20 °C: ice 2.1 kJ/K, melt 334 kJ, water 4.19 kJ/K, boil 2260 kJ, steam 2.0 kJ/K
+const iceState = (q) => {
+  if (q < 42) return { T: -20 + q / 2.1, ice: 1, water: 0, steam: 0 };
+  if (q < 376) { const m = (q - 42) / 334; return { T: 0, ice: 1 - m, water: m, steam: 0 }; }
+  if (q < 795) return { T: (q - 376) / 4.19, ice: 0, water: 1, steam: 0 };
+  if (q < 3055) { const b = (q - 795) / 2260; return { T: 100, ice: 0, water: 1 - b, steam: b }; }
+  return { T: 100 + (q - 3055) / 2.0, ice: 0, water: 0, steam: 1 };
+};
+
 export default {
   id: 'thermo',
   subject: 'physics',
@@ -340,6 +349,38 @@ Special cases: at fixed $T$, $PV$ is constant (Boyle). At fixed $P$, $V \propto 
               unit: 'kJ',
               answer: 1130,
               explain: r`$0.5 \times 2260 = 1{,}130$ kJ, over five times the 210 kJ needed to heat that water from 0 to 100 °C. That’s why a pan takes so long to boil dry.`,
+            },
+            { /*ix:thermo.phases*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Feed it heat',
+              body: r`Start with 1 kg of ice at −20 °C and add heat. Watch the thermometer stall while the ice melts and while the water boils. Add just enough heat to boil away **half** of the water.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 3200, ymin: -30, ymax: 130, grid: 400, gridY: 20, height: 300, axes: { xlabel: 'heat added (kJ)', ylabel: 'T (°C)', yAt: -30 },
+                params: { q: { min: 0, max: 3095, step: 5, value: 200, label: 'heat', color: 'coral', format: (v) => `${Math.round(v)} kJ` } },
+                curves: [{ f: (q) => iceState(q).T, color: 'coral', from: () => 0, to: () => 3095, n: 400 }],
+                under: ({ plot, p, s }) => {
+                  const st = iceState(p.q), X = (v) => plot.X(v), Y = (v) => plot.Y(v), x0 = 1950, x1 = 2850, y0 = 22, y1 = 94, els = [];
+                  // the pan: liquid level from the unboiled mass, ice cubes floating in it, steam above
+                  const lvl = y0 + 52 * (st.ice + st.water);
+                  els.push(s('rect', { x: X(x0), y: Y(lvl), width: X(x1) - X(x0), height: Math.max(0, Y(y0) - Y(lvl)), class: st.water > 0 ? 'fl-blue-soft' : 'fl-surface' }));
+                  const cubes = Math.round(st.ice * 6);
+                  for (let i = 0; i < cubes; i++) els.push(s('rect', { x: X(x0 + 60 + i * 135), y: Y(y0 + 40), width: X(110) - X(0), height: Y(0) - Y(28), rx: 4, fill: 'var(--card)', stroke: 'var(--blue)', 'stroke-width': 2 }));
+                  const puffs = Math.round(st.steam * 8);
+                  for (let i = 0; i < puffs; i++) els.push(s('circle', { cx: X(x0 + 90 + (i % 4) * 240), cy: Y(lvl + 14 + Math.floor(i / 4) * 16 + (i % 2) * 6), r: 7, fill: 'var(--ink-3)', opacity: 0.35 }));
+                  els.push(s('path', { d: `M${X(x0)} ${Y(y1)} L${X(x0)} ${Y(y0)} L${X(x1)} ${Y(y0)} L${X(x1)} ${Y(y1)}`, fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  return els;
+                },
+                points: [{ x: (p) => p.q, y: (p) => iceState(p.q).T, color: 'coral' }],
+                readout: (p) => {
+                  const st = iceState(p.q), pc = (v) => fix(100 * v, 0);
+                  return `T = **${fix(st.T, 1)} °C** · ice ${pc(st.ice)}% · water ${pc(st.water)}% · boiled away ${pc(st.steam)}%`;
+                },
+                goal: (p) => Math.abs(iceState(p.q).steam - 0.5) <= 0.02,
+                hint: r`Add up the stages: warm the ice ($42$ kJ), melt it ($334$ kJ), heat the water to 100 °C ($419$ kJ), then boil half of it.`,
+                solution: { q: 1925 },
+              },
+              explain: r`$42 + 334 + 419 + 1130 = 1925$ kJ. All the way from −20 °C ice to boiling water took 795 kJ, and boiling off just half of it takes 1130 kJ more, all at a steady 100 °C. On both flat stretches the energy goes into pulling molecules apart, not into making them move faster, so the temperature can't rise until the change of state is complete.`,
             },
             {
               type: 'numeric',

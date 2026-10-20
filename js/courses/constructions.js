@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 const r = String.raw;
 const D = Math.PI / 180;
 const arcPath = (plot, cx, cy, rad, a0, a1) => {
@@ -9,6 +10,22 @@ const arcPath = (plot, cx, cy, rad, a0, a1) => {
   return d;
 };
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+
+const VILLAGES = [[-2.2, -1.2, 'A'], [2.4, -1.0, 'B'], [0.4, 2.0, 'C']];
+const wellDists = (p) => VILLAGES.map(([x, y]) => Math.hypot(x - p.wx, y - p.wy));
+
+// spiral of Theodorus: outer corners P_k at radius √k; triangle k is O, P_k, P_(k+1), with a right angle at P_k
+let THEO = null;
+const theodorus = () => THEO || (THEO = (() => {
+  const pts = [[1, 0]];
+  let th = 0;
+  for (let k = 1; k <= 20; k++) {
+    th += Math.atan(1 / Math.sqrt(k));
+    pts.push([Math.sqrt(k + 1) * Math.cos(th), Math.sqrt(k + 1) * Math.sin(th)]);
+  }
+  return pts;
+})());
+const theoTurn = (n) => { let t = 0; for (let k = 1; k <= n; k++) t += (Math.atan(1 / Math.sqrt(k)) * 180) / Math.PI; return t; };
 
 export default {
   id: 'constructions',
@@ -183,6 +200,39 @@ New points appear only where lines and circles cross. Everything in this course 
                 { t: 'Take the midpoint of the longest side', why: 'That’s only equidistant from all three for a right-angled triangle.' },
               ],
               explain: r`Every point on the perpendicular bisector of $AB$ is equally far from $A$ and $B$. Where two bisectors cross, the point is equally far from all three villages: the **circumcentre**, the centre of the circle through all three. (The third bisector passes through it too.)`,
+            },
+            { /*ix:constructions.bisect*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Dig the well',
+              body: r`Drag the well (violet) to the spot that is the same distance from all three villages. The dashed circle around the well passes through village $A$. Whenever the well is equally far from **two** villages, the perpendicular bisector between them lights up.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -3.2, xmax: 3.2, ymin: -3, ymax: 2.6, grid: false, axes: false, maxWidth: 460, clipExtra: true,
+                params: { wx: { min: -3, max: 3, step: 0.01, value: -1.2, slider: false }, wy: { min: -2.8, max: 2.4, step: 0.01, value: 1.2, slider: false } },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), d = wellDists(p), els = [];
+                  els.push(s('circle', { cx: X(p.wx), cy: Y(p.wy), r: X(d[0]) - X(0), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '6 5' }));
+                  // a bisector shows once the well is (nearly) on it
+                  for (const [i, j] of [[0, 1], [1, 2], [2, 0]]) {
+                    if (Math.abs(d[i] - d[j]) > 0.1) continue;
+                    const [x1, y1] = VILLAGES[i], [x2, y2] = VILLAGES[j], mx = (x1 + x2) / 2, my = (y1 + y2) / 2, L = Math.hypot(x2 - x1, y2 - y1), ux = -(y2 - y1) / L, uy = (x2 - x1) / L;
+                    els.push(s('line', { x1: X(mx - 8 * ux), y1: Y(my - 8 * uy), x2: X(mx + 8 * ux), y2: Y(my + 8 * uy), stroke: 'var(--violet)', 'stroke-width': 2.5, opacity: 0.8 }));
+                  }
+                  VILLAGES.forEach(([x, y, n], i) => {
+                    els.push(s('line', { x1: X(p.wx), y1: Y(p.wy), x2: X(x), y2: Y(y), stroke: 'var(--blue)', 'stroke-width': 2 }));
+                    els.push(s('text', { x: X((x + p.wx) / 2) + 6, y: Y((y + p.wy) / 2) - 6, class: 'lbl halo-text', style: 'fill: var(--blue); font-size:max(calc(15px * var(--fs, 1)), var(--fmin, 0px))', text: fix(d[i], 2) }));
+                    els.push(s('rect', { x: X(x) - 9, y: Y(y) - 9, width: 18, height: 18, rx: 3, class: 'fl-amber', stroke: 'var(--ink)', 'stroke-width': 1.5 }));
+                    els.push(s('text', { x: X(x) + (n === 'A' ? -18 : 18), y: Y(y) + (n === 'C' ? -12 : 22), 'text-anchor': 'middle', class: 'lbl halo-text', style: 'font-weight:700; font-size:max(calc(17px * var(--fs, 1)), var(--fmin, 0px))', text: n }));
+                  });
+                  return els;
+                },
+                points: [{ x: (p) => p.wx, y: (p) => p.wy, drag: { x: 'wx', y: 'wy' }, color: 'violet' }],
+                readout: (p) => { const d = wellDists(p); return `to A ${fix(d[0], 2)} · to B ${fix(d[1], 2)} · to C ${fix(d[2], 2)}`; },
+                goal: (p) => { const d = wellDists(p); return Math.abs(d[0] - d[1]) < 0.1 && Math.abs(d[1] - d[2]) < 0.1; },
+                hint: 'First slide the well until the A–B bisector lights up, then move along that line until a second one lights up too.',
+                solution: { wx: 0.07, wy: -0.39 },
+              },
+              explain: r`At the spot where two bisectors cross, the third one lights up as well: equal to $A$ and $B$, and equal to $B$ and $C$, means equal to $A$ and $C$ too. That's why the three perpendicular bisectors of any triangle always meet in one point, the **circumcentre**, and the dashed circle now runs through all three villages. These villages form an acute triangle, so the well is inside it; for a triangle with an obtuse angle it would lie outside.`,
             },
             {
               type: 'numeric',
@@ -753,6 +803,42 @@ That means a cube root of 2, which can't be written with square roots alone, is 
               answer: Math.sqrt(5),
               tol: 0.001,
               explain: r`$\sqrt{1 + 4} = \sqrt5 \approx 2.236$. Adding 1 and halving then gives the golden ratio $\frac{1 + \sqrt5}{2}$, which is how the regular pentagon is constructed.`,
+            },
+            { /*ix:constructions.numbers*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'The spiral of Theodorus',
+              body: r`Each new right triangle has one leg of length 1, standing at right angles on the last hypotenuse. If the last hypotenuse was $\sqrt k$, the new one is $\sqrt{k + 1}$, so the spiral builds every square root in turn. Add triangles until the spiral first **overlaps** itself.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -5, xmax: 5, ymin: -5, ymax: 5, grid: false, axes: false, maxWidth: 440,
+                params: { n: { min: 1, max: 20, step: 1, value: 4, label: 'triangles', color: 'teal', format: (v) => `${v}` } },
+                extra: ({ plot, p, s }) => {
+                  // zoom out as the spiral grows, so a few triangles are not lost in an empty picture
+                  const P = theodorus(), pts = [[0, 0], ...P.slice(0, p.n + 1)], xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
+                  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+                  const z = Math.min(2.4, 4.4 / (Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) / 2 + 0.6));
+                  const X = (v) => plot.X((v - cx) * z), Y = (v) => plot.Y((v - cy) * z), els = [];
+                  let turned = 0;
+                  for (let k = 1; k <= p.n; k++) {
+                    const [x1, y1] = P[k - 1], [x2, y2] = P[k];
+                    turned += (Math.atan(1 / Math.sqrt(k)) * 180) / Math.PI;
+                    const over = turned > 360;
+                    els.push(s('path', { d: `M${X(0)} ${Y(0)} L${X(x1)} ${Y(y1)} L${X(x2)} ${Y(y2)} Z`, class: over ? 'fl-coral-soft' : k % 2 ? 'fl-teal-soft' : 'fl-blue-soft', stroke: over ? 'var(--coral)' : 'var(--ink-2)', 'stroke-width': over ? 2.5 : 1.5, 'stroke-linejoin': 'round' }));
+                    els.push(s('line', { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y2), stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  }
+                  for (let k = 1; k <= p.n + 1; k++) {
+                    const [x, y] = P[k - 1], rr = Math.hypot(x, y), q = (rr + 0.42 / z) / rr;
+                    els.push(s('text', { x: X(x * q), y: Y(y * q) + 5, 'text-anchor': 'middle', class: 'lbl halo-text', style: 'font-size:max(calc(15px * var(--fs, 1)), var(--fmin, 0px))', text: k === 1 ? '1' : `√${k}` }));
+                  }
+                  els.push(s('circle', { cx: X(0), cy: Y(0), r: 4, class: 'fl-ink' }));
+                  return els;
+                },
+                readout: (p) => r`longest side $\sqrt{${p.n + 1}} \approx ${fix(Math.sqrt(p.n + 1), 3)}$ · turned through ${fix(theoTurn(p.n), 2)}°${theoTurn(p.n) > 360 ? ' · **overlap!**' : ''}`,
+                goal: (p) => theoTurn(p.n) > 360 && theoTurn(p.n - 1) <= 360,
+                hint: 'Watch the total turn: the spiral overlaps once it has gone more than 360° round the centre.',
+                solution: { n: 17 },
+              },
+              explain: r`Sixteen triangles reach $\sqrt{17}$ after turning $351°$; the seventeenth, with hypotenuse $\sqrt{18}$, sweeps past $360°$ and covers the first. Every $\sqrt n$ is constructible, one triangle at a time. Plato reports that Theodorus of Cyrene proved $\sqrt3, \sqrt5, \ldots$ irrational one at a time, up to $\sqrt{17}$, and then stopped. Nobody knows why. One guess is a figure like this one, which stops at $\sqrt{17}$ just before it overlaps itself.`,
             },
             {
               type: 'mcq',

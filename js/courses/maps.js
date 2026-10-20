@@ -33,6 +33,9 @@ const PROJ = [
 ];
 const pathOf = (pts) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
 
+// two cities at latitude f (deg), 180° apart in longitude: route along the parallel versus over the pole (km)
+const routes = (f) => ({ par: Math.PI * 6371 * Math.cos(f * D), pole: 6371 * (Math.PI - 2 * f * D) });
+
 export default {
   id: 'maps',
   subject: 'math',
@@ -112,6 +115,42 @@ The Sun is so far away that its rays arrive parallel. So the difference in shado
                 { t: 'The Earth is the centre of the universe', why: 'The measurement works regardless. It only needs parallel rays and a round Earth.' },
               ],
               explain: r`If the Sun were close, rays would spread out and the shadow difference would partly reflect the Sun's nearness instead of the Earth's curvature. Because the Sun is about 150 million km away, the rays are parallel to great accuracy.`,
+            },
+            { /*ix:maps.eratosthenes*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'A flat Earth with a nearby Sun',
+              body: r`Could a **flat** Earth give the same two shadows? Put the Sun directly above Syene, at some height. Its rays then spread out, and the stick in Alexandria, 800 km away, gets a shadow. Find the Sun's height that gives Alexandria's measured $7.2°$.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -2.4, xmax: 1.6, ymin: -0.35, ymax: 1.75, grid: false, axes: false, maxWidth: 560, clipExtra: true,
+                params: { h: { min: 2000, max: 12000, step: 50, value: 2000, label: 'height', color: 'amber', format: (v) => `${Math.round(v).toLocaleString('en-US')} km` } },
+                extra: ({ plot, p, s, arrow }) => {
+                  // 800 km on the ground is drawn as 1.6 units; the sticks are drawn far taller than to scale
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), k = 1.6 / 800, sunY = p.h * k, ax = -1.6, stick = 0.7;
+                  const alpha = Math.atan(800 / p.h), els = [];
+                  for (let g = -2.4; g <= 1.61; g += 0.4) els.push(s('line', { x1: X(0), y1: Y(sunY), x2: X(g), y2: Y(0), stroke: 'var(--amber)', 'stroke-width': 1.5, opacity: 0.45 }));
+                  els.push(s('line', { x1: X(-2.4), y1: Y(0), x2: X(1.6), y2: Y(0), stroke: 'var(--teal)', 'stroke-width': 4 }));
+                  // Syene: stick straight below the Sun, no shadow
+                  els.push(s('line', { x1: X(0), y1: Y(0), x2: X(0), y2: Y(stick), stroke: 'var(--ink)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  // Alexandria: the ray past the top of the stick lands a shadow's length further from the Sun
+                  const sh = stick * Math.tan(alpha);
+                  els.push(s('line', { x1: X(ax), y1: Y(0), x2: X(ax - sh), y2: Y(0), stroke: 'var(--ink-2)', 'stroke-width': 7, opacity: 0.8, 'stroke-linecap': 'round' }));
+                  els.push(s('line', { x1: X(ax), y1: Y(stick), x2: X(ax - sh), y2: Y(0), stroke: 'var(--amber)', 'stroke-width': 3 }));
+                  els.push(s('line', { x1: X(ax), y1: Y(0), x2: X(ax), y2: Y(stick), stroke: 'var(--ink)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                  els.push(s('line', { x1: X(ax), y1: Y(stick), x2: X(ax), y2: Y(stick + 0.45), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                  els.push(s('line', { x1: X(ax), y1: Y(stick), x2: X(ax + 0.45 * Math.tan(alpha)), y2: Y(stick + 0.45), stroke: 'var(--amber)', 'stroke-width': 3 }));
+                  els.push(s('text', { x: X(0) + 10, y: Y(-0.2), class: 'lbl halo-text', text: 'Syene' }));
+                  els.push(s('text', { x: X(ax), y: Y(-0.2), class: 'lbl halo-text', 'text-anchor': 'middle', text: 'Alexandria' }));
+                  els.push(s('text', { x: X(ax + 0.45 * Math.tan(alpha)) + 8, y: Y(stick + 0.32), class: 'lbl halo-text', style: 'fill: var(--violet)', text: `${fix((alpha * 180) / Math.PI, 2)}°` }));
+                  els.push(arrow(X(0.35), Y(1.25), X(0.35), Y(1.65), { color: 'var(--amber)', width: 2.5 }), s('text', { x: X(0.45), y: Y(1.4), class: 'lbl halo-text', text: 'to the Sun' }));
+                  return els;
+                },
+                readout: (p) => `shadow angle in Alexandria **${fix((Math.atan(800 / p.h) * 180) / Math.PI, 2)}°** · in Syene 0.00°`,
+                goal: (p) => Math.abs((Math.atan(800 / p.h) * 180) / Math.PI - 7.2) < 0.2,
+                hint: r`The angle is set by $\tan\alpha = \frac{800}{h}$. Higher Sun, smaller angle.`,
+                solution: { h: 6350 },
+              },
+              explain: r`About **6,300 km** up ($\tan 7.2° \approx 800/6300$). A flat Earth under a Sun 6,300 km away explains the two shadows just as well as a round Earth under a distant Sun: two shadows alone can't tell the pictures apart. Eratosthenes needed a far-away Sun, and the Greeks had reasons for one: Aristarchus had estimated it at about 20 times the Moon's distance. A third city settles it. On a round Earth the shadow angle grows in step with distance, $7.2°$ for every 800 km, while under a nearby Sun it grows more and more slowly. Shadows measured all over the world fit only the round Earth.`,
             },
             {
               type: 'numeric',
@@ -314,6 +353,40 @@ where $\theta$ is the angle (in radians) between the points as seen from the cen
               tol: 20,
               wrong: [{ v: 10008, tol: 30, why: 'That’s the route along the parallel. Over the pole, each city is 30° from the pole.' }, { v: 3336, tol: 20, why: 'That’s only one half of the trip, from a city to the pole.' }],
               explain: r`Each city is $30°$ from the pole, so the great-circle angle is $60° = \frac{\pi}{3}$, and $d = 6371 \times \frac{\pi}{3} \approx 6672$ km: a third shorter than following the parallel. That's why flights from Europe to the west coast of North America pass over Greenland, even though on a flat map it looks like a detour.`,
+            },
+            { /*ix:maps.greatcircles*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Where the shortcut pays most',
+              body: r`Move the two cities north or south, keeping them on opposite sides of the globe. At the equator both routes are great circles of the same length; near the pole both routes are short. Find the latitude where going over the pole **saves the most** kilometres.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -1.3, xmax: 1.3, ymin: -1.3, ymax: 1.3, grid: false, axes: false, maxWidth: 400,
+                params: { f: { min: 5, max: 85, step: 1, value: 60, label: 'latitude', color: 'violet', format: (v) => `${v}° N` } },
+                extra: ({ plot, p, s }) => {
+                  const V = view(0, 0, 1, 0.8), P = (la, lo) => { const [x, y] = V(la, lo); return [plot.X(x), plot.Y(-y)]; };
+                  const eq = [], par = [], gc = [];
+                  for (let t = 0; t <= 360; t += 5) eq.push(P(0, t));
+                  for (let t = 0; t <= 180; t += 3) par.push(P(p.f, t));
+                  for (let la = p.f; la <= 180 - p.f + 1e-9; la += 1) gc.push(la <= 90 ? P(la, 0) : P(180 - la, 180));
+                  const [ax, ay] = P(p.f, 0), [bx, by] = P(p.f, 180), [nx, ny] = P(90, 0);
+                  return [
+                    s('circle', { cx: plot.X(0), cy: plot.Y(0), r: plot.X(1) - plot.X(0), class: 'fl-teal-soft', stroke: 'var(--teal)', 'stroke-width': 2 }),
+                    s('path', { d: pathOf(eq), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }),
+                    s('path', { d: pathOf(par), fill: 'none', stroke: 'var(--coral)', 'stroke-width': 4 }),
+                    s('path', { d: pathOf(gc), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 4 }),
+                    s('circle', { cx: nx, cy: ny, r: 4, class: 'fl-ink' }),
+                    s('circle', { cx: ax, cy: ay, r: 7, class: 'fl-ink' }), s('circle', { cx: bx, cy: by, r: 7, class: 'fl-ink' }),
+                  ];
+                },
+                readout: (p) => {
+                  const { par, pole } = routes(p.f), k = (v) => Math.round(v).toLocaleString('en-US');
+                  return `{coral:along the parallel} ${k(par)} km · {blue:over the pole} ${k(pole)} km · saving **${k(par - pole)} km**`;
+                },
+                goal: (p) => { const { par, pole } = routes(p.f); return par - pole > 4205; },
+                hint: 'The saving grows as you leave the equator, then shrinks again near the pole. Look for where it stops growing.',
+                solution: { f: 40 },
+              },
+              explain: r`The saving $\pi R\cos\varphi - R(\pi - 2\varphi)$ peaks where its slope, $R(2 - \pi\sin\varphi)$, is zero: $\sin\varphi = \frac{2}{\pi}$, so $\varphi \approx 39.5°$, about the latitude of Madrid, Beijing or Philadelphia. There the shortcut saves about 4,213 km. Near the pole the sphere looks almost flat, and the two routes become half a circle against its diameter: the shortcut is $\frac{2}{\pi} \approx 64\%$ of the long way, but both are short, so the saving is small.`,
             },
             {
               type: 'mcq',

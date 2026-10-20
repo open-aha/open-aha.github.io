@@ -27,6 +27,14 @@ const longestRun = (n) => {
   return best;
 };
 
+// 1000 people for the screening test: 20 sick (2%), the rest healthy; counts are whole people
+// false-alarm rates (%) the slider steps through: fine steps where they matter, near zero
+const FALSE_ALARMS = [0.1, 0.2, 0.3, 0.5, 0.7, 1, 1.5, 2, 3, 5, 7, 10];
+const screen = (sens, fpr) => {
+  const tp = Math.round(20 * sens / 100), fp = Math.round(980 * fpr / 100);
+  return { tp, fn: 20 - tp, fp, tn: 980 - fp };
+};
+
 export default {
   id: 'probability',
   subject: 'math',
@@ -661,6 +669,40 @@ $$P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}$$
 For the rare disease: $\frac{0.9 \times 0.02}{0.116} \approx 0.155$, where $P(B) = 0.9 \times 0.02 + 0.1 \times 0.98 = 0.116$ is the overall chance of testing positive.
 
 Bayes' theorem tells you how to **update** a belief when new evidence arrives. It's used everywhere from spam filters to medical diagnosis.`,
+            },
+            { /*ix:probability.bayes*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Fewer false alarms',
+              body: r`Each dot is one of the same 1000 people, 20 of them sick. {coral:Coral} dots are sick people who test positive (a coral ring is a sick person the test misses), and {amber:amber} dots are healthy people who test positive. Improve the test until a positive result is right at least **90%** of the time.`,
+              widget: {
+                kind: 'graph', stackSliders: true, xmin: -0.6, xmax: 39.6, ymin: -0.6, ymax: 24.6, grid: false, axes: false, height: 370,
+                params: {
+                  sens: { min: 50, max: 100, step: 1, value: 90, label: 'detection', color: 'coral', format: (v) => `${v}%` },
+                  fpr: { min: 0, max: FALSE_ALARMS.length - 1, step: 1, value: FALSE_ALARMS.length - 1, label: 'false alarms', color: 'amber', format: (v) => `${fix(FALSE_ALARMS[v], 1)}%` },
+                },
+                extra: ({ plot, p, s }) => {
+                  // dot size from the tighter of the two spacings, so dots never touch on a squat or narrow plot
+                  const { tp, fp } = screen(p.sens, FALSE_ALARMS[p.fpr]), rad = Math.min(plot.X(1) - plot.X(0), plot.Y(0) - plot.Y(1)) * 0.38, els = [];
+                  for (let i = 0; i < 1000; i++) {
+                    const at = { cx: plot.X(i % 40), cy: plot.Y(24 - Math.floor(i / 40)) };
+                    // sick and caught: coral · sick but missed: coral ring · healthy false alarm: amber · healthy negative: faint grey
+                    if (i < tp) els.push(s('circle', { ...at, r: rad, class: 'fl-coral' }));
+                    else if (i < 20) els.push(s('circle', { ...at, r: rad - 0.75, fill: 'none', stroke: 'var(--coral)', 'stroke-width': 1.5 }));
+                    else if (i < 20 + fp) els.push(s('circle', { ...at, r: rad, class: 'fl-amber' }));
+                    else els.push(s('circle', { ...at, r: rad * 0.8, fill: 'var(--line-2)' }));
+                  }
+                  return els;
+                },
+                readout: (p) => {
+                  const { tp, fp } = screen(p.sens, FALSE_ALARMS[p.fpr]);
+                  return r`positive tests: **${tp}** sick + **${fp}** healthy · a positive is right **${fix((100 * tp) / (tp + fp), 1)}%** of the time`;
+                },
+                goal: (p) => { const { tp, fp } = screen(p.sens, FALSE_ALARMS[p.fpr]); return tp / (tp + fp) >= 0.9; },
+                hint: 'Push detection all the way to 100% and see how little it helps. The amber crowd is the problem.',
+                solution: { sens: 90, fpr: 1 },
+              },
+              explain: r`Even a perfect 100% detection rate leaves a positive right only about 17% of the time while 10% of the healthy get false alarms. What matters for a rare disease is the false-alarm rate: it has to fall to about **0.2%**, so that only 2 of the 980 healthy people test positive, before 18 true positives make up 90% of the positives. This is why screening tests for rare conditions need very high **specificity**, and why a positive screen is usually followed by a second, different test.`,
             },
             {
               type: 'mcq',

@@ -14,6 +14,10 @@ const tangent = (f, df) => (x, p) => f(p.a) + df(p.a) * (x - p.a);
 // slope of b^x at x = 0, estimated with a tiny step
 const slopeAt0 = (b) => (b ** 1e-6 - 1) / 1e-6;
 
+// f(x) = x³ − 3x² + 1: peak at 0, valley at 2, and it bends the other way at x = 1
+const hill = (x) => x ** 3 - 3 * x * x + 1;
+const dhill = (x) => 3 * x * x - 6 * x;
+
 export default {
   id: 'derivatives',
   subject: 'math',
@@ -433,6 +437,27 @@ Careful: $f' = 0$ doesn't guarantee a peak or valley. $y = x^3$ has $f'(0) = 0$,
                 { t: r`$x = \sqrt3$`, why: r`That's where $f(x) = 0$ (a root of $f$), not where $f' = 0$.` },
               ],
               explain: r`$f'(x) = x^2 - 1 = 0$ gives $x = \pm 1$. At $x = -1$ the slope goes $+ \to -$ (a local maximum). At $x = 1$ it goes $- \to +$ (a local minimum). You can see both on the derivative graph in the earlier lesson, The Derivative.`,
+            },
+            { /*ix:derivatives.reading-graphs*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Steepest on the way down',
+              body: r`Here is $f(x) = x^3 - 3x^2 + 1$. It is {coral:coral} where it bends like a cap and {blue:blue} where it bends like a cup. Drag the point along the curve and watch the tangent. Find where the curve is falling **most steeply**.`,
+              widget: {
+                kind: 'graph', xmin: -1.2, xmax: 3.4, ymin: -3.8, ymax: 3.4, grid: 1, height: 320, axes: { ...XY, yticks: 2 },
+                params: { a: { min: -1, max: 3.2, step: 0.05, value: 2.6, slider: false } },
+                curves: [
+                  { f: (x, p) => hill(p.a) + dhill(p.a) * (x - p.a), color: 'amber', width: 2, from: (p) => p.a - 1.1, to: (p) => p.a + 1.1 },
+                  { f: hill, color: 'coral', width: 3, from: () => -1.2, to: () => 1 },
+                  { f: hill, color: 'blue', width: 3, from: () => 1, to: () => 3.4 },
+                ],
+                points: [{ x: (p) => p.a, y: (p) => hill(p.a), drag: { x: 'a' }, color: 'ink' }],
+                readout: (p) => r`slope $f'(${fix(p.a, 2)}) = ${fix(dhill(p.a), 2)}$ · ${Math.abs(p.a - 1) < 1e-6 ? 'the bend changes here' : p.a < 1 ? 'bending like a cap' : 'bending like a cup'}`,
+                goal: (p) => Math.abs(p.a - 1) < 1e-6,
+                hint: 'Going downhill from the peak at x = 0, the tangent tilts more and more steeply, then starts to flatten out again. Find the turning point.',
+                solution: { a: 1 },
+              },
+              explain: r`The steepest descent is at $x = 1$, with slope $f'(1) = -3$, exactly where the curve switches from a cap to a cup. That's no accident. Steepest means $f'$ is at its lowest, so $f'$ has a critical point there: $f''(1) = 6 \times 1 - 6 = 0$. A point where the bending changes direction is called an **inflection point**. Before it the slope keeps falling; after it the slope rises again.`,
             },
             {
               type: 'mcq',

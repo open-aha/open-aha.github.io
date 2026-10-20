@@ -62,6 +62,33 @@ const mUp = (H, hc) => Math.tanh((H - hc) / 0.3), mDown = (H, hc) => Math.tanh((
 // 1 m pipes; free fall y = 4.9t², or with eddy-current drag a = g - v/τ (terminal speed 0.25 m/s, so τ = 0.0255 s)
 const pipeDrop = (t) => { const tau = 0.25 / 9.8, v = 0.25 * (1 - Math.exp(-t / tau)), y = 0.25 * (t - tau * (1 - Math.exp(-t / tau))); return { y: Math.min(1, y), v: y >= 1 ? 0 : v }; };
 
+// a bar magnet from x = -1.5 to 1.5 (N on the right), modelled as two poles at x = ±1.2
+const barField = (x, y) => {
+  const dxn = x - 1.2, dxs = x + 1.2, rn = Math.hypot(dxn, y) ** 3, rs = Math.hypot(dxs, y) ** 3;
+  return [dxn / rn - dxs / rs, y / rn - y / rs];
+};
+const inBar = (x, y) => Math.abs(x) < 1.9 && Math.abs(y) < 0.75;
+let BAR_LINES = null;
+// faint field lines: traced forward from the N pole, and backward from the S pole for lines that never reach N
+const barTrace = (x0, dir, stopX) => {
+  let x = x0[0], y = x0[1], closed = false;
+  const pts = [[x, y]];
+  for (let k = 0; k < 1500; k++) {
+    const [fx, fy] = barField(x, y), m = Math.hypot(fx, fy) || 1;
+    x += dir * (fx / m) * 0.02;
+    y += dir * (fy / m) * 0.02;
+    if (k % 4 === 0) pts.push([x, y]);
+    if (Math.hypot(x - stopX, y) < 0.15) { closed = true; break; }
+    if (Math.abs(x) > 6 || Math.abs(y) > 4) break;
+  }
+  return { pts, closed };
+};
+const barLines = () => BAR_LINES || (BAR_LINES = [1, -1].flatMap((dir) => Array.from({ length: 12 }, (_, i) => {
+  const ang = (2 * Math.PI * (i + 0.5)) / 12, px = dir * 1.2;
+  const { pts, closed } = barTrace([px + 0.15 * Math.cos(ang), 0.15 * Math.sin(ang)], dir, -px);
+  return dir < 0 && closed ? null : pts;
+}).filter(Boolean)));
+
 export default {
   id: 'magnetism',
   subject: 'physics',
@@ -123,6 +150,44 @@ export default {
                 { t: 'There’s no field inside', why: 'The field is actually strongest inside, where the lines are packed most tightly.' },
               ],
               explain: r`Magnetic field lines always form **closed loops**: they never begin or end, because there are no monopoles. Inside the magnet, the lines run from S back to N.`,
+            },
+            { /*ix:magnetism.magnets*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Carry a compass',
+              body: r`Drag the compass around the magnet. Its {coral:coral} end is the needle's north end. Inside the magnet the field runs from S to N, to the right, as you just saw. Find a place outside the magnet where the needle points the **opposite** way, straight to the left.`,
+              widget: {
+                kind: 'graph', equal: true, xmin: -4, xmax: 4, ymin: -2.6, ymax: 2.6, grid: false, axes: false, maxWidth: 560, clipExtra: true,
+                params: { cx: { min: -3.4, max: 3.4, step: 0.05, value: 2.6, slider: false }, cy: { min: -2, max: 2, step: 0.05, value: 1.3, slider: false } },
+                under: ({ plot, s }) => barLines().map((pts) => s('path', { d: pts.map(([x, y], i) => `${i ? 'L' : 'M'}${plot.X(x).toFixed(1)} ${plot.Y(y).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--violet)', 'stroke-width': 1.5, opacity: 0.35 })),
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), u = X(1) - X(0);
+                  const els = [
+                    s('rect', { x: X(-1.5), y: Y(0.3), width: X(0) - X(-1.5), height: Y(-0.3) - Y(0.3), rx: 6, class: 'fl-blue' }),
+                    s('rect', { x: X(0), y: Y(0.3), width: X(1.5) - X(0), height: Y(-0.3) - Y(0.3), rx: 6, class: 'fl-coral' }),
+                    s('text', { x: X(-0.75), y: Y(0) + 8, 'text-anchor': 'middle', style: 'fill:#fff;font-weight:800;font-size:max(calc(20px * var(--fs, 1)), var(--fmin, 0px))', text: 'S' }),
+                    s('text', { x: X(0.75), y: Y(0) + 8, 'text-anchor': 'middle', style: 'fill:#fff;font-weight:800;font-size:max(calc(20px * var(--fs, 1)), var(--fmin, 0px))', text: 'N' }),
+                  ];
+                  const px = X(p.cx), py = Y(p.cy);
+                  els.push(s('circle', { cx: px, cy: py, r: 0.6 * u, class: 'fl-card', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  if (!inBar(p.cx, p.cy)) {
+                    const [fx, fy] = barField(p.cx, p.cy), m = Math.hypot(fx, fy) || 1, ux = (fx / m) * 0.5 * u, uy = (-fy / m) * 0.5 * u, w = 0.22;
+                    els.push(s('path', { d: `M${px + ux} ${py + uy} L${px - uy * w} ${py + ux * w} L${px + uy * w} ${py - ux * w} Z`, class: 'fl-coral' }));
+                    els.push(s('path', { d: `M${px - ux} ${py - uy} L${px - uy * w} ${py + ux * w} L${px + uy * w} ${py - ux * w} Z`, class: 'fl-muted' }));
+                  }
+                  return els;
+                },
+                points: [{ x: (p) => p.cx, y: (p) => p.cy, drag: { x: 'cx', y: 'cy' }, color: 'ink', r: 4 }],
+                readout: (p) => {
+                  if (inBar(p.cx, p.cy)) return 'The compass is on top of the magnet: move it off.';
+                  const [fx, fy] = barField(p.cx, p.cy), ang = (Math.atan2(fy, fx) * 180) / Math.PI;
+                  return `the needle points ${fix(Math.abs(ang), 0)}° away from the magnet's S-to-N direction`;
+                },
+                goal: (p) => { if (inBar(p.cx, p.cy)) return false; const [fx, fy] = barField(p.cx, p.cy); return Math.abs(Math.atan2(fy, fx)) > (174 * Math.PI) / 180; },
+                hint: 'Try the space beside the magnet rather than off its ends.',
+                solution: { cx: 0, cy: 1.5 },
+              },
+              explain: r`Anywhere level with the **middle** of the magnet, above or below it, the needle points from N back towards S: the field lines leaving the N end curve round and run home alongside the magnet. Off either **end**, on the magnet's axis, the needle lines up with the magnet instead, pointing the same way as its S-to-N arrow. Each field line is a closed loop: out of N, round to S, and back through the inside.`,
             },
             {
               type: 'mcq',
@@ -501,6 +566,46 @@ Mains electricity alternates 50 times a second (50 Hz) in most of the world, and
                 curves: [{ f: (t) => Math.cos(2 * Math.PI * t), color: 'violet', width: 2 }, { f: (t) => Math.sin(2 * Math.PI * t), color: 'teal' }],
                 readout: () => r`$\violet{\text{flux}} \propto \cos(\omega t)$, $\quad \teal{\text{voltage}} \propto \sin(\omega t)$`,
               },
+            },
+            { /*ix:magnetism.generators*/
+              type: 'interactive',
+              kicker: 'Try it',
+              title: 'Turn the coil',
+              body: r`On the left, a coil seen edge-on turns between two magnet poles; the field runs from N to S. On the right, the {violet:flux} through the coil and the {teal:voltage} it makes are traced as it turns. Find a position where the **voltage** is at its peak.`,
+              widget: {
+                kind: 'graph', xmin: -3.7, xmax: 4.35, ymin: -1.45, ymax: 1.45, grid: false, axes: false, height: 260,
+                params: { th: { min: 0, max: 720, step: 5, value: 210, label: 'angle', color: 'violet', format: (v) => `${v}°` } },
+                curves: [
+                  { f: (x) => Math.cos(Math.PI * x), color: 'violet', width: 2.5, from: () => 0, to: (p) => p.th / 180 },
+                  { f: (x) => Math.sin(Math.PI * x), color: 'teal', width: 3, from: () => 0, to: (p) => p.th / 180 },
+                ],
+                under: ({ plot, s }) => [
+                  s('line', { x1: plot.X(0), y1: plot.Y(0), x2: plot.X(4), y2: plot.Y(0), stroke: 'var(--line-2)', 'stroke-width': 1.5 }),
+                  s('line', { x1: plot.X(0), y1: plot.Y(-1.2), x2: plot.X(0), y2: plot.Y(1.2), stroke: 'var(--line-2)', 'stroke-width': 1.5 }),
+                  ...[1, 2, 3, 4].map((k) => s('text', { x: plot.X(k), y: plot.Y(-1.38), 'text-anchor': 'middle', class: 'lbl halo-text', style: 'font-size:max(calc(14px * var(--fs, 1)), var(--fmin, 0px))', text: `${180 * k}°` })),
+                ],
+                extra: ({ plot, p, s, arrow }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), a = (p.th * Math.PI) / 180, cx = -2.05, L = 0.75, els = [];
+                  els.push(s('rect', { x: X(-3.55), y: Y(1.1), width: X(-3.15) - X(-3.55), height: Y(-1.1) - Y(1.1), rx: 5, class: 'fl-coral' }));
+                  els.push(s('rect', { x: X(-0.95), y: Y(1.1), width: X(-0.55) - X(-0.95), height: Y(-1.1) - Y(1.1), rx: 5, class: 'fl-blue' }));
+                  els.push(s('text', { x: X(-3.35), y: Y(0) + 7, 'text-anchor': 'middle', style: 'fill:#fff;font-weight:800;font-size:max(calc(18px * var(--fs, 1)), var(--fmin, 0px))', text: 'N' }));
+                  els.push(s('text', { x: X(-0.75), y: Y(0) + 7, 'text-anchor': 'middle', style: 'fill:#fff;font-weight:800;font-size:max(calc(18px * var(--fs, 1)), var(--fmin, 0px))', text: 'S' }));
+                  for (const y of [-0.9, -0.3, 0.3, 0.9]) els.push(arrow(X(-3.05), Y(y), X(-1.05), Y(y), { color: 'var(--ink-3)', width: 1.5 }));
+                  // the coil edge-on: face-on to the field (most flux) when it stands upright
+                  const ux = L * Math.sin(a), uy = L * Math.cos(a);
+                  els.push(s('line', { x1: X(cx - ux), y1: Y(-uy), x2: X(cx + ux), y2: Y(uy), stroke: 'var(--ink)', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+                  els.push(s('circle', { cx: X(cx + ux), cy: Y(uy), r: 6, class: 'fl-amber', stroke: 'var(--ink)', 'stroke-width': 1.5 }));
+                  const x = p.th / 180;
+                  els.push(s('circle', { cx: X(x), cy: Y(Math.cos(a)), r: 6, class: 'fl-violet' }));
+                  els.push(s('circle', { cx: X(x), cy: Y(Math.sin(a)), r: 7, class: 'fl-teal' }));
+                  return els;
+                },
+                readout: (p) => { const a = (p.th * Math.PI) / 180; return `{violet:flux} ${fix(Math.cos(a), 2)} · {teal:voltage} ${fix(Math.sin(a), 2)} (as fractions of their peaks)`; },
+                goal: (p) => Math.abs(Math.sin((p.th * Math.PI) / 180)) > 0.99,
+                hint: 'Watch the teal dot rather than the coil. When is the flux changing fastest?',
+                solution: { th: 90 },
+              },
+              explain: r`The voltage peaks when the coil lies **along** the field, at 90° or 270°, where no field lines pass through it at all. That seems backwards until you remember Faraday's law: the voltage depends on how fast the flux is **changing**, not on how much there is. Edge-on, the coil's sides cut straight across the field lines and the flux is changing fastest; face-on, the flux is at its biggest but, for an instant, not changing, so the voltage is zero.`,
             },
             {
               type: 'explain',
