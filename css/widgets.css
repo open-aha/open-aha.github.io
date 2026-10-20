@@ -575,3 +575,58 @@
 }
 .tr-none { opacity: 0.55; font-style: italic; }
 .tr-status { font-size: 15px; color: var(--ink-2); }
+
+/* ---------- molecule builder (mol.js) ---------- */
+.mol-palette .mol-chip {
+  min-width: 64px;
+  justify-content: center;
+  font-weight: 700;
+  border-bottom: 4px solid var(--chip, var(--line-2));
+}
+.mol-found {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+.mol-found:empty {
+  display: none;
+}
+.mol-thumb-box {
+  position: relative;
+  width: 92px;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 2px solid var(--success-edge);
+  padding: 4px;
+}
+.mol-thumb-box svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mol-thumb-box span {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+}
+.mol-thumb-box.flash {
+  animation: mol-flash 0.9s var(--ease);
+}
+@keyframes mol-flash {
+  0%, 60% { border-color: var(--select); box-shadow: 0 0 0 4px var(--select-tint); }
+  100% { border-color: var(--success-edge); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mol-thumb-box.flash { animation: none; border-color: var(--select); }
+}
+.mol-chip .mol-left {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}

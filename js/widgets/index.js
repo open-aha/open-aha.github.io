@@ -31,6 +31,9 @@ const LOADERS = {
   robot: () => import('./robot.js'),
   trace: () => import('./trace.js'),
   reactor: () => import('./reactor.js'),
+  mol: () => import('./mol.js'),
+  mol3d: () => import('./mol3d.js'),
+  fold: () => import('./fold.js'),
 };
 const REGISTRY = {};
 

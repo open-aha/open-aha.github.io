@@ -199,7 +199,7 @@ export function graph(box, spec, api) {
   }
   if (controls.children.length) box.append(controls);
 
-  // optional animation: advances a time parameter (spec.animate = { param, speed, max, loop, autoplay })
+  // optional animation: advances a time parameter (spec.animate = { param, speed, max, loop, autoplay, controls })
   let raf = 0, playing = false, last = 0;
   const anim = spec.animate;
   let playBtn = null;
@@ -207,7 +207,8 @@ export function graph(box, spec, api) {
     if (p[anim.param] == null) p[anim.param] = 0;
     playBtn = button('Play', () => (playing ? stop() : start()), { icon: icons.play, primary: true });
     const resetBtn = button('Reset', () => { stop(); p[anim.param] = 0; update(); }, { icon: icons.reset });
-    box.append(h('div.w-controls.center', playBtn, resetBtn));
+    // controls: false for a purely decorative loop (it just plays)
+    if (anim.controls !== false) box.append(h('div.w-controls.center', playBtn, resetBtn));
   }
   function start() {
     playing = true;

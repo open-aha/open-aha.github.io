@@ -6776,6 +6776,950 @@ export const courses = [
   ]
  },
  {
+  "id": "bonding",
+  "subject": "physics",
+  "title": "Chemical Bonding",
+  "level": "Intermediate",
+  "cover": "bonding",
+  "tagline": "Build molecules atom by atom: ions, shared pairs, Lewis structures, resonance and metals.",
+  "description": "Why do atoms stick together at all, and why in such particular numbers: two hydrogens to one oxygen, four to one carbon? Hand electrons from metals to non-metals to make ions, then build molecules yourself by joining atoms on the screen while their electrons pair up live. Learn to draw Lewis structures, use formal charge to pick the best one, see why ozone and benzene need more than one drawing, and finish with the atoms that break the octet rule and the sea of electrons that holds a metal together.",
+  "prereq": "Chemical Reactions",
+  "chapters": [
+   {
+    "title": "Why Atoms Bond",
+    "summary": "Outer electrons, ions and shared pairs.",
+    "lessons": [
+     {
+      "id": "valence",
+      "title": "Valence Electrons",
+      "summary": "Only the outer shell takes part",
+      "icon": "atom",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "ionic",
+      "title": "Ionic Bonds",
+      "summary": "Handing electrons over",
+      "icon": "bolt",
+      "nSteps": 8,
+      "minutes": 7
+     },
+     {
+      "id": "covalent",
+      "title": "Sharing Electrons",
+      "summary": "The covalent bond",
+      "icon": "link",
+      "nSteps": 7,
+      "minutes": 6
+     }
+    ]
+   },
+   {
+    "title": "Lewis Structures",
+    "summary": "Drawing every electron.",
+    "lessons": [
+     {
+      "id": "multiple",
+      "title": "Double & Triple Bonds",
+      "summary": "Sharing more than one pair",
+      "icon": "layers",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "lewis",
+      "title": "Drawing Lewis Structures",
+      "summary": "A recipe that always works",
+      "icon": "pencil",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "formal",
+      "title": "Formal Charge",
+      "summary": "Which drawing is best?",
+      "icon": "target",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "resonance",
+      "title": "Resonance",
+      "summary": "When one drawing isn’t enough",
+      "icon": "sparkle",
+      "nSteps": 7,
+      "minutes": 6
+     }
+    ]
+   },
+   {
+    "title": "Beyond the Octet",
+    "summary": "Exceptions and metals.",
+    "lessons": [
+     {
+      "id": "exceptions",
+      "title": "Breaking the Octet Rule",
+      "summary": "Too few, too many, and odd numbers",
+      "icon": "flag",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "metallic",
+      "title": "Metallic Bonds",
+      "summary": "A sea of shared electrons",
+      "icon": "bolt",
+      "nSteps": 7,
+      "minutes": 6
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "shapes",
+  "subject": "physics",
+  "title": "Molecular Shapes",
+  "level": "Intermediate",
+  "cover": "shapes",
+  "tagline": "Turn molecules in 3D: electron domains, lone pairs, polarity, hybrid orbitals and molecular orbitals.",
+  "description": "A Lewis structure says which atoms are joined, but molecules are three-dimensional, and their shapes decide almost everything: why water is a liquid, why carbon dioxide is a gas, how a drug fits its target. Build shapes from repelling electron pairs and turn them with your finger, watch lone pairs squeeze bond angles, add up bond dipoles to see whether a molecule is polar, mix orbitals into hybrids, and fill molecular-orbital diagrams to find out why liquid oxygen sticks to a magnet.",
+  "prereq": "Chemical Bonding",
+  "chapters": [
+   {
+    "title": "Electron Domains",
+    "summary": "Pairs that push each other apart.",
+    "lessons": [
+     {
+      "id": "domains",
+      "title": "Pushing Apart",
+      "summary": "The VSEPR idea",
+      "icon": "atom",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "lone",
+      "title": "Lone Pairs Take Space",
+      "summary": "Ammonia, water and squeezed angles",
+      "icon": "eye",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "bigger",
+      "title": "Five and Six Domains",
+      "summary": "Seesaws, T-shapes and squares",
+      "icon": "layers",
+      "nSteps": 7,
+      "minutes": 6
+     }
+    ]
+   },
+   {
+    "title": "Polarity",
+    "summary": "Uneven sharing, and when it cancels.",
+    "lessons": [
+     {
+      "id": "polar-bonds",
+      "title": "Polar Bonds",
+      "summary": "Tug of war for the shared pair",
+      "icon": "target",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "polar-molecules",
+      "title": "Polar or Non-polar?",
+      "summary": "When bond dipoles cancel",
+      "icon": "sparkle",
+      "nSteps": 7,
+      "minutes": 6
+     }
+    ]
+   },
+   {
+    "title": "Orbitals",
+    "summary": "What the bonds are made of.",
+    "lessons": [
+     {
+      "id": "hybrid",
+      "title": "Hybrid Orbitals",
+      "summary": "Mixing s and p",
+      "icon": "sparkle",
+      "nSteps": 7,
+      "minutes": 6
+     },
+     {
+      "id": "sigma-pi",
+      "title": "Sigma & Pi Bonds",
+      "summary": "Head-on and side by side",
+      "icon": "link",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "mo",
+      "title": "Molecular Orbitals",
+      "summary": "Why oxygen is magnetic",
+      "icon": "bolt",
+      "nSteps": 7,
+      "minutes": 6
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "imf",
+  "subject": "physics",
+  "title": "Forces Between Molecules",
+  "level": "Intermediate",
+  "cover": "imf",
+  "tagline": "Why water boils at 100 °C, oil and water don’t mix, and how chemists pull mixtures apart.",
+  "description": "Molecules attract one another, weakly but constantly, and those attractions decide whether a substance is a gas, a liquid or a solid at room temperature. Play boiling-point detective with dispersion forces, dipoles and hydrogen bonds, steer a point around the phase diagrams of water and carbon dioxide, see why salt melts ice, and finish by separating mixtures yourself: tune a solvent to pull dyes apart on a chromatography plate and count the stages a still needs to purify a liquid.",
+  "prereq": "Molecular Shapes",
+  "chapters": [
+   {
+    "title": "Sticky Molecules",
+    "summary": "Three kinds of attraction.",
+    "lessons": [
+     {
+      "id": "forces",
+      "title": "Sticky Molecules",
+      "summary": "Attractions between neighbours",
+      "icon": "link",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "dispersion",
+      "title": "London Forces",
+      "summary": "Even non-polar molecules stick",
+      "icon": "sparkle",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "hbonds",
+      "title": "Hydrogen Bonds",
+      "summary": "Why water is so strange",
+      "icon": "link",
+      "nSteps": 6,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "States of Matter",
+    "summary": "Solid, liquid, gas and in between.",
+    "lessons": [
+     {
+      "id": "phases",
+      "title": "Phase Diagrams",
+      "summary": "A map of solid, liquid and gas",
+      "icon": "target",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "vapour",
+      "title": "Vapour Pressure & Boiling",
+      "summary": "Escaping molecules",
+      "icon": "flame",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Mixtures",
+    "summary": "Dissolving, and taking apart again.",
+    "lessons": [
+     {
+      "id": "dissolving",
+      "title": "Like Dissolves Like",
+      "summary": "Why oil and water don’t mix",
+      "icon": "layers",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "colligative",
+      "title": "Salt on Ice",
+      "summary": "Dissolved particles shift boiling and freezing",
+      "icon": "sun",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "chromatography",
+      "title": "Chromatography",
+      "summary": "A race on a plate",
+      "icon": "play",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "distillation",
+      "title": "Distillation",
+      "summary": "Separating by boiling point",
+      "icon": "flame",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "thermochem",
+  "subject": "physics",
+  "title": "Thermochemistry",
+  "level": "Intermediate",
+  "cover": "thermochem",
+  "tagline": "Where reaction heat comes from, Hess’s law puzzles, entropy and free energy.",
+  "description": "Every reaction either gives out heat or takes it in. Measure it with a calorimeter, predict it by adding up the bonds that break and form, and solve Hess's law puzzles by flipping and scaling known reactions until they add up to one you can't measure directly. Then meet entropy and Gibbs free energy, the quantity that decides whether a reaction will run at all, and use it to find the temperature at which ice melts, limestone turns to lime and carbon can pull a metal out of its ore.",
+  "prereq": "Chemical Reactions, and Heat & Thermodynamics",
+  "chapters": [
+   {
+    "title": "Heat of Reaction",
+    "summary": "Measuring and predicting ΔH.",
+    "lessons": [
+     {
+      "id": "enthalpy",
+      "title": "Heat In, Heat Out",
+      "summary": "Exothermic and endothermic",
+      "icon": "flame",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "calorimetry",
+      "title": "Measuring Heat",
+      "summary": "Calorimeters and q = mcΔT",
+      "icon": "clock",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "bonds",
+      "title": "Bond Enthalpies",
+      "summary": "Breaking costs, making pays",
+      "icon": "bolt",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Hess’s Law",
+    "summary": "Adding reactions like equations.",
+    "lessons": [
+     {
+      "id": "hess",
+      "title": "Hess’s Law",
+      "summary": "The route doesn’t matter",
+      "icon": "layers",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "formation",
+      "title": "Enthalpies of Formation",
+      "summary": "One table for every reaction",
+      "icon": "book",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Will It Go?",
+    "summary": "Entropy and free energy.",
+    "lessons": [
+     {
+      "id": "entropy",
+      "title": "Entropy in Chemistry",
+      "summary": "Counting the ways",
+      "icon": "sparkle",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "gibbs",
+      "title": "Gibbs Free Energy",
+      "summary": "The deciding number",
+      "icon": "target",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "coupling",
+      "title": "Driving Uphill",
+      "summary": "Coupled reactions and smelting",
+      "icon": "bolt",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "equilibrium",
+  "subject": "physics",
+  "title": "Chemical Equilibrium",
+  "level": "Intermediate",
+  "cover": "equilibrium",
+  "tagline": "Reactions that run both ways: K and Q, ICE tables, Le Chatelier, ammonia and precipitates.",
+  "description": "Many reactions never finish: they settle into a balance where the forward and backward reactions run at the same speed. Watch two tanks level out, write and use equilibrium constants, predict which way a mixture will move, and solve for the balance point by dragging along a curve. Then push equilibria around with heat and concentration, run an ammonia plant against the clock, and use solubility to identify mystery ions by the precipitates they form.",
+  "prereq": "Chemical Reactions",
+  "chapters": [
+   {
+    "title": "The Balance Point",
+    "summary": "K, Q and solving for equilibrium.",
+    "lessons": [
+     {
+      "id": "dynamic",
+      "title": "Two-Way Traffic",
+      "summary": "Equilibrium is busy, not still",
+      "icon": "reset",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "k",
+      "title": "The Equilibrium Constant",
+      "summary": "Writing and reading K",
+      "icon": "sigma",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "q",
+      "title": "Which Way Will It Go?",
+      "summary": "The reaction quotient",
+      "icon": "right",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "ice",
+      "title": "Solving for Equilibrium",
+      "summary": "ICE tables and a curve to drag",
+      "icon": "pencil",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Shifting the Balance",
+    "summary": "Le Chatelier and the ammonia plant.",
+    "lessons": [
+     {
+      "id": "lechatelier",
+      "title": "Le Chatelier’s Principle",
+      "summary": "Push it and it pushes back",
+      "icon": "hand",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "haber",
+      "title": "Making Ammonia",
+      "summary": "Yield versus speed",
+      "icon": "flame",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Solubility",
+    "summary": "Equilibria with solids.",
+    "lessons": [
+     {
+      "id": "solubility",
+      "title": "Solubility & Ksp",
+      "summary": "How much dissolves",
+      "icon": "layers",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "precipitation",
+      "title": "Mystery Ions",
+      "summary": "Detective work with precipitates",
+      "icon": "eye",
+      "nSteps": 6,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "acids",
+  "subject": "physics",
+  "title": "Acids, Bases & Buffers",
+  "level": "Intermediate",
+  "cover": "acids",
+  "tagline": "Proton swaps, weak acids, buffers that hold pH steady, indicators and an acidifying ocean.",
+  "description": "An acid is a proton donor and a base a proton acceptor: draw the swap with curly arrows and find the conjugate pairs. Then go beyond strong acids: work out the pH of vinegar, build a buffer that holds blood at pH 7.4, fight off a stream of acid with buffer capacity, find a pKa from a titration curve, choose the right indicator, follow an amino acid's charge as the pH changes, and see what extra carbon dioxide is doing to the sea.",
+  "prereq": "Chemical Reactions, and Chemical Equilibrium",
+  "chapters": [
+   {
+    "title": "Proton Swaps",
+    "summary": "What makes an acid an acid.",
+    "lessons": [
+     {
+      "id": "bronsted",
+      "title": "Proton Swaps",
+      "summary": "Donors and acceptors",
+      "icon": "link",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "strength",
+      "title": "Strong & Weak",
+      "summary": "How completely acids ionise",
+      "icon": "bolt",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "weak-ph",
+      "title": "The pH of Vinegar",
+      "summary": "Calculating weak-acid pH",
+      "icon": "pencil",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Buffers",
+    "summary": "Holding pH steady.",
+    "lessons": [
+     {
+      "id": "buffers",
+      "title": "Buffers",
+      "summary": "A weak acid and its partner",
+      "icon": "layers",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "capacity",
+      "title": "Buffer Battles",
+      "summary": "How much a buffer can take",
+      "icon": "trophy",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "titration",
+      "title": "Titrating a Weak Acid",
+      "summary": "Reading pKa off a curve",
+      "icon": "target",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Acids Everywhere",
+    "summary": "Colour, life and the ocean.",
+    "lessons": [
+     {
+      "id": "indicators",
+      "title": "Indicators",
+      "summary": "Molecules that change colour",
+      "icon": "eye",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "amino",
+      "title": "Charged Molecules of Life",
+      "summary": "Amino acids and pH",
+      "icon": "atom",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "ocean",
+      "title": "Acid Oceans",
+      "summary": "Carbon dioxide and the sea",
+      "icon": "sun",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "electrochem",
+  "subject": "physics",
+  "title": "Electrochemistry & Batteries",
+  "level": "Intermediate",
+  "cover": "electrochem",
+  "tagline": "Redox, the reactivity series, cells you can build, electrolysis, batteries and rust.",
+  "description": "Whenever electrons move from one substance to another, you can make them do work on the way. Track electrons with oxidation numbers and balance half-equations, race metals against each other's ions, then build galvanic cells from pairs of metals and read their voltage, stack them into batteries and see how concentration shifts the voltage. Run the process backwards to plate copper and make aluminium, look inside a lithium-ion cell, and save a ship's hull from rust.",
+  "prereq": "Chemical Reactions, and Electricity & Circuits",
+  "chapters": [
+   {
+    "title": "Moving Electrons",
+    "summary": "Redox and reactivity.",
+    "lessons": [
+     {
+      "id": "redox",
+      "title": "Electron Transfer",
+      "summary": "Oxidation and reduction",
+      "icon": "bolt",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "activity",
+      "title": "The Reactivity Series",
+      "summary": "Which metal wins the electrons",
+      "icon": "trophy",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Cells and Batteries",
+    "summary": "Electrons that do work.",
+    "lessons": [
+     {
+      "id": "cells",
+      "title": "Galvanic Cells",
+      "summary": "Splitting a redox reaction in two",
+      "icon": "bolt",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "potentials",
+      "title": "Standard Potentials",
+      "summary": "A table that predicts voltages",
+      "icon": "book",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "nernst",
+      "title": "Concentration Matters",
+      "summary": "The Nernst equation",
+      "icon": "sigma",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Electrons at Work",
+    "summary": "Electrolysis, batteries and rust.",
+    "lessons": [
+     {
+      "id": "electrolysis",
+      "title": "Electrolysis",
+      "summary": "Driving reactions backwards",
+      "icon": "flame",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "batteries",
+      "title": "Inside a Battery",
+      "summary": "Lithium-ion and friends",
+      "icon": "bolt",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "corrosion",
+      "title": "Rust & Protection",
+      "summary": "Fighting an unwanted cell",
+      "icon": "target",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "fuelcells",
+      "title": "Fuel Cells",
+      "summary": "Burning hydrogen without a flame",
+      "icon": "sun",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "organic",
+  "subject": "physics",
+  "title": "Organic Chemistry",
+  "level": "Intermediate",
+  "cover": "organic",
+  "tagline": "Carbon skeletons, isomer hunts, names, functional groups, rings and benzene.",
+  "description": "Carbon can bond to itself in chains, branches and rings, and that one talent produces millions of compounds, from petrol to perfume to DNA. Build carbon skeletons on screen, read the chemist's shorthand of zig-zag lines, then hunt down every isomer of a formula while the builder catches you drawing the same molecule twice. Learn to name what you build, recognise the functional groups that give molecules their personalities, count rings and double bonds from a formula alone, and meet benzene, the ring that broke the rules.",
+  "prereq": "Chemical Bonding",
+  "chapters": [
+   {
+    "title": "Carbon Skeletons",
+    "summary": "Chains, shorthand and isomers.",
+    "lessons": [
+     {
+      "id": "carbon",
+      "title": "Carbon’s Four Bonds",
+      "summary": "Why carbon builds everything",
+      "icon": "atom",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "skeletal",
+      "title": "Skeletal Formulas",
+      "summary": "The chemist’s shorthand",
+      "icon": "pencil",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "isomers",
+      "title": "Isomers",
+      "summary": "Same formula, different molecule",
+      "icon": "layers",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "naming",
+      "title": "Naming Molecules",
+      "summary": "One name per structure",
+      "icon": "book",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Personalities",
+    "summary": "Functional groups, rings and benzene.",
+    "lessons": [
+     {
+      "id": "functional",
+      "title": "Functional Groups",
+      "summary": "Where the chemistry happens",
+      "icon": "sparkle",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "unsaturation",
+      "title": "Rings & Double Bonds",
+      "summary": "Reading a formula for hidden structure",
+      "icon": "target",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "benzene",
+      "title": "Benzene",
+      "summary": "A ring with a secret",
+      "icon": "sparkle",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "making",
+      "title": "Making Molecules",
+      "summary": "Addition and esterification",
+      "icon": "flame",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "colour",
+  "subject": "physics",
+  "title": "The Chemistry of Colour",
+  "level": "Intermediate",
+  "cover": "colour",
+  "tagline": "Why carrots are orange and copper is blue: absorption, flames, dyes, metals, pigments and glow.",
+  "description": "Colour is what's left of white light after molecules have taken their share. Every swatch in this course is computed from a real spectrum, the way your eye would see it. Choose which light a solution absorbs and see its colour, mix salts to design a firework, lengthen a chain of double bonds until it turns carrot-orange, swap the molecules around a metal ion to change its colour, mix pigments, make molecules glow, and work out why ultraviolet light burns.",
+  "prereq": "Chemical Bonding, and Light & Optics",
+  "chapters": [
+   {
+    "title": "Taking Light Away",
+    "summary": "Absorption and complementary colours.",
+    "lessons": [
+     {
+      "id": "absorb",
+      "title": "Why Things Have Colour",
+      "summary": "What’s missing is what you see",
+      "icon": "eye",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "flames",
+      "title": "Flames & Fireworks",
+      "summary": "Atoms that emit",
+      "icon": "flame",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Molecules with Colour",
+    "summary": "Dyes, metals and pigments.",
+    "lessons": [
+     {
+      "id": "conjugation",
+      "title": "Conjugated Dyes",
+      "summary": "Longer chains, longer wavelengths",
+      "icon": "link",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "metals",
+      "title": "Transition-Metal Colours",
+      "summary": "Splitting the d orbitals",
+      "icon": "atom",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "pigments",
+      "title": "Mixing Pigments",
+      "summary": "Subtractive colour",
+      "icon": "pencil",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Light Back Out",
+    "summary": "Glowing molecules and UV.",
+    "lessons": [
+     {
+      "id": "glow",
+      "title": "Glowing Molecules",
+      "summary": "Fluorescence and chemiluminescence",
+      "icon": "sparkle",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "uv",
+      "title": "Sunscreen & UV",
+      "summary": "When light breaks bonds",
+      "icon": "sun",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "biochem",
+  "subject": "physics",
+  "title": "Molecules of Life",
+  "level": "Intermediate",
+  "cover": "biochem",
+  "tagline": "Fold a protein, pair DNA, fit an enzyme’s speed curve, and follow the energy in sugar and fat.",
+  "description": "Living things are made from a handful of molecular building blocks strung into enormous chains. Find out how amino acids join into proteins, then fold protein chains yourself on a grid, tucking oily beads away from water the way real proteins do. Pair up the bases of DNA, fit the speed curve of an enzyme, see why soap-like molecules build cell walls by themselves, and trace the energy in a sugar molecule all the way to ATP.",
+  "prereq": "Organic Chemistry, and Forces Between Molecules",
+  "chapters": [
+   {
+    "title": "Proteins",
+    "summary": "Chains that fold themselves.",
+    "lessons": [
+     {
+      "id": "building-blocks",
+      "title": "Life’s Building Blocks",
+      "summary": "Small pieces, long chains",
+      "icon": "layers",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "amino",
+      "title": "Amino Acids",
+      "summary": "Twenty side chains",
+      "icon": "atom",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "folding",
+      "title": "Protein Folding",
+      "summary": "Hide the oily beads",
+      "icon": "trophy",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "enzymes",
+      "title": "Enzymes",
+      "summary": "Catalysts made of protein",
+      "icon": "bolt",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Information and Energy",
+    "summary": "DNA, membranes, fuel.",
+    "lessons": [
+     {
+      "id": "dna",
+      "title": "DNA",
+      "summary": "A code written in pairs",
+      "icon": "link",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "membranes",
+      "title": "Fats & Membranes",
+      "summary": "Walls that build themselves",
+      "icon": "layers",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "energy",
+      "title": "Sugar to ATP",
+      "summary": "The cell’s energy currency",
+      "icon": "flame",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
   "id": "heat",
   "subject": "physics",
   "title": "Heat Transfer",
@@ -10992,6 +11936,362 @@ export const courses = [
       "summary": "Unit cells and density",
       "icon": "grip",
       "nSteps": 6,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "chirality",
+  "subject": "physics",
+  "title": "Stereochemistry",
+  "level": "Advanced",
+  "cover": "chirality",
+  "tagline": "Left- and right-handed molecules: stereocentres, R and S, cis and trans, and mirror-image drugs.",
+  "description": "Some molecules come in left- and right-handed versions that are mirror images but can't be superimposed, like a pair of hands. Turn 3D molecules with your finger to try to make them match, find the stereocentres that cause handedness, rank groups by the Cahn–Ingold–Prelog rules and name each centre R or S. Then meet molecules with two centres, cis–trans isomers (one of them is how you see), the way chiral molecules twist light, and why the two hands of a drug can act completely differently in the body.",
+  "prereq": "Organic Chemistry, and Molecular Shapes",
+  "chapters": [
+   {
+    "title": "Handedness",
+    "summary": "Mirror images that don’t match.",
+    "lessons": [
+     {
+      "id": "hands",
+      "title": "Mirror Images",
+      "summary": "Molecules with a left and a right hand",
+      "icon": "hand",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "centres",
+      "title": "Stereocentres",
+      "summary": "Four different groups",
+      "icon": "target",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Naming Hands",
+    "summary": "Priorities, R and S.",
+    "lessons": [
+     {
+      "id": "cip",
+      "title": "Ranking Groups",
+      "summary": "The Cahn–Ingold–Prelog rules",
+      "icon": "trophy",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "rs",
+      "title": "R or S?",
+      "summary": "Clockwise or anticlockwise",
+      "icon": "reset",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "two",
+      "title": "Two Stereocentres",
+      "summary": "Enantiomers and diastereomers",
+      "icon": "layers",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Handedness at Work",
+    "summary": "Double bonds, light and drugs.",
+    "lessons": [
+     {
+      "id": "cistrans",
+      "title": "Cis & Trans",
+      "summary": "Locked by a double bond",
+      "icon": "eye",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "light",
+      "title": "Twisting Light",
+      "summary": "Optical activity",
+      "icon": "sun",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "medicines",
+      "title": "Mirror-Image Medicines",
+      "summary": "When the other hand matters",
+      "icon": "flag",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "mechanisms",
+  "subject": "physics",
+  "title": "Reaction Mechanisms",
+  "level": "Advanced",
+  "cover": "mechanisms",
+  "tagline": "Push electrons with curly arrows: substitution, elimination, addition, and planning a synthesis.",
+  "description": "A balanced equation says what goes in and what comes out; a **mechanism** says how, one electron pair at a time. Draw curly arrows yourself, from lone pairs and bonds to the atoms that receive them, and watch each step produce its products. Meet nucleophiles and electrophiles, the one-step SN2 with its umbrella flip, the carbocations of SN1, eliminations that make double bonds, additions that break them, and attacks on the carbonyl group, then string reactions together to plan a synthesis.",
+  "prereq": "Organic Chemistry, and Acids, Bases & Buffers",
+  "chapters": [
+   {
+    "title": "Pushing Electrons",
+    "summary": "The grammar of curly arrows.",
+    "lessons": [
+     {
+      "id": "arrows",
+      "title": "Curly Arrows",
+      "summary": "Electrons move in pairs",
+      "icon": "right",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "nucleophiles",
+      "title": "Nucleophiles & Electrophiles",
+      "summary": "Electron-rich meets electron-poor",
+      "icon": "target",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Substitution & Elimination",
+    "summary": "Swapping groups and making double bonds.",
+    "lessons": [
+     {
+      "id": "sn2",
+      "title": "SN2",
+      "summary": "One step, from the back",
+      "icon": "reset",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "sn1",
+      "title": "SN1 & Carbocations",
+      "summary": "Leave first, then attack",
+      "icon": "layers",
+      "nSteps": 6,
+      "minutes": 5
+     },
+     {
+      "id": "elimination",
+      "title": "Elimination",
+      "summary": "Making a double bond",
+      "icon": "bolt",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Building Molecules",
+    "summary": "Additions, carbonyls and planning.",
+    "lessons": [
+     {
+      "id": "addition",
+      "title": "Adding to Double Bonds",
+      "summary": "π electrons as a nucleophile",
+      "icon": "link",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "carbonyl",
+      "title": "Carbonyl Chemistry",
+      "summary": "Attacking C=O",
+      "icon": "sparkle",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "synthesis",
+      "title": "Planning a Synthesis",
+      "summary": "Chaining reactions together",
+      "icon": "flag",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "spectroscopy",
+  "subject": "physics",
+  "title": "Spectroscopy",
+  "level": "Advanced",
+  "cover": "spectroscopy",
+  "tagline": "How chemists see molecules: light absorption, infrared, mass spectra and NMR puzzles.",
+  "description": "Nobody can look at a molecule, yet chemists routinely work out structures of compounds they have never seen. They shine light of every kind through them and read the clues. Measure concentrations with the Beer–Lambert law, treat bonds as springs that absorb infrared, weigh molecules and read chlorine and bromine from their isotope patterns, then master NMR: colour equivalent hydrogens, predict splitting patterns, and combine all the evidence to solve unknown structures.",
+  "prereq": "Organic Chemistry, and Light & Optics",
+  "chapters": [
+   {
+    "title": "Light and Matter",
+    "summary": "Absorbing and measuring.",
+    "lessons": [
+     {
+      "id": "light",
+      "title": "Molecules Meet Light",
+      "summary": "Each region probes something different",
+      "icon": "sun",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "beer",
+      "title": "Measuring Concentration",
+      "summary": "The Beer–Lambert law",
+      "icon": "eye",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "ir",
+      "title": "Bonds as Springs",
+      "summary": "Infrared spectroscopy",
+      "icon": "bolt",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "mass",
+      "title": "Weighing Molecules",
+      "summary": "Mass spectrometry",
+      "icon": "target",
+      "nSteps": 5,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "NMR",
+    "summary": "Listening to hydrogen nuclei.",
+    "lessons": [
+     {
+      "id": "nmr-env",
+      "title": "Hydrogen Environments",
+      "summary": "One signal per kind of H",
+      "icon": "atom",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "nmr-shift",
+      "title": "Shift & Integration",
+      "summary": "Where and how big",
+      "icon": "layers",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "nmr-split",
+      "title": "Splitting Patterns",
+      "summary": "The n + 1 rule",
+      "icon": "sigma",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "solve",
+      "title": "Solve the Structure",
+      "summary": "Putting the clues together",
+      "icon": "trophy",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "drugs",
+  "subject": "physics",
+  "title": "Drug Design",
+  "level": "Advanced",
+  "cover": "drugs",
+  "tagline": "How medicines are made: binding pockets, affinity, dose curves, getting into the body and dosing schedules.",
+  "description": "A medicine is a molecule shaped to fit a particular protein, strongly enough to change what it does, and then it has to survive the journey through the body. Decorate a drug to fit a binding pocket, turn binding energies into dissociation constants, read dose–response curves, use Lipinski's rules to judge whether a pill can be absorbed, design a dosing schedule that keeps a drug in its therapeutic window, and follow the long odds from a hit in the lab to a medicine on the shelf.",
+  "prereq": "Molecules of Life, and Acids, Bases & Buffers",
+  "chapters": [
+   {
+    "title": "Finding a Fit",
+    "summary": "Binding and affinity.",
+    "lessons": [
+     {
+      "id": "binding",
+      "title": "Lock and Key",
+      "summary": "Matching a pocket",
+      "icon": "target",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "affinity",
+      "title": "Binding Strength",
+      "summary": "Kd and occupancy",
+      "icon": "link",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "dose",
+      "title": "Dose–Response",
+      "summary": "Potency and efficacy",
+      "icon": "sigma",
+      "nSteps": 4,
+      "minutes": 5
+     }
+    ]
+   },
+   {
+    "title": "Into the Body",
+    "summary": "Absorption, half-life, dosing.",
+    "lessons": [
+     {
+      "id": "lipinski",
+      "title": "Getting In",
+      "summary": "Lipinski’s rule of five",
+      "icon": "flag",
+      "nSteps": 5,
+      "minutes": 5
+     },
+     {
+      "id": "pk",
+      "title": "Half-Life & Dosing",
+      "summary": "Staying in the window",
+      "icon": "clock",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "inhibitors",
+      "title": "Blocking Enzymes",
+      "summary": "Inhibitors as medicines",
+      "icon": "hand",
+      "nSteps": 4,
+      "minutes": 5
+     },
+     {
+      "id": "discovery",
+      "title": "From Hit to Medicine",
+      "summary": "The long odds",
+      "icon": "trophy",
+      "nSteps": 4,
       "minutes": 5
      }
     ]

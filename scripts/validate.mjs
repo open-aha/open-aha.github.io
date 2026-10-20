@@ -11,6 +11,8 @@ import { evaluate as evaluateGates } from '../js/widgets/gates-core.js';
 import { withEdits as tmEdits } from '../js/widgets/turing-core.js';
 import { solves as robotSolves, parseWorld } from '../js/widgets/robot-core.js';
 import { collect as traceCollect } from '../js/widgets/trace.js';
+import { molProblems } from '../js/lib/chem.js';
+import { foldScore } from '../js/widgets/fold.js';
 
 const COLORS = ['blue', 'coral', 'teal', 'amber', 'violet', 'pink', 'green', 'red'];
 const macros = {};
@@ -226,6 +228,12 @@ for (const c of courses) {
             if (okOf(p)) warns.push(`${sw}: initial trace already satisfies goal`);
             if (!w.solution || !okOf({ ...p, ...w.solution })) errors.push(`${sw}: trace solution missing or fails the goal`);
           }
+        }
+        if (w?.kind === 'mol') for (const msg of molProblems(w)) errors.push(`${sw}: ${msg}`);
+        if (w?.kind === 'fold') {
+          const n = w.seq.length, okOf = (t) => { const r = foldScore(w.seq, t.split('')); return !r.clash.size && r.contacts.length >= (w.target || 0); };
+          if (!w.solution || w.solution.length !== n - 2 || !okOf(w.solution)) errors.push(`${sw}: fold solution missing or fails`);
+          if (okOf(w.turns || 'S'.repeat(n - 2))) warns.push(`${sw}: fold already solved at the start`);
         }
         if (typeof w?.validate === 'function') {
           const msg = w.validate();

@@ -892,6 +892,162 @@ export const covers = {
     ${Array.from({ length: 9 }, (_, i) => Array.from({ length: 6 }, (_, j) => { const x = 24 + i * 34, y = 22 + j * 32, dx = x - 160, dy = y - 100, rr = Math.hypot(dx, dy) || 1, ux = -dy / rr, uy = dx / rr, L = 12; return `<path d="M${x - ux * L} ${y - uy * L} L${x + ux * L} ${y + uy * L}" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" opacity=".55"/><circle cx="${x + ux * L}" cy="${y + uy * L}" r="3" fill="var(--blue)" opacity=".7"/>`; }).join('')).join('')}
     <g transform="translate(160 100)"><circle r="26" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".3" stroke-width="2"/><path d="M0 0 L22 -8 M0 0 L8 22 M0 0 L-22 8 M0 0 L-8 -22" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/><circle r="5" fill="var(--ink)"/></g>
   `),
+  bonding: frame(`
+    ${gridLines()}
+    <path d="M160 96 L96 140 M160 96 L224 140" stroke="var(--ink)" stroke-opacity=".75" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="160" cy="96" r="34" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="5"/>
+    <text x="160" y="107" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="30" fill="var(--ink)">O</text>
+    <circle cx="96" cy="140" r="22" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".45" stroke-width="4"/>
+    <circle cx="224" cy="140" r="22" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".45" stroke-width="4"/>
+    <text x="96" y="148" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="21" fill="var(--ink)">H</text>
+    <text x="224" y="148" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="21" fill="var(--ink)">H</text>
+    <circle cx="146" cy="46" r="5" fill="var(--ink)"/><circle cx="174" cy="46" r="5" fill="var(--ink)"/>
+    <circle cx="112" cy="78" r="5" fill="var(--ink)"/><circle cx="122" cy="58" r="5" fill="var(--ink)"/>
+    <circle cx="262" cy="52" r="7" fill="var(--blue)"/><path d="M262 52 C 240 30, 210 30, 196 46" fill="none" stroke="var(--blue)" stroke-width="3" stroke-dasharray="5 6"/>
+  `),
+  shapes: frame(`
+    ${gridLines()}
+    <path d="M160 104 L160 34 M160 104 L98 140 M160 104 L222 140" stroke="var(--ink)" stroke-opacity=".7" stroke-width="7" stroke-linecap="round"/>
+    <path d="M160 104 L182 168" stroke="var(--ink)" stroke-opacity=".35" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 10"/>
+    <circle cx="182" cy="168" r="17" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".3" stroke-width="3"/>
+    <circle cx="160" cy="34" r="20" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".5" stroke-width="4"/>
+    <circle cx="98" cy="140" r="20" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".5" stroke-width="4"/>
+    <circle cx="222" cy="140" r="20" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".5" stroke-width="4"/>
+    <circle cx="160" cy="104" r="28" fill="var(--ink)"/>
+    <ellipse cx="151" cy="94" rx="9" ry="5" fill="#fff" opacity=".25" transform="rotate(-30 151 94)"/>
+    <path d="M126 70 A 48 48 0 0 1 192 70" fill="none" stroke="var(--blue)" stroke-width="4"/>
+    <text x="214" y="70" font-family="Figtree, sans-serif" font-weight="700" font-size="18" fill="var(--blue)">109.5°</text>
+  `),
+  imf: frame(`
+    ${gridLines()}
+    <g stroke="var(--ink)" stroke-opacity=".7" stroke-width="6" stroke-linecap="round">
+      <path d="M82 92 L58 120 M82 92 L112 108"/><path d="M200 70 L176 44 M200 70 L232 62"/><path d="M226 150 L250 176 M226 150 L196 160"/>
+    </g>
+    <path d="M118 112 L166 70" stroke="var(--blue)" stroke-width="4" stroke-dasharray="6 7" stroke-linecap="round"/>
+    <path d="M200 96 L218 128" stroke="var(--blue)" stroke-width="4" stroke-dasharray="6 7" stroke-linecap="round"/>
+    <circle cx="82" cy="92" r="22" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="4"/>
+    <circle cx="200" cy="70" r="22" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="4"/>
+    <circle cx="226" cy="150" r="22" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="4"/>
+    <g fill="var(--card)" stroke="var(--ink)" stroke-opacity=".45" stroke-width="3">
+      <circle cx="58" cy="120" r="13"/><circle cx="112" cy="108" r="13"/><circle cx="176" cy="44" r="13"/><circle cx="232" cy="62" r="13"/><circle cx="250" cy="176" r="13"/><circle cx="196" cy="160" r="13"/>
+    </g>
+  `),
+  thermochem: frame(`
+    ${gridLines()}
+    <path d="M30 70 H96" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M128 30 H190" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M222 160 H290" stroke="var(--blue)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M96 70 L128 30 M190 30 L222 160" stroke="var(--ink)" stroke-opacity=".35" stroke-width="3" stroke-dasharray="6 6"/>
+    <path d="M63 70 V150 H256 V160" fill="none" stroke="var(--violet)" stroke-width="4" stroke-dasharray="2 8" stroke-linecap="round"/>
+    <path d="M150 112 c -14 -18, 10 -26, 0 -46 c 22 14, 28 34, 14 50 c 8 -10, -2 -18, -6 -22 c 0 10, -6 14, -8 18 z" fill="var(--amber)" stroke="var(--coral)" stroke-width="3"/>
+  `),
+  equilibrium: frame(`
+    ${gridLines()}
+    <path d="M20 160 C 70 160, 90 80, 150 64 S 250 60, 300 60" fill="none" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M20 40 C 70 40, 90 120, 150 136 S 250 140, 300 140" fill="none" stroke="var(--blue)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M196 92 H262" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><path d="M262 92 l-10 -7 v7 z" fill="var(--ink)"/>
+    <path d="M262 108 H196" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><path d="M196 108 l10 7 v-7 z" fill="var(--ink)"/>
+  `),
+  acids: frame(`
+    ${gridLines()}
+    <defs><linearGradient id="cv-acids" x1="0" x2="1"><stop offset="0" stop-color="#d7301f"/><stop offset=".35" stop-color="#f2c12e"/><stop offset=".55" stop-color="#2aa36b"/><stop offset=".8" stop-color="#2f5bd3"/><stop offset="1" stop-color="#8e3fa8"/></linearGradient></defs>
+    <rect x="30" y="150" width="260" height="18" rx="9" fill="url(#cv-acids)"/>
+    <path d="M40 130 C 120 128, 140 120, 150 90 C 158 60, 170 52, 280 50" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="150" cy="90" r="8" fill="var(--coral)"/>
+    <path d="M226 18 v38 c0 14 -24 14 -24 0 v-38" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="3"/>
+  `),
+  electrochem: frame(`
+    ${gridLines()}
+    <path d="M40 80 V170 H130 V80 M190 80 V170 H280 V80" fill="none" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="42" y="110" width="86" height="58" fill="var(--blue)" opacity=".18"/><rect x="192" y="110" width="86" height="58" fill="var(--blue)" opacity=".18"/>
+    <rect x="76" y="56" width="16" height="96" rx="3" fill="#8c9aa6"/><rect x="226" y="56" width="16" height="96" rx="3" fill="#c8743f"/>
+    <path d="M110 130 V96 H210 V130" fill="none" stroke="var(--teal)" stroke-opacity=".5" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M84 56 V26 H234 V56" fill="none" stroke="var(--ink)" stroke-width="3"/>
+    <rect x="132" y="12" width="56" height="28" rx="8" fill="var(--card)" stroke="var(--ink)" stroke-width="3"/>
+    <text x="160" y="32" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="15" fill="var(--ink)">1.10 V</text>
+    <circle cx="108" cy="26" r="5" fill="var(--blue)"/><circle cx="208" cy="26" r="5" fill="var(--blue)"/>
+  `),
+  organic: frame(`
+    ${gridLines()}
+    <path d="M70 120 L70 80 L104 60 L138 80 L138 120 L104 140 Z" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round"/>
+    <circle cx="104" cy="100" r="22" fill="none" stroke="var(--ink)" stroke-width="3.5"/>
+    <path d="M138 80 L172 60 L206 80 L240 60 L274 80" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M206 80 L206 120" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M240 60 L240 28 M248 60 L248 28" stroke="var(--coral)" stroke-width="4" stroke-linecap="round"/>
+    <text x="244" y="22" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="18" fill="var(--coral)">O</text>
+    <text x="206" y="142" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="18" fill="var(--blue)">NH₂</text>
+  `),
+  chirality: frame(`
+    ${gridLines()}
+    <path d="M160 20 V180" stroke="var(--ink)" stroke-opacity=".35" stroke-width="3" stroke-dasharray="6 7"/>
+    <g stroke="var(--ink)" stroke-opacity=".7" stroke-width="6" stroke-linecap="round">
+      <path d="M96 100 L96 46 M96 100 L50 128 M96 100 L132 132"/><path d="M224 100 L224 46 M224 100 L270 128 M224 100 L188 132"/>
+    </g>
+    <path d="M96 100 L82 150 M224 100 L238 150" stroke="var(--ink)" stroke-opacity=".3" stroke-width="6" stroke-dasharray="2 8" stroke-linecap="round"/>
+    <circle cx="96" cy="100" r="17" fill="var(--ink)"/><circle cx="224" cy="100" r="17" fill="var(--ink)"/>
+    <circle cx="96" cy="46" r="15" fill="var(--pink-soft)" stroke="var(--pink)" stroke-width="4"/><circle cx="224" cy="46" r="15" fill="var(--pink-soft)" stroke="var(--pink)" stroke-width="4"/>
+    <circle cx="50" cy="128" r="14" fill="var(--teal-soft)" stroke="var(--teal)" stroke-width="4"/><circle cx="270" cy="128" r="14" fill="var(--teal-soft)" stroke="var(--teal)" stroke-width="4"/>
+    <circle cx="132" cy="132" r="13" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="4"/><circle cx="188" cy="132" r="13" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="4"/>
+    <circle cx="82" cy="150" r="10" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".4" stroke-width="3"/><circle cx="238" cy="150" r="10" fill="var(--card)" stroke="var(--ink)" stroke-opacity=".4" stroke-width="3"/>
+  `),
+  mechanisms: frame(`
+    ${gridLines()}
+    <path d="M150 120 L210 120" stroke="var(--ink)" stroke-opacity=".75" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="80" cy="120" r="24" fill="var(--coral-soft)" stroke="var(--coral)" stroke-width="4"/>
+    <text x="80" y="128" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="20" fill="var(--ink)">O</text>
+    <circle cx="150" cy="120" r="22" fill="var(--ink)"/>
+    <circle cx="240" cy="120" r="26" fill="var(--pink-soft)" stroke="var(--pink)" stroke-width="4"/>
+    <text x="240" y="128" text-anchor="middle" font-family="Figtree, sans-serif" font-weight="700" font-size="18" fill="var(--ink)">Br</text>
+    <circle cx="74" cy="88" r="4" fill="var(--ink)"/><circle cx="86" cy="88" r="4" fill="var(--ink)"/>
+    <path d="M92 86 Q 118 40 146 92" fill="none" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/><path d="M146 92 l-3 -15 l-10 9 z" fill="var(--coral)"/>
+    <path d="M180 112 Q 205 60 236 90" fill="none" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/><path d="M236 90 l-2 -15 l-11 8 z" fill="var(--coral)"/>
+    <path d="M150 120 L136 170 M150 120 L172 168" stroke="var(--ink)" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>
+  `),
+  spectroscopy: frame(`
+    ${gridLines()}
+    <path d="M20 170 H300" stroke="var(--ink)" stroke-opacity=".45" stroke-width="2"/>
+    <path d="M40 170 V150 M60 170 V110 M80 170 V60 M100 170 V110 M120 170 V150" stroke="var(--blue)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M190 170 V120 M210 170 V70 M230 170 V120" stroke="var(--teal)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M150 30 C 160 30, 165 30, 170 60 C 175 92, 180 92, 186 60 C 190 34, 196 30, 300 30" fill="none" stroke="var(--violet)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M20 30 H140" stroke="var(--violet)" stroke-width="4" stroke-linecap="round" stroke-opacity=".5"/>
+    <text x="262" y="150" font-family="Figtree, sans-serif" font-weight="700" font-size="16" fill="var(--ink)" opacity=".6">δ</text>
+  `),
+  colour: frame(`
+    <defs><linearGradient id="cv-colour" x1="0" x2="1"><stop offset="0" stop-color="#7a3cff"/><stop offset=".2" stop-color="#2f5bd3"/><stop offset=".4" stop-color="#1fa594"/><stop offset=".55" stop-color="#9bd12a"/><stop offset=".7" stop-color="#f2c12e"/><stop offset=".85" stop-color="#ff8a2a"/><stop offset="1" stop-color="#e3342f"/></linearGradient></defs>
+    ${gridLines()}
+    <rect x="20" y="150" width="280" height="22" rx="4" fill="url(#cv-colour)"/>
+    <path d="M80 172 C 90 110, 110 110, 120 172" fill="var(--ink)" opacity=".2"/>
+    <path d="M60 140 L60 40 L100 40 L100 140 Q 80 160 60 140 Z" fill="#f29a2e" stroke="var(--ink)" stroke-width="3"/>
+    <path d="M140 140 L140 40 L180 40 L180 140 Q 160 160 140 140 Z" fill="#2f5bd3" stroke="var(--ink)" stroke-width="3"/>
+    <path d="M220 140 L220 40 L260 40 L260 140 Q 240 160 220 140 Z" fill="#8e3fa8" stroke="var(--ink)" stroke-width="3"/>
+  `),
+  biochem: frame(`
+    ${gridLines()}
+    <path d="M60 40 H100 V80 H140 V40 H180 V80 H220 V120 H180 V160 H140 V120 H100 V160 H60 V120" fill="none" stroke="var(--ink)" stroke-opacity=".6" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M100 80 L100 120 M140 80 L140 120 M180 80 L180 120" stroke="var(--amber)" stroke-width="4" stroke-dasharray="4 5"/>
+    <g stroke-width="3">
+      <circle cx="60" cy="40" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/><circle cx="100" cy="40" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
+      <circle cx="100" cy="80" r="10" fill="var(--amber)" stroke="var(--warn)"/><circle cx="140" cy="80" r="10" fill="var(--amber)" stroke="var(--warn)"/>
+      <circle cx="140" cy="40" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/><circle cx="180" cy="40" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
+      <circle cx="180" cy="80" r="10" fill="var(--amber)" stroke="var(--warn)"/><circle cx="220" cy="80" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
+      <circle cx="220" cy="120" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/><circle cx="180" cy="120" r="10" fill="var(--amber)" stroke="var(--warn)"/>
+      <circle cx="180" cy="160" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/><circle cx="140" cy="160" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
+      <circle cx="140" cy="120" r="10" fill="var(--amber)" stroke="var(--warn)"/><circle cx="100" cy="120" r="10" fill="var(--amber)" stroke="var(--warn)"/>
+      <circle cx="100" cy="160" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/><circle cx="60" cy="160" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/><circle cx="60" cy="120" r="10" fill="var(--blue-soft)" stroke="var(--blue)"/>
+    </g>
+    <path d="M250 30 C 290 60, 250 90, 290 120 C 330 150, 250 170, 290 195" fill="none" stroke="var(--coral)" stroke-width="4"/>
+    <path d="M290 30 C 250 60, 290 90, 250 120 C 210 150, 290 170, 250 195" fill="none" stroke="var(--teal)" stroke-width="4"/>
+  `),
+  drugs: frame(`
+    ${gridLines()}
+    <path d="M70 40 V150 H250 V40" fill="none" stroke="var(--ink)" stroke-opacity=".25" stroke-width="30" stroke-linejoin="round"/>
+    <circle cx="70" cy="70" r="14" fill="var(--coral)"/><circle cx="160" cy="150" r="14" fill="var(--amber)"/><circle cx="250" cy="70" r="14" fill="var(--blue)"/>
+    <path d="M140 76 L160 64 L180 76 L180 100 L160 112 L140 100 Z" fill="var(--card)" stroke="var(--ink)" stroke-width="4"/>
+    <path d="M140 88 L104 76 M160 112 L160 130 M180 88 L216 76" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+    <rect x="84" y="62" width="34" height="24" rx="12" fill="var(--success-tint)" stroke="var(--success)" stroke-width="3"/>
+    <rect x="202" y="62" width="34" height="24" rx="12" fill="var(--success-tint)" stroke="var(--success)" stroke-width="3"/>
+    <rect x="143" y="122" width="34" height="22" rx="11" fill="var(--success-tint)" stroke="var(--success)" stroke-width="3"/>
+  `),
   circuits: frame(`
     ${gridLines()}
     <path d="M60 50 H260 V150 H60 Z" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>

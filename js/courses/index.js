@@ -127,13 +127,27 @@ import control from './control.js';
 import markov from './markov.js';
 import ml from './ml.js';
 import vectorcalc from './vectorcalc.js';
+import bonding from './bonding.js';
+import shapes from './shapes.js';
+import imf from './imf.js';
+import thermochem from './thermochem.js';
+import equilibrium from './equilibrium.js';
+import acids from './acids.js';
+import electrochem from './electrochem.js';
+import organic from './organic.js';
+import chirality from './chirality.js';
+import mechanisms from './mechanisms.js';
+import spectroscopy from './spectroscopy.js';
+import colour from './colour.js';
+import biochem from './biochem.js';
+import drugs from './drugs.js';
 
 // Ordered as a learning path: foundational → intermediate → advanced, math and physics interleaved.
 export const courses = [
   ratios, powers, units, algebra, equations, motion, geometry, forces, machines, numbers, logic, coding, puzzles, graphsread,
   functions, optimization, quadratics, inequalities, circles, constructions, origami, perspective, conics, energy, materials, sports, bodyphysics, trig, trigid, polar, maps, navigation, probability, geoprob, decisions, games, matching, voting, epidemics, waves, oceanwaves, sound, resonance, earthquakes, counting, binary, digital, algorithms, crypto, nim, automata, electrostatics, electricity, rc, control, statistics, powerlaws,
-  vectors, graphics, circular, gravity, tides, planets, momentum, rockets, series, recursion, light, waveoptics, skyoptics, telescopes, fluids, flight, viscous, thermo, reactions, heat, weather, climate, graphs, contfrac, solids, tilings, fractals, astronomy, exoplanets,
-  limits, derivatives, integrals, numerics, diffeq, populations, multivariable, vectorcalc, ml, neural, curves, taylor, fourier, sampling, magnetism, grid, emwaves, semiconductors, rotation, gyroscopes, complex, linalg, groups, primes, topology, computability, distributions, randomwalks, markov, inference, statmech, relativity, spacetime, blackholes, cosmology, infinity, quantum, periodic, quantumcomp, lasers, nuclear, particles,
+  vectors, graphics, circular, gravity, tides, planets, momentum, rockets, series, recursion, light, waveoptics, skyoptics, telescopes, fluids, flight, viscous, thermo, reactions, bonding, shapes, imf, thermochem, equilibrium, acids, electrochem, organic, colour, biochem, heat, weather, climate, graphs, contfrac, solids, tilings, fractals, astronomy, exoplanets,
+  limits, derivatives, integrals, numerics, diffeq, populations, multivariable, vectorcalc, ml, neural, curves, taylor, fourier, sampling, magnetism, grid, emwaves, semiconductors, rotation, gyroscopes, complex, linalg, groups, primes, topology, computability, distributions, randomwalks, markov, inference, statmech, relativity, spacetime, blackholes, cosmology, infinity, quantum, periodic, chirality, mechanisms, spectroscopy, drugs, quantumcomp, lasers, nuclear, particles,
 ];
 
 export function getCourse(id) {
