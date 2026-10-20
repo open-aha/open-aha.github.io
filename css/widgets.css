@@ -163,36 +163,152 @@
 .w-readout.left {
   text-align: left;
 }
+/* the gas-box reading wraps to two lines in a narrow column: reserve both from the first layout */
+.gas-box {
+  container-type: inline-size;
+}
+@container (max-width: 480px) {
+  .gas-readout {
+    min-height: calc(3.1em + 4px);
+  }
+}
 
-/* slider */
+/* slider: label | track | value on one line. When a long label would squeeze the track below
+   140px, the label takes its own line and the track and value share the next one. */
 .slider {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 2px 12px;
   flex: 1 1 240px;
   min-width: 0;
 }
 .slider label {
   font-weight: 700;
   min-width: 28px;
+  flex: 0 1 auto;
 }
 .slider label .katex {
   font-size: 1.1em;
 }
+.slider .sl-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0 12px;
+  flex: 1 1 216px;
+  min-width: 0;
+}
+.slider input[type="range"] {
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+/* a few named options: a row of buttons instead of a slider (controls.js choices) */
+.seg-opts {
+  --sc: var(--select);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.seg {
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 2px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink-2);
+  font-weight: 650;
+  font-size: 15px;
+  line-height: 1.25;
+  text-align: center;
+  touch-action: manipulation;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.seg:hover:not(.on) {
+  border-color: color-mix(in srgb, var(--sc) 45%, var(--line-2));
+}
+.seg:active {
+  transform: translateY(1px);
+}
+.seg.on {
+  border-color: var(--sc);
+  background: color-mix(in srgb, var(--sc) 16%, var(--card));
+  color: var(--ink);
+}
+.seg .katex {
+  font-size: 1.05em;
+}
+/* when the options wrap onto several rows, the label stays level with the first one */
+.slider.seg-slider {
+  align-items: flex-start;
+}
+.slider.seg-slider > label {
+  padding-top: 8px;
+}
+/* −/+ buttons for sliders too fine to set by finger; they do the fine work, so the track may be shorter */
+/* (such a slider asks for a wider share of the row, so two of them stack rather than squeeze side by side) */
+.slider.fine {
+  flex-basis: 330px;
+}
+.slider .sl-row.fine {
+  gap: 0 6px;
+}
+.slider .sl-row.fine input[type="range"] {
+  min-width: 110px;
+}
+.slider .sl-row.fine output {
+  margin-left: 6px;
+}
+.sl-nudge {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.sl-nudge:hover {
+  border-color: color-mix(in srgb, var(--select) 40%, var(--line-2));
+}
+.sl-nudge:active {
+  transform: scale(0.92);
+}
+/* −/+ under a figure, for a dragged point that has an exact spot to hit */
+.pt-nudge {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--ink-3);
+  font-size: 15px;
+  font-weight: 600;
+}
+.pt-nudge span {
+  min-width: 9.5em;
+  text-align: center;
+}
 .slider output {
+  flex: 0 0 auto;
   min-width: 64px;
   text-align: right;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-/* a long option name sits on its own line, so its width never resizes the track */
-.slider.long-out {
-  grid-template-columns: auto 1fr;
-  row-gap: 0;
-}
+/* a long option name sits on its own line under the track, so its width never resizes the track */
 .slider.long-out output {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
   text-align: center;
   min-width: 0;
   margin-top: -4px;

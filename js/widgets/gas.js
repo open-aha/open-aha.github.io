@@ -35,7 +35,10 @@ export function gas(box, spec, api) {
   }
   makeParticles();
 
-  const readout = h('div.w-readout');
+  // in a narrow column the reading wraps to two lines; css reserves both (see .gas-box in widgets.css)
+  box.classList.add('gas-box');
+  const readout = h('div.w-readout.gas-readout');
+  let shown = '', tallest = 0;
   box.append(svg, readout);
   const sliders = {};
   const row = h('div.w-controls');
@@ -97,7 +100,14 @@ export function gas(box, spec, api) {
     const perimeter = 2 * (maxW * p.V + boxH);
     const P = span > 0.5 ? total / span / perimeter / 1.74 : null;
     const meas = { P, theory: (p.N / 60) * (p.T / 300) / p.V };
-    readout.innerHTML = mdi(spec.readout ? spec.readout(p, meas) : `pressure $\\approx ${P == null ? '…' : fix(P, 2)}$ $\\quad$ (ideal gas law predicts $${fix(meas.theory, 2)}$)`);
+    const html = mdi(spec.readout ? spec.readout(p, meas) : `pressure $\\approx ${P == null ? '…' : fix(P, 2)}$ $\\quad$ (ideal gas law predicts $${fix(meas.theory, 2)}$)`);
+    // the readout keeps its tallest height, so a reading that wraps to two lines never pushes the sliders down and up
+    if (html !== shown) {
+      shown = html;
+      readout.innerHTML = html;
+      const hgt = readout.offsetHeight;
+      if (hgt > tallest) { tallest = hgt; readout.style.minHeight = hgt + 'px'; }
+    }
   }
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) raf = requestAnimationFrame(frame);
   else draw();

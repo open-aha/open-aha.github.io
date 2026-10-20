@@ -8,7 +8,7 @@
 import { h } from '../lib/dom.js';
 import { mdi } from '../lib/md.js';
 import { Plot, s, set, draggable, keyNudge, clamp, snap, sticky, arrow, fmt, fmtTick, expectedBoost, keepInside } from '../lib/svg.js';
-import { slider, button } from './controls.js';
+import { slider, button, nudgeButton } from './controls.js';
 import { icons } from '../lib/icons.js';
 
 export function graph(box, spec, api) {
@@ -131,10 +131,29 @@ export function graph(box, spec, api) {
   for (const [k, d] of Object.entries(defs)) {
     if (d.slider === false) continue;
     sliders[k] = slider({
-      label: d.label || k, min: d.min, max: d.max, step: d.step || 0.1, value: d.value, color: d.color, format: d.format,
+      label: d.label || k, min: d.min, max: d.max, step: d.step || 0.1, value: d.value, color: d.color, format: d.format, control: d.control,
       onInput: (v) => { p[k] = v; touch(); },
     });
     controls.append(sliders[k].el);
+  }
+  // A dragged point with a goal to hit gets −/+ buttons for each direction it moves in (when that
+  // value has more than 30 steps), so the exact spot is reachable on a phone, where a finger can't place it.
+  if (spec.goal) {
+    const done = new Set();
+    (spec.points || []).forEach((pt) => {
+      const dr = pt.drag;
+      if (!dr) return;
+      const axes = dr.fn ? [[dr.key || Object.keys(defs)[0], ['back', 'forward']]] : [[dr.x, ['left', 'right']], [dr.y, ['down', 'up']]].filter(([k]) => k);
+      for (const [k, what] of axes) {
+        const d = defs[k];
+        if (!d || d.slider !== false || done.has(k) || !d.step || (d.max - d.min) / d.step <= 30) continue;
+        done.add(k);
+        const n = Math.round((d.max - d.min) / d.step);
+        const move = (dir) => (steps) => { setParam(k, p[k] + dir * steps * d.step); touch(); };
+        const text = axes.length > 1 ? `move ${what[0]} / ${what[1]}` : 'fine-tune the point';
+        controls.append(h('div.pt-nudge', nudgeButton(-1, move(-1), `Move the point ${what[0]}`, n), h('span', text), nudgeButton(1, move(1), `Move the point ${what[1]}`, n)));
+      }
+    });
   }
   const readout = spec.readout ? h('div.w-readout') : null;
 
