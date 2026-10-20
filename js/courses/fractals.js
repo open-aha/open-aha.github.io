@@ -183,7 +183,7 @@ export default {
               body: r`Here's the edge of the snowflake (a Koch curve), and we keep zooming in on its left end. Watch closely: every time the zoom reaches 3 times, the picture is exactly the same as when we started.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -0.02, xmax: 1.0, ymin: -0.05, ymax: 0.32, grid: false, axes: false, clipExtra: true,
-                animate: { param: 't', speed: 0.3, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 0.3, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const z = 3 ** (p.t % 1), out = [[0, 0]];
                   // drawing the curve scaled by z about the left end = viewing the window [0, 1/z]

@@ -793,11 +793,12 @@ That's a Markov chain on web pages. A page's **PageRank** is its stationary prob
               widget: {
                 kind: 'graph', xmin: 0, xmax: 600, ymin: 0, ymax: 260, grid: false, axes: false, height: 260,
                 animate: { param: 't', speed: 1, max: 34, autoplay: true },
-                extra: ({ p, s }) => {
+                extra: ({ plot, p, s }) => {
                   const { pages, counts } = surfRun(), h = surfHop(p.t), k = Math.floor(h), c = counts[k], tot = k + 1;
                   const els = webDraw(s, WEB.links, c.map((v) => v / tot));
                   const a = WEB.xy[pages[k]], b = WEB.xy[pages[Math.min(12000, k + 1)]], f = k < 20 ? Math.min(1, Math.max(0, ((h - k) - 0.3) / 0.5)) : 0;
-                  els.push(s('circle', { cx: a[0] + (b[0] - a[0]) * f, cy: a[1] + (b[1] - a[1]) * f - 30, r: 8, class: 'fl-coral' }));
+                  // the surfer rides just above its page, but never above the top of the drawing (page B is near the top)
+                  els.push(s('circle', { cx: a[0] + (b[0] - a[0]) * f, cy: Math.max(plot.Y(260) + 9, a[1] + (b[1] - a[1]) * f - 30), r: 8, class: 'fl-coral' }));
                   return els;
                 },
                 readout: (p) => { const { counts } = surfRun(), k = Math.floor(surfHop(p.t)), rk = pagerank(WEB.links, 0.85); let gap = 0; counts[k].forEach((v, i) => { gap = Math.max(gap, Math.abs(v / (k + 1) - rk[i])); }); return `${k} clicks · largest difference from the PageRanks: ${fix(gap, 3)}`; },

@@ -192,7 +192,7 @@ export function renderLesson(root, { course, lesson, next, go, start = 0 }) {
       bar.classList.add('is-correct');
       fbBadge.innerHTML = icons.eye;
       fbTitle.textContent = 'Here’s the answer';
-      fbMsg.innerHTML = steps[i].explain ? 'Read the explanation below, then continue.' : '';
+      fbMsg.innerHTML = steps[i].explain ? 'Read the explanation above, then continue.' : '';
       clearNote();
       secondary.hidden = true;
       main.textContent = 'Continue';

@@ -822,7 +822,7 @@ with $I$ in amps, $t$ in seconds and $n$ the electrons per ion.`,
               body: r`In a car's fuel cell, hydrogen and oxygen never meet directly. They are kept apart by a thin plastic **membrane** that lets protons through but not electrons, so the electrons have to take the long way round, through the motor (here, a light bulb).`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: 4, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
                   // chambers, electrodes and the membrane
@@ -835,20 +835,20 @@ with $I$ in amps, $t$ in seconds and $n$ the electrons per ion.`,
                   // the outer circuit with a bulb
                   const wire = [[3.7, 4.0], [3.7, 5.3], [6.3, 5.3], [6.3, 4.0]];
                   out.push(s('path', { d: `M${X(3.7)} ${Y(4.0)}V${Y(5.3)}H${X(6.3)}V${Y(4.0)}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2.5 }));
-                  out.push(s('circle', { cx: X(5), cy: Y(5.3), r: 15, fill: 'var(--amber)', opacity: 0.55 + 0.25 * Math.sin(t * 9) ** 2, stroke: 'var(--warn)', 'stroke-width': 2 }));
+                  out.push(s('circle', { cx: X(5), cy: Y(5.3), r: 15, fill: 'var(--amber)', opacity: 0.55 + 0.25 * Math.sin(t * 4 * Math.PI) ** 2, stroke: 'var(--warn)', 'stroke-width': 2 }));
                   for (let k = 0; k < 6; k++) {
-                    const [x, y] = fcAlong(wire, (t * 0.35 + k / 6) % 1);
+                    const [x, y] = fcAlong(wire, (t * 0.5 + k / 6) % 1);
                     out.push(s('circle', { cx: X(x), cy: Y(y), r: 4.5, fill: 'var(--blue)' }));
                   }
                   // hydrogen molecules drift to the anode and split
                   for (let k = 0; k < 5; k++) {
-                    const f = (t * 0.3 + k / 5) % 1, x = 0.8 + 2.6 * f, y = 1.0 + ((k * 0.61) % 1) * 2.6;
+                    const f = (t * 0.25 + k / 5) % 1, x = 0.8 + 2.6 * f, y = 1.0 + ((k * 0.61) % 1) * 2.6;
                     out.push(s('circle', { cx: X(x - 0.09), cy: Y(y), r: 5.5, fill: 'var(--blue-soft)', stroke: 'var(--blue)', 'stroke-width': 1.5 }));
                     out.push(s('circle', { cx: X(x + 0.09), cy: Y(y), r: 5.5, fill: 'var(--blue-soft)', stroke: 'var(--blue)', 'stroke-width': 1.5 }));
                   }
                   // protons cross the membrane
                   for (let k = 0; k < 7; k++) {
-                    const f = (t * 0.45 + k / 7) % 1, x = 3.95 + 2.1 * f, y = 0.9 + ((k * 0.43) % 1) * 2.8;
+                    const f = (t * 0.5 + k / 7) % 1, x = 3.95 + 2.1 * f, y = 0.9 + ((k * 0.43) % 1) * 2.8;
                     out.push(s('text', { x: X(x), y: Y(y) + 4, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'H⁺' }));
                   }
                   // oxygen in on the right, water leaving lower down

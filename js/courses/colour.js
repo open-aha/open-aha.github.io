@@ -540,7 +540,7 @@ Different ligands split the levels by different amounts (the **spectrochemical s
               body: r`Each electronic level of a molecule comes with a ladder of **vibrational** levels: the molecule can also be shaking. Follow fluorescein through one cycle of absorbing and emitting light.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: 5, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], u = (p.t % 5) / 5;
                   const S0 = 0.9, S1 = 4.0, vib = 0.18;

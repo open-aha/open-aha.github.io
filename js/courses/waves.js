@@ -459,7 +459,7 @@ Noise-cancelling headphones use destructive interference. A microphone listens t
               body: r`Two dippers tap a pond in step, sending out ripples. The rings are wave **crests** from the {blue:left} and {teal:right} source. Watch the {amber:dots} where two crests meet.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -6, xmax: 6, ymin: -0.3, ymax: 7, grid: false, axes: false, clipExtra: true,
-                animate: { param: 't', speed: 0.6, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 0.6, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const c = 1.5, lam = 1, ph = (p.t % 1) * lam, els = [], R = (r) => plot.X(r) - plot.X(0);
                   const radii = Array.from({ length: 10 }, (_, n) => ph + n * lam);

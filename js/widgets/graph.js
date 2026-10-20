@@ -3,11 +3,12 @@
 //   curves:[{f:(x,p)=>y, color, dash, width, from:(p)=>x, to:(p)=>x, param:{x:(t,p),y:(t,p),t0,t1}}],
 //   points:[{x:(p)=>, y:(p)=>, color, label:(p)=>str|str, drag:{x:'param', y:'param'}, r}],
 //   under:(ctx)=>[svg elements below the curves], extra:(ctx)=>[svg elements above the curves], readout:(p)=>md string, goal:(p)=>bool|{ok,msg}, solution:{...}, hint,
-//   stackSliders: true puts each slider on its own row }
+//   stackSliders: true puts each slider on its own row,
+//   animate: { param, speed, max, loop, autoplay, controls } advances p[param]; with a max it gets a timeline }
 
 import { h } from '../lib/dom.js';
 import { mdi } from '../lib/md.js';
-import { Plot, s, set, draggable, keyNudge, clamp, snap, sticky, arrow, fmt, fmtTick, expectedBoost, keepInside } from '../lib/svg.js';
+import { Plot, s, set, draggable, keyNudge, clamp, snap, sticky, arrow, fmt, fix, fmtTick, expectedBoost, keepInside } from '../lib/svg.js';
 import { slider, button, nudgeButton } from './controls.js';
 import { icons } from '../lib/icons.js';
 
@@ -200,17 +201,32 @@ export function graph(box, spec, api) {
   if (controls.children.length) box.append(controls);
 
   // optional animation: advances a time parameter (spec.animate = { param, speed, max, loop, autoplay, controls })
-  let raf = 0, playing = false, last = 0;
+  // An animation with a length (max) gets a timeline slider to move backwards and forwards through it; one without
+  // a max runs endlessly (steady motion) and has only Play and Reset.
+  let raf = 0, playing = false, last = 0, scrubber = null;
   const anim = spec.animate;
   let playBtn = null;
   if (anim) {
     if (p[anim.param] == null) p[anim.param] = 0;
     playBtn = button('Play', () => (playing ? stop() : start()), { icon: icons.play, primary: true });
     const resetBtn = button('Reset', () => { stop(); p[anim.param] = 0; update(); }, { icon: icons.reset });
+    if (anim.max != null && anim.controls !== false) {
+      scrubber = slider({
+        // a fine step so the thumb glides while it plays; the −/+ buttons still move 1% at a time
+        label: 'Timeline', min: 0, max: anim.max, step: anim.max / 2000, nudge: anim.max / 100, value: p[anim.param], color: 'ink', control: 'slider',
+        format: (v) => `${fix((100 * v) / anim.max, 0)}%`,
+        onInput: (v) => { stop(); p[anim.param] = v; touched = true; update(); api.onChange(); },
+      });
+      // the scene itself shows where you are, so the track takes the room a value label would
+      scrubber.el.classList.add('timeline');
+      box.append(h('div.w-controls', scrubber.el));
+    }
     // controls: false for a purely decorative loop (it just plays)
     if (anim.controls !== false) box.append(h('div.w-controls.center', playBtn, resetBtn));
   }
   function start() {
+    // a finished one-shot animation starts again from the beginning
+    if (anim.loop === false && anim.max != null && p[anim.param] >= anim.max - 1e-9) p[anim.param] = 0;
     playing = true;
     touched = true;
     api.onChange();
@@ -257,6 +273,7 @@ export function graph(box, spec, api) {
   }
 
   function update() {
+    if (scrubber && Math.abs(scrubber.value - p[anim.param]) > 1e-9) scrubber.value = p[anim.param];
     (spec.curves || []).forEach((c, i) => {
       let d;
       if (c.param) d = plot.paramPath((t) => c.param.x(t, p), (t) => c.param.y(t, p), c.param.t0, typeof c.param.t1 === 'function' ? c.param.t1(p) : c.param.t1);

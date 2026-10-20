@@ -143,7 +143,7 @@ In 1995, Michel Mayor and Didier Queloz found **51 Pegasi b** this way: the firs
               body: r`A star and a giant planet orbit their common {ink:centre of mass} (sizes and the wobble are exaggerated). We watch from far below the picture. On the right are a few dark lines in the star's spectrum, and below them the star's speed away from us, traced over time.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -2.7, xmax: 9.2, ymin: -3.1, ymax: 2.9, grid: false, axes: false, maxWidth: 640,
-                animate: { param: 't', speed: 0.9, max: 400 * Math.PI, autoplay: true },
+                animate: { param: 't', speed: 0.9, max: 2 * Math.PI, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const th = p.t, R = (r) => plot.X(r) - plot.X(0), els = [], v = -Math.cos(th);
                   const T = (x, y, text, anchor = 'middle', col = 'ink-2') => s('text', { x: plot.X(x), y: plot.Y(y), 'text-anchor': anchor, class: 'halo-text', style: `font-size:max(calc(13px * var(--fs, 1)), var(--fmin, 0px));fill:var(--${col})`, text });

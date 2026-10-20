@@ -213,7 +213,7 @@ Now push it repeatedly with a **driving frequency** of your choice. How big do t
               body: r`Three identical oscillators (natural frequency $f_0$), each driven by a {blue:hand} moving up and down. One is driven slowly, one exactly at $f_0$, one fast. Compare each {coral:mass} with its own hand. (The swings are scaled to the same size so you can compare their timing.)`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 9, ymin: -2.2, ymax: 2.4, grid: false, axes: false, height: 320,
-                animate: { param: 't', speed: 1, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 1, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const g = 0.25, els = [];
                   [[0.45, 'slow'], [1, 'at resonance'], [1.8, 'fast']].forEach(([w, lab], i) => {

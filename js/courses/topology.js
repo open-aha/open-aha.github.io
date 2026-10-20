@@ -825,7 +825,7 @@ More precisely: any continuous map from a disc (or a ball, or a square) to itsel
               body: r`The park has a {blue:pond} and a {coral:path}. The map, a shrunken copy of the park, lies somewhere inside it. But then the map shows itself too, so there's a smaller map on the map, and a smaller one on that, and so on. As the map is moved around, follow the {ink:black dot}.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -0.15, xmax: 4.15, ymin: -0.15, ymax: 3.15, grid: false, axes: false, maxWidth: 480,
-                animate: { param: 't', speed: 1, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 1, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const m = parkMap(p.t), els = [];
                   const draw = (f, level) => {

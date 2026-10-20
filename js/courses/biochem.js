@@ -537,7 +537,7 @@ Instead of releasing all that energy as heat at once, cells capture it in small 
               body: r`Most ATP is made by **ATP synthase**, a rotary motor in the inner membrane of mitochondria. Respiration pumps protons out across the membrane; they can only flow back through this enzyme. Seen from above: on the left, the membrane ring of 8 subunits that each proton turns by one step; on the right, the head with three active sites, turned by a shaft fixed to the ring.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 300, equal: true,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: 13.2, loop: false, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], th = synAngle(p.t), rad = (d) => (d * Math.PI) / 180;
                   // the ring: 8 subunits; a proton rides each one from the entry (top) almost all the way round

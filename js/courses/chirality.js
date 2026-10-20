@@ -485,7 +485,7 @@ So tartaric acid has only **three** stereoisomers, not four: RR, SS and meso. Lo
               body: r`A polariser lets through light whose electric field vibrates in one plane (here, straight up and down). Inside the tube of sugar solution, watch that plane: it doesn't jump, it turns a little more with every millimetre the light travels.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: Math.PI, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], yc = 3.6, A = 1.15;
                   // oblique 3D: depth (z) is drawn up and to the right

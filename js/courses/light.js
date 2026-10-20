@@ -340,7 +340,7 @@ Why does slowing down cause bending? Picture a column of marching soldiers walki
               body: r`Watch the {blue:wavefronts} (crests of the light wave) arrive at an angle from air into glass, where light travels 1.5 times slower. Think of a line of marchers stepping from pavement into mud.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -3, xmax: 3, ymin: -2.2, ymax: 2.2, grid: false, axes: false, maxWidth: 520, clipExtra: true,
-                animate: { param: 't', speed: 0.6, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 0.6, max: 1, autoplay: true },
                 under: ({ plot, s }) => [s('rect', { x: plot.X(-3), y: plot.Y(0), width: plot.X(3) - plot.X(-3), height: plot.Y(-2.2) - plot.Y(0), class: 'fl-blue-soft' })],
                 extra: ({ plot, p, s }) => {
                   const n = 1.5, t1 = (40 * Math.PI) / 180, t2 = Math.asin(Math.sin(t1) / n), lam = 0.7, els = [];

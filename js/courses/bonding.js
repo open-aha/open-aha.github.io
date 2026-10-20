@@ -762,7 +762,7 @@ Switch on the battery to push the sea along.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5, grid: false, axes: false, height: 250,
                 params: { V: { min: 0, max: 1, step: 1, value: 0, label: 'Battery', format: (v) => (v ? 'on' : 'off') } },
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   if (p.t < seaLast) seaDrift = 0;
                   seaDrift += (p.t - seaLast) * (p.V ? 0.9 : 0);

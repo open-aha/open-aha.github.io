@@ -96,10 +96,11 @@ const slabN = (t) => Math.min(5, Math.floor(Math.max(0, t) / 1.3));
 
 // ---------- carbon dioxide's three ways to vibrate, and what each does to the dipole ----------
 // each mode: displacements of [O, C, O] in x and y per unit of the oscillation, plus the oscillation rate
+// (each rate is a whole number of cycles in 6 s, the animation's length, so the loop is seamless)
 const CO2_MODES = [
-  { name: 'symmetric stretch', dx: [-1, 0, 1], dy: [0, 0, 0], w: 3.0, note: '~1340 cm⁻¹ · no IR absorption' },
-  { name: 'asymmetric stretch', dx: [1, -1.1, 1], dy: [0, 0, 0], w: 4.4, note: '2349 cm⁻¹ · absorbs' },
-  { name: 'bend', dx: [0, 0, 0], dy: [1, -1.1, 1], w: 1.8, note: '667 cm⁻¹ · absorbs' },
+  { name: 'symmetric stretch', dx: [-1, 0, 1], dy: [0, 0, 0], w: Math.PI, note: '~1340 cm⁻¹ · no IR absorption' },
+  { name: 'asymmetric stretch', dx: [1, -1.1, 1], dy: [0, 0, 0], w: (4 * Math.PI) / 3, note: '2349 cm⁻¹ · absorbs' },
+  { name: 'bend', dx: [0, 0, 0], dy: [1, -1.1, 1], w: (2 * Math.PI) / 3, note: '667 cm⁻¹ · absorbs' },
 ];
 
 // ---------- time of flight: ions from acetone get the same push; the light ones arrive first ----------
@@ -308,7 +309,7 @@ Light bonds to hydrogen (C–H, O–H, N–H) vibrate fastest, near 3000 cm⁻¹
               body: r`A vibration can only absorb infrared light if it makes the molecule's **dipole** rock back and forth: the oscillating electric field of the light needs something electrical to push on. Carbon dioxide has no dipole at rest. Watch its three kinds of vibration, and the arrow showing the dipole at each instant.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.3, grid: false, axes: false, height: 340,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: 6, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [];
                   CO2_MODES.forEach((m, i) => {
@@ -406,7 +407,7 @@ Elements also come as **isotopes**. Chlorine is 76% $^{35}$Cl and 24% $^{37}$Cl 
               body: r`In a **time-of-flight** mass spectrometer, a burst of ions gets exactly the same electrical push. Same energy means the light ions fly fastest (½mv² is fixed), so they reach the detector first. Here are three ions made from acetone.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: 18, loop: false, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
                   const x0 = 0.9, x1 = 9.2, yt = 4.6;

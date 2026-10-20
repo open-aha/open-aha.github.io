@@ -425,7 +425,7 @@ For a regular polygon with $n$ sides, each turn is $\dfrac{360°}{n}$, and each 
               body: r`Watch the turtle draw, and keep an eye on the dial: it adds up every turn the turtle makes, winding further out each time the total passes a full circle. Try the stars.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -1.25, xmax: 3.35, ymin: -1.2, ymax: 1.2, grid: false, axes: false,
-                animate: { param: 't', speed: 1.6, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1.6, autoplay: true },
                 params: { sh: { min: 0, max: 3, step: 1, value: 1, label: 'shape', color: 'violet', format: (v) => ['pentagon (turn 72.0°)', '5-pointed star (turn 144.0°)', '7-pointed star (turn 154.3°)', '8-pointed star (turn 135.0°)'][v] } },
                 extra: ({ plot, p, s }) => {
                   const [n, k] = [[5, 1], [5, 2], [7, 3], [8, 3]][p.sh], beta = (2 * Math.PI * k) / n, R = 1, phi0 = Math.PI / 2;

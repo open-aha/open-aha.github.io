@@ -202,7 +202,7 @@ The repeated tugs keep Io's orbit slightly elliptical, so Jupiter's tides flex i
               body: r`Io, Europa and Ganymede, with periods in the ratio $1 : 2 : 4$ (orbit sizes to scale). A line flashes whenever two neighbours pass each other.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -1.15, xmax: 1.15, ymin: -1.15, ymax: 1.15, grid: false, axes: false, maxWidth: 400,
-                animate: { param: 't', speed: 0.8, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 0.8, max: 8 * Math.PI, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const M = [['Io', 0.394, 1, 0, 'coral'], ['Europa', 0.627, 0.5, 0, 'blue'], ['Ganymede', 1, 0.25, Math.PI / 2, 'teal']], els = [];
                   const pos = ([, r, n, ph], tt) => [r * Math.cos(n * tt + ph), r * Math.sin(n * tt + ph)];

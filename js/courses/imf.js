@@ -67,7 +67,8 @@ const stages = (x0, n) => { const xs = [x0]; for (let i = 0; i < n; i++) xs.push
 
 // ---------- London forces: two electron clouds that flicker in step ----------
 // how far each cloud has slid sideways (left atom, then the right one, which follows it a moment later)
-const lonL = (t) => 0.55 * Math.sin(2.1 * t) + 0.35 * Math.sin(3.7 * t + 1) + 0.22 * Math.sin(5.9 * t + 2);
+// frequencies are whole multiples of 2π/12, so the motion repeats exactly every 12 s (the animation's length)
+const lonL = (t) => 0.55 * Math.sin(((2 * Math.PI) / 12) * 4 * t) + 0.35 * Math.sin(((2 * Math.PI) / 12) * 7 * t + 1) + 0.22 * Math.sin(((2 * Math.PI) / 12) * 11 * t + 2);
 const lonR = (t) => 0.85 * lonL(t - 0.15);
 
 // ---------- a closed flask: molecules escape at a steady rate and return at a rate that grows ----------
@@ -243,7 +244,7 @@ Bigger molecules have bigger, floppier electron clouds and more surface to touch
               body: r`Two neighbouring atoms, each a nucleus inside a cloud of electrons. Each cloud wobbles at random, so on average neither atom has a dipole at all. But watch the right one: whenever the left cloud slides towards it, its own electrons are pushed away.`,
               widget: {
                 kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.2, grid: false, axes: false, height: 320,
-                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                animate: { param: 't', speed: 1, max: 12, autoplay: true },
                 extra: ({ plot, p, s }) => {
                   const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t, u = X(1) - X(0);
                   const atoms = [[2.9, lonL(t), 'var(--blue)'], [7.1, lonR(t), 'var(--coral)']];

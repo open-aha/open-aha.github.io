@@ -630,3 +630,6 @@
   font-weight: 600;
   color: var(--ink-3);
 }
+
+/* an animation's timeline slider (graph animate with a max): no value label, so the track is as long as possible */
+.slider.timeline output { display: none; }

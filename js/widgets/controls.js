@@ -11,7 +11,8 @@ export const colorVar = (c) => COLOR_VARS[c] || c || 'var(--select)';
 
 // Range slider with label and live value. A handful of named options becomes a row of buttons
 // instead (see choices below); control: 'slider' or 'buttons' overrides the choice.
-export function slider({ label, min, max, step = 0.1, value, color = 'blue', format, onInput, control }) {
+// nudge: the step the −/+ buttons move by, when it should be coarser than the slider's own step
+export function slider({ label, min, max, step = 0.1, value, color = 'blue', format, onInput, control, nudge: nudgeStep }) {
   const id = 'sl' + Math.random().toString(36).slice(2, 8);
   const input = h('input', { type: 'range', id, min, max, step, value });
   const out = h('output', { for: id });
@@ -78,14 +79,14 @@ export function slider({ label, min, max, step = 0.1, value, color = 'blue', for
   // step, so an exact target is always reachable on a phone. Holding a button repeats.
   const fine = n > 30;
   const nudge = (dir, k = 1) => {
-    const v = Math.max(min, Math.min(max, +(parseFloat(input.value) + dir * k * step).toFixed(9)));
+    const v = Math.max(min, Math.min(max, +(parseFloat(input.value) + dir * k * (nudgeStep || step)).toFixed(9)));
     if (Math.abs(v - committed) < 1e-9) return;
     input.value = v;
     committed = parseFloat(input.value);
     sync();
     onInput && onInput(committed);
   };
-  const nudgeBtn = (dir) => nudgeButton(dir, (k) => nudge(dir, k), `${dir < 0 ? 'Decrease' : 'Increase'} ${String(label).replace(/[$\\{}]/g, '')}`, n);
+  const nudgeBtn = (dir) => nudgeButton(dir, (k) => nudge(dir, k), `${dir < 0 ? 'Decrease' : 'Increase'} ${String(label).replace(/[$\\{}]/g, '')}`, nudgeStep ? Math.round((max - min) / nudgeStep) : n);
   // the track and its value wrap together, so a long label never strands the value on a line of its own
   const basis = long ? (fine ? '220px' : '140px') : `calc(${fine ? 232 : 152}px + ${reserve})`;
   // (a long option name sits on its own line under the row, at the slider's full width)

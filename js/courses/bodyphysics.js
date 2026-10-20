@@ -571,7 +571,7 @@ Faster than that, you'd lift off the ground: you have to **run**.`,
               body: r`Watch a walker's hips vault over each planted leg (leg length 0.9 m). Speed up and compare the two arrows at the top of each arc: the {coral:acceleration needed to follow the arc}, $v^2/L$, and the {blue:most gravity can provide}, $g$.`,
               widget: {
                 kind: 'graph', equal: true, xmin: -0.2, xmax: 3.8, ymin: -0.15, ymax: 1.85, grid: false, axes: false, maxWidth: 560,
-                animate: { param: 't', speed: 1, max: 1000, autoplay: true },
+                animate: { param: 't', speed: 1, autoplay: true },
                 params: { v: { min: 0.5, max: 4, step: 0.5, value: 1.5, label: 'walking speed', color: 'coral', format: (v) => `${fix(v, 1)} m/s` } },
                 clipExtra: true,
                 extra: ({ plot, p, s }) => {
