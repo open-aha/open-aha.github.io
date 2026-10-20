@@ -47,6 +47,18 @@ const emission = (mix) => (l) => Object.entries(mix).reduce((t, [el, n]) => t + 
 // ---------- ligand-field colours of chromium(III) ----------
 const LIGANDS = [['Cl⁻', 13600], ['H₂O', 17400], ['NH₃', 21500], ['CN⁻', 26600]];
 
+// ---------- hydrogen's visible lines: jumps down to level 2 (E_n = −13.6/n² eV) ----------
+const HLINES = { 3: 656, 4: 486, 5: 434, 6: 410 };
+const H_SEQ = [3, 5, 4, 3, 6, 4, 3, 5]; // the jumps, in the order they happen
+const hLineCol = (l) => css(glow((x) => Math.exp(-0.5 * ((x - l) / 4) ** 2)));
+const H_CYCLE = 1.6; // seconds per excite-and-fall
+
+// ---------- the π electrons as particles in a box: a longer chain, more levels, a smaller gap ----------
+const boxK = (t) => Math.min(11, 1 + Math.floor(Math.max(0, t) / 0.9)); // conjugated C=C at time t
+
+// ---------- a Jablonski diagram: absorb at 490 nm, slide down the vibrational ladder, emit at 515 nm ----------
+const JAB_COL = (l) => css(glow((x) => Math.exp(-0.5 * ((x - l) / 4) ** 2)));
+
 export default {
   id: 'colour',
   subject: 'physics',
@@ -139,6 +151,56 @@ Move the absorption band and watch the solution.`,
               body: r`Heat a metal salt in a flame and its atoms' electrons jump to higher levels, then fall back, emitting light at a few exact wavelengths: a **line spectrum** that is a fingerprint of the element. Sodium's line at 589 nm gives street lamps (and burnt soup) their orange-yellow; strontium glows red, barium green, copper blue.`,
               widget: bars([['Li', 671, 'coral'], ['Sr', 662, 'coral'], ['Na', 589, 'amber'], ['Ba', 524, 'teal'], ['Cu', 435, 'blue']], { ymax: 750, yticks: 150, ylabel: 'main wavelength (nm)', height: 260 }),
             },
+            { /*chemanim:colour.flames*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'One jump, one colour',
+              body: r`Hydrogen, the simplest atom, shows the idea cleanly. Its electron can only sit on certain levels. A collision in the hot gas kicks it up; when it falls back to level 2 it gives out one photon whose energy is exactly the gap. Watch the spectrum fill in.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.2, grid: false, axes: false, height: 330,
+                animate: { param: 't', speed: 1, max: H_SEQ.length * H_CYCLE, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  const EY = (n) => 1.9 + 4.0 * (1 - 4 / (n * n)) * (n > 2 ? 1 : 0); // level 2 at the bottom of the ladder, 6 near the top
+                  for (let n = 2; n <= 6; n++) {
+                    out.push(s('line', { x1: X(0.8), x2: X(4.6), y1: Y(EY(n)), y2: Y(EY(n)), stroke: 'var(--ink-2)', 'stroke-width': 2 }));
+                    if (n < 6) out.push(s('text', { x: X(0.6), y: Y(EY(n)) + 4, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: `n=${n}` }));
+                    else out.push(s('text', { x: X(4.75), y: Y(EY(n)) + 4, class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: 'n=6' }));
+                  }
+                  const i = Math.min(H_SEQ.length - 1, Math.floor(t / H_CYCLE)), u = t / H_CYCLE - i, n = H_SEQ[i], lx = 1.4 + (i % 4) * 0.9;
+                  // up (a collision), wait, down (a photon)
+                  let ey = EY(2);
+                  if (u < 0.25) ey = EY(2) + (EY(n) - EY(2)) * (u / 0.25);
+                  else if (u < 0.5) ey = EY(n);
+                  else if (u < 0.7) ey = EY(n) + (EY(2) - EY(n)) * ((u - 0.5) / 0.2);
+                  out.push(s('line', { x1: X(lx), x2: X(lx), y1: Y(EY(2)), y2: Y(EY(n)), stroke: u < 0.5 ? 'var(--ink-3)' : hLineCol(HLINES[n]), 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+                  out.push(s('circle', { cx: X(lx), cy: Y(ey), r: 7, fill: 'var(--blue)' }));
+                  if (u >= 0.6 && u < 1) {
+                    // the photon flies off to the right as a wiggle
+                    const x0 = 4.8 + (u - 0.6) * 9, col = hLineCol(HLINES[n]), y0 = (EY(n) + EY(2)) / 2;
+                    let d = '';
+                    for (let k = 0; k <= 30; k++) d += `${k ? 'L' : 'M'}${X(x0 + k * 0.04).toFixed(1)} ${Y(y0 + 0.18 * Math.sin(k * 0.9)).toFixed(1)}`;
+                    out.push(s('path', { d, fill: 'none', stroke: col, 'stroke-width': 3 }));
+                  }
+                  // the spectrum: a line appears once that jump has happened
+                  const SX = (l) => 0.9 + ((l - 380) / 350) * 8.4;
+                  out.push(s('rect', { x: X(0.9), y: Y(1.2), width: X(9.3) - X(0.9), height: Y(0.5) - Y(1.2), fill: '#0b0d12', rx: 4 }));
+                  const seenLines = new Set(H_SEQ.slice(0, i + (u >= 0.7 ? 1 : 0)));
+                  for (const m of seenLines) {
+                    const l = HLINES[m];
+                    out.push(s('rect', { x: X(SX(l)) - 2.5, y: Y(1.2), width: 5, height: Y(0.5) - Y(1.2), style: `fill:${hLineCol(l)}` }));
+                    out.push(s('text', { x: X(SX(l)), y: Y(0.5) + 15, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: `${l}` }));
+                  }
+                  out.push(s('text', { x: X(9.3), y: Y(1.2) - 6, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: 'wavelength (nm) →' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const i = Math.min(H_SEQ.length - 1, Math.floor(p.t / H_CYCLE)), n = H_SEQ[i];
+                  return `Jump from level ${n} to level 2: a ${HLINES[n]} nm photon`;
+                },
+              },
+              after: r`Only four visible lines ever appear, however long you watch: red 656, cyan 486, blue 434 and violet 410 nm, because only four gaps from higher levels down to level 2 fall in the visible. Bigger jumps give bluer photons (falls all the way to level 1 give ultraviolet). Each element has its own ladder of levels, so its own set of lines: a barcode that identifies it in a flame, a firework or a distant star.`,
+            },
             {
               type: 'interactive',
               title: 'Design a firework',
@@ -218,6 +280,48 @@ Ethene (one C=C) absorbs only in the far ultraviolet. Add double bonds and the a
                 extra: ({ plot, s }) => [s('text', { x: plot.X(0.3), y: plot.Y(400) - 8, class: 'lbl halo-text', style: `fill:var(--ink-3);${FS(13)}`, text: 'visible light starts' })],
               },
               after: r`The dots are measured values for polyenes; the curve is a fit. Around eight to ten conjugated double bonds the absorption enters the visible.`,
+            },
+            { /*chemanim:colour.conjugation*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Stretch the box',
+              body: r`Each extra double bond lengthens the box and adds two more π electrons. The energy levels of a particle in a box go as $n^2/L^2$: stretch the box and every level drops and crowds closer together. Electrons fill the levels two at a time. Watch the gap between the top filled level and the first empty one.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.4, grid: false, axes: false, height: 340,
+                animate: { param: 't', speed: 0.9, max: 10.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], k = boxK(p.t), N = 2 * k, L = N + 1;
+                  // the chain: 2k carbons, alternating double and single bonds
+                  const step = 8.6 / 22, x0 = 5 - (step * (N - 1)) / 2;
+                  for (let j = 0; j < N - 1; j++) {
+                    const xa = x0 + j * step, xb = xa + step, ya = 5.75 + (j % 2 ? 0.18 : -0.18), yb = 5.75 + (j % 2 ? -0.18 : 0.18);
+                    out.push(s('line', { x1: X(xa), y1: Y(ya), x2: X(xb), y2: Y(yb), stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                    if (j % 2 === 0) {
+                      // the second line of a double bond: parallel, on the inside of the zig-zag, a little shorter
+                      const px = X(xa), py = Y(ya), qx = X(xb), qy = Y(yb), len = Math.hypot(qx - px, qy - py), nx = (-(qy - py) / len) * 6, ny = ((qx - px) / len) * 6;
+                      out.push(s('line', { x1: px + nx + (qx - px) * 0.15, y1: py + ny + (qy - py) * 0.15, x2: qx + nx - (qx - px) * 0.15, y2: qy + ny - (qy - py) * 0.15, stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                    }
+                  }
+                  // the box and its levels (E ∝ n²/L²), scaled so ethene's first empty level sits near the top
+                  const EY = (n) => 0.45 + (4.5 * (n * n) / (L * L)) / (4 / 9);
+                  const bx0 = 5 - (step * N) / 2 - 0.1, bx1 = 5 + (step * N) / 2 + 0.1;
+                  out.push(s('path', { d: `M${X(bx0)} ${Y(5.15)}V${Y(0.35)}H${X(bx1)}V${Y(5.15)}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  for (let n = 1; n <= k + 1; n++) {
+                    const filled = n <= k, y = EY(n);
+                    out.push(s('line', { x1: X(bx0 + 0.15), x2: X(bx1 - 0.15), y1: Y(y), y2: Y(y), stroke: filled ? 'var(--blue)' : 'var(--coral)', 'stroke-width': 2 }));
+                    if (filled) for (const dx of [-0.12, 0.12]) out.push(s('circle', { cx: X(5 + dx), cy: Y(y), r: 3.5, fill: 'var(--blue)' }));
+                  }
+                  const yH = EY(k), yL = EY(k + 1);
+                  out.push(s('line', { x1: X(bx1 + 0.35), x2: X(bx1 + 0.35), y1: Y(yH), y2: Y(yL), stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  out.push(s('text', { x: X(bx1 + 0.5), y: Y((yH + yL) / 2) + 5, class: 'lbl halo-text', style: `fill:var(--violet);${FS(13)}`, text: 'gap' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const k = boxK(p.t);
+                  return `${k} conjugated C=C · ${2 * k} π electrons · absorbs at about ${fix(polyene(k), 0)} nm (measured)`;
+                },
+              },
+              after: r`Two things happen at once as the chain grows: the levels sink and crowd together ($1/L^2$), and there are more electrons to fill them, so the top filled level climbs the ladder. The net effect is a shrinking gap between the highest filled orbital and the lowest empty one, so smaller photons, of longer wavelength, are enough to lift an electron. The simple box overdoes the effect (real chains have alternating bond lengths), so the wavelengths quoted are measured ones, but the trend is exactly right.`,
             },
             {
               type: 'interactive',
@@ -428,6 +532,53 @@ Different ligands split the levels by different amounts (the **spectrochemical s
                 curves: [{ f: (l) => Math.exp(-0.5 * ((l - 490) / 18) ** 2), color: 'blue' }, { f: (l) => 0.85 * gp(l, 515, 14, 28), color: 'teal' }],
                 extra: ({ plot, s }) => [s('text', { x: plot.X(455), y: plot.Y(1.05), 'text-anchor': 'middle', class: 'lbl halo-text', style: `fill:var(--blue);${FS(13)}`, text: 'absorbed' }), s('text', { x: plot.X(570), y: plot.Y(0.75), 'text-anchor': 'middle', class: 'lbl halo-text', style: `fill:var(--teal);${FS(13)}`, text: 'emitted' })],
               },
+            },
+            { /*chemanim:colour.glow*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Where the energy goes',
+              body: r`Each electronic level of a molecule comes with a ladder of **vibrational** levels: the molecule can also be shaking. Follow fluorescein through one cycle of absorbing and emitting light.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], u = (p.t % 5) / 5;
+                  const S0 = 0.9, S1 = 4.0, vib = 0.18;
+                  // the two electronic levels, each with its vibrational ladder
+                  for (const [base, name] of [[S0, 'ground state'], [S1, 'excited state']]) {
+                    for (let v = 0; v < 5; v++) out.push(s('line', { x1: X(2.2), x2: X(7.8), y1: Y(base + v * vib), y2: Y(base + v * vib), stroke: 'var(--ink-2)', 'stroke-width': v ? 1 : 2.5, 'stroke-opacity': v ? 0.5 : 1 }));
+                    out.push(s('text', { x: X(2.05), y: Y(base) + 4, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: name }));
+                  }
+                  const blue = JAB_COL(490), green = JAB_COL(515);
+                  // phases: absorb (u 0–0.2), relax down the ladder (0.2–0.55), wait (0.55–0.65), emit (0.65–0.85), relax again (0.85–1)
+                  let ex = 3.4, ey = S0;
+                  if (u < 0.2) { ey = S0 + (S1 + 2 * vib - S0) * (u / 0.2); }
+                  else if (u < 0.55) { const f = (u - 0.2) / 0.35; ex = 3.4 + 1.2 * f; ey = S1 + 2 * vib * (1 - Math.floor(f * 2.999) / 2); }
+                  else if (u < 0.65) { ex = 4.6; ey = S1; }
+                  else if (u < 0.85) { const f = (u - 0.65) / 0.2; ex = 4.6 + 1.0 * f; ey = S1 + (S0 + 2 * vib - S1) * f; }
+                  else { const f = (u - 0.85) / 0.15; ex = 5.6; ey = S0 + 2 * vib * (1 - Math.floor(f * 2.999) / 2); }
+                  // arrows already travelled
+                  if (u >= 0.2) out.push(s('line', { x1: X(3.4), x2: X(3.4), y1: Y(S0), y2: Y(S1 + 2 * vib), stroke: blue, 'stroke-width': 4 }));
+                  if (u >= 0.85) out.push(s('line', { x1: X(5.6), x2: X(5.6), y1: Y(S1), y2: Y(S0 + 2 * vib), stroke: green, 'stroke-width': 4 }));
+                  out.push(s('circle', { cx: X(ex), cy: Y(ey), r: 7, fill: 'var(--ink)' }));
+                  // incoming and outgoing photons
+                  const wig = (xA, yA, col) => {
+                    let d = '';
+                    for (let k = 0; k <= 26; k++) d += `${k ? 'L' : 'M'}${X(xA + k * 0.045).toFixed(1)} ${Y(yA + 0.16 * Math.sin(k * 0.95)).toFixed(1)}`;
+                    out.push(s('path', { d, fill: 'none', stroke: col, 'stroke-width': 3 }));
+                  };
+                  if (u < 0.2) wig(0.4 + 1.6 * (u / 0.2), 2.6, blue);
+                  if (u >= 0.65 && u < 1) wig(6.3 + 2.3 * ((u - 0.65) / 0.35), 2.6, green);
+                  out.push(s('text', { x: X(1.0), y: Y(3.2), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--blue);${FS(12)}`, text: 'in: 490 nm' }));
+                  out.push(s('text', { x: X(8.9), y: Y(3.2), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--success);${FS(12)}`, text: 'out: 515 nm' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const u = (p.t % 5) / 5;
+                  return u < 0.2 ? 'A blue photon lifts an electron, and the molecule starts shaking.' : u < 0.65 ? 'Within picoseconds the shaking is passed on as heat.' : u < 0.85 ? 'A few nanoseconds later: a green photon, smaller than the blue one.' : 'Back in the ground state, shaking a little; that heat goes too.';
+                },
+              },
+              after: r`The {blue:absorption arrow} is longer than the {success:emission arrow}: some energy leaks away as vibration (heat) at both ends, so the light that comes out always has less energy, and a longer wavelength, than the light that went in. That difference is the Stokes shift (drawn much bigger here than fluorescein's 5% so you can see the steps). It is what makes fluorescence so useful: filters can block the blue light shining in and pass only the green glow coming out.`,
             },
             {
               type: 'numeric',

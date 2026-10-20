@@ -37,6 +37,33 @@ function dnaPuzzle(top) {
   };
 }
 
+// ---------- melting a stretch of DNA: the A–T end opens first, the G–C end holds on ----------
+const MELT_SEQ = 'ATTATAATGCGGCC';
+const MELT_PAIR = { A: 'T', T: 'A', G: 'C', C: 'G' };
+// each pair's local melting temperature: A–T stretch near 70 °C, G–C stretch near 89 °C, the very ends a little lower
+const MELT_TM = [...MELT_SEQ].map((b, i) => (i < 8 ? 70 : 89) + (i === 0 || i === 13 ? -3 : 0) + ((i * 7) % 3) - 1);
+const meltT = (t) => 50 + 50 * Math.min(1, Math.max(0, t / 10));
+const meltOpen = (i, T) => 1 / (1 + Math.exp(-(T - MELT_TM[i]) / 1.3));
+const MELT_COL = { A: 'var(--blue)', T: 'var(--amber)', G: 'var(--teal)', C: 'var(--coral)' };
+
+// ---------- phospholipids scattered in water, settling into a bilayer ----------
+const LIP_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const LIPIDS = (() => {
+  let seed = 53;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const out = [];
+  for (const top of [true, false]) for (let k = 0; k < 12; k++) {
+    // target: heads out (up for the top sheet, down for the bottom one), tails meeting in the middle
+    out.push({ tx: 0.95 + k * 0.735 + (top ? 0 : 0.37), ty: top ? 3.65 : 1.75, ta: top ? -90 : 90, sx: 0.6 + rnd() * 8.8, sy: 0.6 + rnd() * 4.6, sa: rnd() * 360, delay: rnd() * 3.2, ph: rnd() * 6.28 });
+  }
+  return out;
+})();
+
+// ---------- ATP synthase: protons turn a ring of 8; every third of a turn, the head releases one ATP ----------
+const SYN_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+// rotor angle (degrees): 45° per proton, each step quick then a pause
+const synAngle = (t) => { const k = Math.max(0, t) / 0.55, n = Math.floor(k); return 45 * (n + SYN_SM((k - n) / 0.5)); };
+
 export default {
   id: 'biochem',
   subject: 'physics',
@@ -332,6 +359,54 @@ $$v = \frac{V_{\max}[S]}{K_m + [S]}$$`,
               ],
               explain: r`G–C pairs hold together more strongly (three hydrogen bonds and stronger stacking), so G–C-rich DNA needs more heat. Microbes from hot springs have especially G–C-rich ribosomal RNA, which has to stay folded at 80 °C and above.`,
             },
+            { /*chemanim:biochem.dna*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Turn up the heat',
+              body: r`A short stretch of DNA: mostly A–T pairs on the left, G–C pairs on the right. Heat it slowly from 50 °C to 100 °C. Below it, the curve tracks the fraction of pairs that have come apart, which chemists measure from UV absorbance (separated strands absorb about 40% more at 260 nm).`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.2, grid: false, axes: false, height: 330,
+                animate: { param: 't', speed: 0.9, max: 11, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], T = meltT(p.t);
+                  const xs = [...MELT_SEQ].map((b, i) => 0.9 + i * 0.63), mid = 4.35;
+                  const open = xs.map((x, i) => meltOpen(i, T));
+                  const yTop = open.map((o) => mid + 0.45 + 0.65 * o), yBot = open.map((o) => mid - 0.45 - 0.65 * o);
+                  // hydrogen bonds (2 for A–T, 3 for G–C), fading as a pair opens
+                  [...MELT_SEQ].forEach((b, i) => {
+                    const nh = b === 'A' || b === 'T' ? 2 : 3, op = Math.max(0, 1 - 2 * open[i]);
+                    if (op > 0) for (let h = 0; h < nh; h++) {
+                      const dx = (h - (nh - 1) / 2) * 0.09;
+                      out.push(s('line', { x1: X(xs[i] + dx), x2: X(xs[i] + dx), y1: Y(mid + 0.1), y2: Y(mid - 0.1), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '2 2', opacity: op }));
+                    }
+                  });
+                  // bases as stubs from each backbone towards the middle
+                  [...MELT_SEQ].forEach((b, i) => {
+                    const pb = MELT_PAIR[b];
+                    out.push(s('line', { x1: X(xs[i]), x2: X(xs[i]), y1: Y(yTop[i]), y2: Y(yTop[i] - 0.33), stroke: MELT_COL[b], 'stroke-width': 7, 'stroke-linecap': 'round' }));
+                    out.push(s('line', { x1: X(xs[i]), x2: X(xs[i]), y1: Y(yBot[i]), y2: Y(yBot[i] + 0.33), stroke: MELT_COL[pb], 'stroke-width': 7, 'stroke-linecap': 'round' }));
+                    out.push(s('text', { x: X(xs[i]), y: Y(yTop[i] + 0.22), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(10)}`, text: b }));
+                    out.push(s('text', { x: X(xs[i]), y: Y(yBot[i] - 0.22) + 8, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(10)}`, text: pb }));
+                  });
+                  for (const ys of [yTop, yBot]) out.push(s('path', { d: xs.map((x, i) => `${i ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(ys[i]).toFixed(1)}`).join(''), fill: 'none', stroke: 'var(--ink-2)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+                  // fraction of pairs open against temperature
+                  const gx0 = 1.2, gx1 = 9.6, gy0 = 0.45, gy1 = 2.05, GX = (TT) => gx0 + ((gx1 - gx0) * (TT - 50)) / 50, GY = (f) => gy0 + (gy1 - gy0) * f;
+                  const frac = (TT) => xs.reduce((a, x, i) => a + meltOpen(i, TT), 0) / xs.length;
+                  out.push(s('path', { d: `M${X(gx0)} ${Y(gy1)}V${Y(gy0)}H${X(gx1)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  let d = '';
+                  for (let TT = 50; TT <= T + 1e-9; TT += 0.5) d += `${d ? 'L' : 'M'}${X(GX(TT)).toFixed(1)} ${Y(GY(frac(TT))).toFixed(1)}`;
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  for (const TT of [50, 75, 100]) out.push(s('text', { x: X(GX(TT)), y: Y(gy0) + 15, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: `${TT} °C` }));
+                  out.push(s('text', { x: X(gx0) + 4, y: Y(gy1) - 4, class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: 'fraction of pairs apart' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const T = meltT(p.t), n = [...MELT_SEQ].filter((b, i) => meltOpen(i, T) > 0.5).length;
+                  return `temperature ${fix(T, 0)} °C · pairs apart: ${n} of 14`;
+                },
+              },
+              after: r`The melting comes in two steps. The {blue:A}–{amber:T} stretch, held by two hydrogen bonds per pair, opens around 70 °C; the {teal:G}–{coral:C} stretch, with three per pair and stronger stacking, holds on until nearly 90 °C. Real genes melt in exactly this patchy way, A–T-rich regions first, which is why cells start copying DNA at A–T-rich spots. PCR uses the whole effect on purpose: about 95 °C to separate the strands, then cooling so new partners can pair up.`,
+            },
           ],
           recap: [
             'A pairs with T (2 H-bonds), G with C (3 H-bonds).',
@@ -365,6 +440,43 @@ $$v = \frac{V_{\max}[S]}{K_m + [S]}$$`,
                   return out;
                 },
               },
+            },
+            { /*chemanim:biochem.membranes*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A wall that builds itself',
+              body: r`Shake phospholipids into water. Each has a water-loving head (pink) and two oily tails. Nothing steers them, but every arrangement that hides the tails from water lowers the energy, so they find one.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 290,
+                animate: { param: 't', speed: 1, max: 6.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t, u = X(1) - X(0), v = Y(0) - Y(1);
+                  out.push(s('rect', { x: X(0.2), y: Y(5.4), width: X(9.8) - X(0.2), height: Y(0.2) - Y(5.4), rx: 8, fill: 'var(--blue)', opacity: 0.1 }));
+                  const done = LIP_SM((t - 4.6) / 0.8);
+                  if (done > 0) {
+                    out.push(s('rect', { x: X(0.4), y: Y(3.5), width: X(9.6) - X(0.4), height: Y(1.9) - Y(3.5), fill: 'var(--amber)', opacity: 0.18 * done }));
+                    out.push(s('text', { x: X(9.6), y: Y(1.1), 'text-anchor': 'end', class: 'lbl halo-text', style: `fill:var(--ink-2);opacity:${done};${FS(11)}`, text: 'oily core ↑' }));
+                  }
+                  for (const L of LIPIDS) {
+                    const f = LIP_SM((t - 0.4 - L.delay) / 1.4);
+                    const wob = (1 - f) * 0.15;
+                    const x = L.sx + (L.tx - L.sx) * f + wob * Math.sin(1.6 * t + L.ph), y = L.sy + (L.ty - L.sy) * f + wob * Math.cos(1.3 * t + L.ph);
+                    // turn the short way round to the target angle
+                    let da = (((L.ta - L.sa) % 360) + 540) % 360 - 180;
+                    const a = ((L.sa + da * f + (1 - f) * 25 * Math.sin(t + L.ph)) * Math.PI) / 180;
+                    const dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx;
+                    // tails run from the head in direction (dx, dy) (in plot units; y up)
+                    for (const side of [-1, 1]) {
+                      const bx = x + nx * 0.07 * side, by = y + ny * 0.07 * side;
+                      out.push(s('line', { x1: X(bx), y1: Y(by), x2: X(bx + dx * 0.85), y2: Y(by + dy * 0.85), stroke: 'var(--warn)', 'stroke-width': 2.5, 'stroke-linecap': 'round' }));
+                    }
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 0.14 * Math.min(u, v), fill: 'var(--pink)', opacity: 0.9 }));
+                  }
+                  return out;
+                },
+                readout: (p) => (p.t < 4.6 ? 'Lipids tumble about; tails keep ending up next to other tails.' : 'A bilayer: heads face the water on both sides, tails hide in the middle.'),
+              },
+              after: r`No blueprint, no machinery: the bilayer forms because water molecules hydrogen-bond better to each other than to oily tails, so tails get pushed together, the same **hydrophobic effect** that folds proteins. The result is a sheet two molecules (about 5 nm) thick that seals itself if torn. A bilayer has edges, so in practice it curls round into a closed bubble: the start of a cell.`,
             },
             {
               type: 'mcq',
@@ -417,6 +529,49 @@ $$v = \frac{V_{\max}[S]}{K_m + [S]}$$`,
 $$\mathrm{C_6H_{12}O_6 + 6O_2 \to 6CO_2 + 6H_2O} \qquad \Delta G \approx -2870 \text{ kJ/mol}$$
 Instead of releasing all that energy as heat at once, cells capture it in small packets by making **ATP** (adenosine triphosphate) from ADP and phosphate. Splitting ATP back releases about 30.5 kJ/mol wherever energy is needed: contracting muscles, pumping ions, building proteins.`,
               widget: bars([['glucose\n(per mol)', 2870, 'amber'], ['ATP made\n(about 30)', 915, 'teal'], ['lost as\nheat', 1955, 'coral']], { ymax: 3200, yticks: 800, ylabel: 'energy (kJ)', height: 260, labelSize: 12 }),
+            },
+            { /*chemanim:biochem.energy*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A turbine in your cells',
+              body: r`Most ATP is made by **ATP synthase**, a rotary motor in the inner membrane of mitochondria. Respiration pumps protons out across the membrane; they can only flow back through this enzyme. Seen from above: on the left, the membrane ring of 8 subunits that each proton turns by one step; on the right, the head with three active sites, turned by a shaft fixed to the ring.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 300, equal: true,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], th = synAngle(p.t), rad = (d) => (d * Math.PI) / 180;
+                  // the ring: 8 subunits; a proton rides each one from the entry (top) almost all the way round
+                  const cx = 2.6, cy = 2.9, R = 1.35;
+                  out.push(s('circle', { cx: X(cx), cy: Y(cy), r: X(R) - X(0), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '3 5' }));
+                  for (let k = 0; k < 8; k++) {
+                    const a = th + 45 * k, rel = ((a % 360) + 360) % 360, x = cx + R * Math.cos(rad(a + 90)), y = cy + R * Math.sin(rad(a + 90));
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 0.36 * (X(1) - X(0)), fill: 'var(--teal-soft)', stroke: 'var(--teal)', 'stroke-width': 2 }));
+                    // carrying a proton between entry (0°) and exit (315°)
+                    if (rel > 2 && rel < 313) out.push(s('text', { x: X(x), y: Y(y) + 4.5, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'H⁺' }));
+                  }
+                  out.push(s('text', { x: X(cx), y: Y(cy + R + 0.75), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'H⁺ in ↓' }));
+                  out.push(s('text', { x: X(cx + 1.5), y: Y(cy + R + 0.45), class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: '↑ out' }));
+                  out.push(s('text', { x: X(cx), y: Y(0.2), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'membrane ring' }));
+                  // the head: three sites; the shaft's direction decides which is open, loose or tight
+                  const hx = 7.4, hy = 2.9, names = ['open', 'loose', 'tight'];
+                  out.push(s('line', { x1: X(hx), y1: Y(hy), x2: X(hx + 0.95 * Math.cos(rad(th + 90))), y2: Y(hy + 0.95 * Math.sin(rad(th + 90))), stroke: 'var(--ink)', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+                  for (let i = 0; i < 3; i++) {
+                    const sa = 90 + 120 * i, x = hx + 1.45 * Math.cos(rad(sa)), y = hy + 1.45 * Math.sin(rad(sa));
+                    const st = Math.floor(((((th + 90 - sa) % 360) + 360) % 360) / 120) % 3, col = ['var(--ink-3)', 'var(--blue)', 'var(--violet)'][st];
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 0.62 * (X(1) - X(0)), fill: 'var(--card)', stroke: col, 'stroke-width': 3 }));
+                    out.push(s('text', { x: X(x), y: Y(y) + (st ? -2 : 4), 'text-anchor': 'middle', class: 'lbl', style: `fill:${col};${FS(11)}`, text: names[st] }));
+                    if (st) out.push(s('text', { x: X(x), y: Y(y) + 12, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(10)}`, text: st === 1 ? 'ADP + P' : 'ATP' }));
+                  }
+                  out.push(s('circle', { cx: X(hx), cy: Y(hy), r: 7, fill: 'var(--ink)' }));
+                  out.push(s('text', { x: X(hx), y: Y(0.2), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'catalytic head' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const th = synAngle(p.t);
+                  return `protons through: ${Math.floor(th / 45 + 1e-6)} · ATP released: ${Math.floor(th / 120 + 1e-6)}`;
+                },
+              },
+              after: r`Each proton that flows through pushes the ring round by one subunit. The shaft turns with it, and each third of a turn squeezes one site of the head from loose to tight (ADP and phosphate pressed into ATP) and opens another to release a finished ATP. One full turn: 8 protons, 3 ATP. A single motor can make more than a hundred ATP a second; Paul Boyer and John Walker shared the 1997 Nobel Prize for working out how it does it.`,
             },
             {
               type: 'numeric',

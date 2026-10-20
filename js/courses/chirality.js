@@ -32,6 +32,25 @@ const matchWidget = (ghost, mover, o = {}) => ({ kind: 'mol3d', mode: 'match', h
 // polarimeter: light through an analyser at angle a, sample turns the plane by rot
 const bright = (a, rot) => Math.cos(((a - rot) * Math.PI) / 180) ** 2;
 
+// ---------- retinal: light twists the C11=C12 bond, turning the bent 11-cis form into straight all-trans ----------
+const RET_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+// the all-trans chain: C6 (on the ring), C7 … C15, then the nitrogen that links it to the protein
+const RET_CHAIN = Array.from({ length: 11 }, (_, i) => [2.25 + i * 0.56, 3.05 + (i % 2 ? 0.32 : 0)]);
+const RET_DOUBLE = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]; // C7=C8, C9=C10, C11=C12, C13=C14, C15=N
+const RET_METHYL = [3, 7]; // methyl groups on C9 and C13
+// turn a point of the tail by angle a about the C11=C12 axis (a = 0: trans, π: cis); returns [x, y, depth]
+const retRot = ([x, y], a) => {
+  const [ax, ay] = RET_CHAIN[5], [bx, by] = RET_CHAIN[6], L = Math.hypot(bx - ax, by - ay), ex = (bx - ax) / L, ey = (by - ay) / L;
+  const along = (x - ax) * ex + (y - ay) * ey, d = (x - ax) * -ey + (y - ay) * ex;
+  return [ax + along * ex - ey * d * Math.cos(a), ay + along * ey + ex * d * Math.cos(a), d * Math.sin(a)];
+};
+const retPos = (i, a) => (i <= 6 ? [...RET_CHAIN[i], 0] : retRot(RET_CHAIN[i], a));
+const retAngle = (t) => Math.PI * (1 - RET_SM((t - 1.3) / 0.9));
+
+// ---------- polarised light through a sugar solution: the plane of vibration turns steadily along the tube ----------
+const ROT_X0 = 3.0, ROT_X1 = 7.2, ROT_DEG = 33;
+const rotPhi = (x) => ((ROT_DEG * Math.min(1, Math.max(0, (x - ROT_X0) / (ROT_X1 - ROT_X0)))) * Math.PI) / 180;
+
 export default {
   id: 'chirality',
   subject: 'physics',
@@ -379,6 +398,58 @@ So tartaric acid has only **three** stereoisomers, not four: RR, SS and meso. Lo
               title: 'Seeing is a cis–trans switch',
               body: r`In your eye, the molecule **retinal** sits in a protein with one double bond in the cis form. When a photon hits it, that π bond briefly breaks and the molecule snaps to trans in about 200 femtoseconds. The change of shape triggers the nerve signal: every image you see starts with millions of cis-to-trans flips.`,
             },
+            { /*chemanim:chirality.cistrans*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'The fastest switch in your body',
+              body: r`Retinal sits in its protein with a kink: the double bond between carbons 11 and 12 is **cis**. When a photon is absorbed, that π bond briefly loses its grip, the tail of the molecule swings round the C11–C12 axis, and the chain straightens out.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0.6, ymax: 5.4, grid: false, axes: false, height: 260,
+                animate: { param: 't', speed: 0.7, max: 3.6, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], a = retAngle(p.t);
+                  // depth is shown by sliding a little down and right
+                  const P = (i) => { const [x, y, z] = retPos(i, a); return [X(x + 0.18 * z), Y(y - 0.3 * z)]; };
+                  // the β-ionone ring, attached at C6
+                  const [r6x, r6y] = RET_CHAIN[0], ring = [0, 1, 2, 3, 4, 5].map((k) => [r6x - 0.56 + 0.56 * Math.cos((k * Math.PI) / 3), r6y + 0.56 * Math.sin((k * Math.PI) / 3)]);
+                  out.push(s('path', { d: ring.map(([x, y], k) => `${k ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(y).toFixed(1)}`).join('') + 'Z', fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  const bond = (i, j, dbl) => {
+                    const [x1, y1] = P(i), [x2, y2] = P(j);
+                    out.push(s('line', { x1, y1, x2, y2, stroke: 'var(--ink)', 'stroke-width': 2.5, 'stroke-linecap': 'round' }));
+                    if (dbl) {
+                      const L = Math.hypot(x2 - x1, y2 - y1), nx = (-(y2 - y1) / L) * 5, ny = ((x2 - x1) / L) * 5;
+                      out.push(s('line', { x1: x1 + nx + (x2 - x1) * 0.15, y1: y1 + ny + (y2 - y1) * 0.15, x2: x2 + nx - (x2 - x1) * 0.15, y2: y2 + ny - (y2 - y1) * 0.15, stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                    }
+                  };
+                  for (let i = 0; i < 10; i++) {
+                    const twisting = i === 5;
+                    bond(i, i + 1, RET_DOUBLE.some(([u, v]) => u === i && v === i + 1) && !(twisting && a > 0.25 && a < Math.PI - 0.25));
+                  }
+                  // methyls: a short stub pointing away from the chain
+                  for (const m of RET_METHYL) {
+                    const [x, y, z] = retPos(m, a), up = RET_CHAIN[m][1] > 3.1 ? 1 : -1;
+                    const stub = [RET_CHAIN[m][0], RET_CHAIN[m][1] + 0.55 * up], [x2, y2, z2] = m > 6 ? retRot(stub, a) : [...stub, 0];
+                    out.push(s('line', { x1: X(x + 0.18 * z), y1: Y(y - 0.3 * z), x2: X(x2 + 0.18 * z2), y2: Y(y2 - 0.3 * z2), stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  }
+                  // highlight the bond that turns, and the protein end
+                  const [h1x, h1y] = P(5), [h2x, h2y] = P(6);
+                  out.push(s('line', { x1: h1x, y1: h1y, x2: h2x, y2: h2y, stroke: 'var(--coral)', 'stroke-width': 7, opacity: 0.35, 'stroke-linecap': 'round' }));
+                  const [nx, ny] = P(10);
+                  out.push(s('text', { x: nx + 6, y: ny + 5, class: 'lbl halo-text', style: `fill:var(--blue);${FS(13)}`, text: 'N–protein' }));
+                  out.push(s('text', { x: (h1x + h2x) / 2, y: Math.min(h1y, h2y) - 12, 'text-anchor': 'middle', class: 'lbl halo-text', style: `fill:var(--coral);${FS(11)}`, text: 'C11=C12' }));
+                  // the incoming photon
+                  if (p.t < 1.4) {
+                    const x0 = 0.4 + 2.8 * Math.min(1, p.t / 1.3);
+                    let d = '';
+                    for (let k = 0; k <= 22; k++) d += `${k ? 'L' : 'M'}${X(x0 + k * 0.05).toFixed(1)} ${Y(4.7 - k * 0.03 + 0.13 * Math.sin(k * 1.1)).toFixed(1)}`;
+                    out.push(s('path', { d, fill: 'none', stroke: 'var(--success)', 'stroke-width': 3 }));
+                  }
+                  return out;
+                },
+                readout: (p) => (retAngle(p.t) > Math.PI - 0.05 ? '11-cis-retinal: bent at C11=C12.' : retAngle(p.t) > 0.05 ? 'The C11=C12 bond twists: the tail swings round…' : 'All-trans-retinal: straight. About 200 femtoseconds after the photon.'),
+              },
+              after: r`The straightened retinal no longer fits its pocket, so the protein (rhodopsin) changes shape, and that change sets off the nerve signal. It is one of the fastest chemical reactions known, finished in about 200 femtoseconds, and it works with a single photon. Afterwards, enzymes turn all-trans retinal back into 11-cis so the switch can be used again.`,
+            },
             {
               type: 'mcq',
               kicker: 'Challenge',
@@ -406,6 +477,53 @@ So tartaric acid has only **three** stereoisomers, not four: RR, SS and meso. Lo
               type: 'explain',
               title: 'A polarimeter',
               body: r`Shine polarised light (vibrating in one plane) through a solution of a chiral substance and the plane turns. One enantiomer turns it clockwise by some angle (labelled +), the other turns it anticlockwise by exactly the same angle (−). That's **optical activity**, measured with a **polarimeter**: a polariser, the sample tube, and an analyser you rotate until the light is brightest again.`,
+            },
+            { /*chemanim:chirality.light*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Light with a twist',
+              body: r`A polariser lets through light whose electric field vibrates in one plane (here, straight up and down). Inside the tube of sugar solution, watch that plane: it doesn't jump, it turns a little more with every millimetre the light travels.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], yc = 3.6, A = 1.15;
+                  // oblique 3D: depth (z) is drawn up and to the right
+                  const proj = (x, ey, ez) => [X(x + 0.8 * ez), Y(yc + ey + 0.25 * ez)];
+                  // the tube
+                  out.push(s('rect', { x: X(ROT_X0), y: Y(yc + 1.45), width: X(ROT_X1) - X(ROT_X0), height: Y(yc - 1.45) - Y(yc + 1.45), rx: 14, fill: 'var(--amber)', opacity: 0.14, stroke: 'var(--amber)', 'stroke-opacity': 0.6, 'stroke-width': 2 }));
+                  out.push(s('text', { x: X((ROT_X0 + ROT_X1) / 2), y: Y(yc - 1.45) + 16, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'sugar solution' }));
+                  // polariser before the tube
+                  const [p1x, p1y] = proj(1.6, 1.4, 0), [p2x, p2y] = proj(1.6, -1.4, 0);
+                  out.push(s('line', { x1: p1x, y1: p1y, x2: p2x, y2: p2y, stroke: 'var(--ink-2)', 'stroke-width': 6, opacity: 0.5 }));
+                  out.push(s('text', { x: X(1.6), y: Y(yc - 1.45) + 16, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'polariser' }));
+                  // the beam axis and the travelling wave
+                  const [a1x, a1y] = proj(0.4, 0, 0), [a2x, a2y] = proj(9.6, 0, 0);
+                  out.push(s('line', { x1: a1x, y1: a1y, x2: a2x, y2: a2y, stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' }));
+                  let d = '';
+                  for (let x = 1.6; x <= 9.0; x += 0.04) {
+                    const e = A * Math.cos(3.4 * x - 4 * p.t), ph = rotPhi(x), [px, py] = proj(x, e * Math.cos(ph), e * Math.sin(ph));
+                    d += `${d ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`;
+                  }
+                  // field arrows at regular spots show the plane of vibration
+                  for (let x = 1.8; x <= 9.0; x += 0.25) {
+                    const e = A * Math.cos(3.4 * x - 4 * p.t), ph = rotPhi(x), [qx, qy] = proj(x, e * Math.cos(ph), e * Math.sin(ph)), [ox, oy] = proj(x, 0, 0);
+                    out.push(s('line', { x1: ox, y1: oy, x2: qx, y2: qy, stroke: 'var(--violet)', 'stroke-width': 1.6, 'stroke-opacity': 0.8 }));
+                  }
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 2.5 }));
+                  // end-on views: before and after the tube
+                  for (const [cx, ph, txt] of [[1.6, 0, 'before'], [8.6, (ROT_DEG * Math.PI) / 180, `after: ${ROT_DEG}°`]]) {
+                    const cy = 0.75, R = 0.48;
+                    out.push(s('circle', { cx: X(cx), cy: Y(cy), r: X(R) - X(0), fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                    out.push(s('line', { x1: X(cx), x2: X(cx), y1: Y(cy - R), y2: Y(cy + R), stroke: 'var(--ink-3)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+                    out.push(s('line', { x1: X(cx - R * 0.9 * Math.sin(ph)), y1: Y(cy - R * 0.9 * Math.cos(ph)), x2: X(cx + R * 0.9 * Math.sin(ph)), y2: Y(cy + R * 0.9 * Math.cos(ph)), stroke: 'var(--violet)', 'stroke-width': 3 }));
+                    out.push(s('text', { x: X(cx + (cx < 5 ? 0.7 : -0.7)), y: Y(cy) + 4, 'text-anchor': cx < 5 ? 'start' : 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: txt }));
+                  }
+                  return out;
+                },
+                readout: () => 'Looking into the beam, the plane ends up turned 33° clockwise.',
+              },
+              after: r`The rotation builds up along the whole path: double the tube length, or the concentration, and the angle doubles. Underneath, the light can be thought of as two circular waves, one twisting left and one right; in a chiral liquid they travel at very slightly different speeds, and their sum is a plane that slowly turns. A non-chiral liquid treats both alike, so nothing turns.`,
             },
             {
               type: 'interactive',

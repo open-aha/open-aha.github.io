@@ -1,3 +1,4 @@
+import { fix } from '../lib/svg.js';
 import { r, FS, build, view, transfer, pick, row, bars } from './_chem.js';
 
 // the electron sea: ions on a grid, electrons wandering among them (and drifting when a battery is on)
@@ -7,6 +8,33 @@ const SEA = (() => {
   return Array.from({ length: 30 }, () => ({ x: rnd() * 10, y: 0.5 + rnd() * 4, a: 0.25 + rnd() * 0.35, w: 0.7 + rnd() * 1.2, ph: rnd() * 6.28, v: (rnd() - 0.5) * 0.6 }));
 })();
 let seaDrift = 0, seaLast = 0;
+
+// ---------- ionic bonding: where the energy really comes from ----------
+const IONIC_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+// energy (kJ/mol, from separate gas atoms): remove Na's electron, give it to Cl, then let the ions build a crystal
+const ionicE = (t) => 496 * IONIC_SM((t - 1) / 0.5) - 349 * IONIC_SM((t - 1.6) / 0.5) - 787 * IONIC_SM((t - 2.8) / 1.8);
+// a 4 x 4 patch of rock-salt: the first pair plus seven more pairs that drift in from scattered spots
+const IONIC_GRID = (() => {
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const cells = [];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) cells.push({ gx: 3.2 + (i - 1.5) * 0.92, gy: 2.75 + (j - 1.5) * 0.92, na: (i + j) % 2 === 0 });
+  // the original pair lands in the middle of the patch
+  const na0 = cells.findIndex((c) => c.na && Math.abs(c.gx - 2.74) < 0.01 && Math.abs(c.gy - 2.29) < 0.01);
+  const cl0 = cells.findIndex((c) => !c.na && Math.abs(c.gx - 3.66) < 0.01 && Math.abs(c.gy - 2.29) < 0.01);
+  cells.forEach((c, k) => {
+    if (k === na0) Object.assign(c, { sx: 1.5, sy: 2.75, first: true });
+    else if (k === cl0) Object.assign(c, { sx: 4.9, sy: 2.75, first: true });
+    else Object.assign(c, { sx: 0.5 + rnd() * 5.4, sy: 0.45 + rnd() * 4.6 });
+  });
+  return cells;
+})();
+
+// ---------- H2: energy against distance (a Morse curve with H2's real bond length and depth) ----------
+const H2_E = (r) => 436 * ((1 - Math.exp(-0.0194 * (r - 74))) ** 2 - 1);
+const H2_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+// distance between the nuclei (pm) over time: approach, get squeezed too close, spring back
+const h2R = (t) => (t < 3 ? 400 - 326 * H2_SM(t / 3) : t < 4 ? 74 - 41 * H2_SM(t - 3) : t < 5 ? 33 + 41 * H2_SM(t - 4) : 74);
 
 export default {
   id: 'bonding',
@@ -131,6 +159,61 @@ $$\mathrm{Na \to Na^+ + e^-} \qquad \mathrm{Cl + e^- \to Cl^-}$$`,
               ],
               explain: r`Both routes would give full shells, but pulling seven electrons off chlorine would cost an enormous amount of energy, while sodium gives up its single outer electron cheaply. Atoms take the route with the fewest electrons moved.`,
             },
+            { /*chemanim:bonding.ionic*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Who pays for the transfer?',
+              body: r`Even moving **one** electron is uphill. Pulling it off sodium costs 496 kJ/mol; chlorine gives back only 349 kJ/mol when it takes it. So why does salt form at all? Watch the energy as the electron moves and the ions get together.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 0.8, max: 6, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const t = p.t, X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [];
+                  const gather = IONIC_SM((t - 2.8) / 1.8), fadeIn = IONIC_SM((t - 2.5) / 0.4), moved = IONIC_SM((t - 1) / 1.1);
+                  // ions (or, before the hop, the two neutral atoms)
+                  for (const c of IONIC_GRID) {
+                    if (!c.first && fadeIn <= 0) continue;
+                    const x = c.sx + (c.gx - c.sx) * gather, y = c.sy + (c.gy - c.sy) * gather;
+                    const ion = !c.first || moved >= 1;
+                    const rad = c.na ? (ion ? 0.27 : 0.46) : ion ? 0.43 : 0.38;
+                    const op = c.first ? 1 : fadeIn;
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: (X(rad) - X(0)), fill: c.na ? 'var(--violet-soft)' : 'var(--teal-soft)', stroke: c.na ? 'var(--violet)' : 'var(--teal)', 'stroke-width': 2.5, opacity: op }));
+                    out.push(s('text', { x: X(x), y: Y(y) + 5, 'text-anchor': 'middle', class: 'lbl', style: `opacity:${op};${FS(c.first ? 14 : 12)}`, text: (c.na ? 'Na' : 'Cl') + (ion ? (c.na ? '⁺' : '⁻') : '') }));
+                  }
+                  // the travelling electron: circles sodium, hops across, then circles chlorine until the crystal forms
+                  const ang = t * 4;
+                  let ex, ey;
+                  if (t < 1) { ex = 1.5 + 0.62 * Math.cos(ang); ey = 2.75 + 0.62 * Math.sin(ang); }
+                  else if (t < 2.1) { const u = IONIC_SM((t - 1) / 1.1); ex = 1.5 + 0.62 + (4.9 - 0.55 - 1.5 - 0.62) * u; ey = 2.75 + 1.1 * Math.sin(Math.PI * u); }
+                  else { ex = 4.9 - 0.55 * Math.cos(ang); ey = 2.75 + 0.55 * Math.sin(ang); }
+                  const eOp = 1 - IONIC_SM((t - 2.6) / 0.3);
+                  if (eOp > 0) out.push(s('circle', { cx: X(ex), cy: Y(ey), r: 6, fill: 'var(--amber)', stroke: 'var(--warn)', 'stroke-width': 1.5, opacity: eOp }));
+                  // energy ladder on the right
+                  const E = ionicE(t), EY = (e) => 0.5 + ((e + 700) / 1250) * 5.1;
+                  out.push(s('line', { x1: X(7.2), x2: X(7.2), y1: Y(EY(560)), y2: Y(EY(-690)), stroke: 'var(--axis)', 'stroke-width': 2 }));
+                  out.push(s('text', { x: X(7.2), y: Y(EY(560)) - 8, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'energy' }));
+                  const level = (e, txt, col, on) => {
+                    if (!on) return;
+                    out.push(s('line', { x1: X(7.0), x2: X(7.6), y1: Y(EY(e)), y2: Y(EY(e)), stroke: col, 'stroke-width': 2.5 }));
+                    out.push(s('text', { x: X(7.75), y: Y(EY(e)) + 5, class: 'lbl', style: `fill:${col};${FS(12)}`, text: txt }));
+                  };
+                  level(0, 'atoms: 0', 'var(--ink-2)', true);
+                  level(496, 'e⁻ off Na: +496', 'var(--coral)', t > 1.5);
+                  level(147, 'onto Cl: +147', 'var(--coral)', t > 2.1);
+                  level(-640, 'crystal: −640', 'var(--success)', t > 4.6);
+                  out.push(s('circle', { cx: X(7.3), cy: Y(EY(E)), r: 7, fill: E > 0 ? 'var(--coral)' : 'var(--success)' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const t = p.t, E = fix(ionicE(t), 0);
+                  if (t < 1) return `Two neutral atoms · energy ${E} kJ/mol`;
+                  if (t < 2.5) return `Handing over the electron: energy ${E} kJ/mol, uphill`;
+                  if (t < 4.6) return `The ions pull together into a crystal: energy ${E} kJ/mol`;
+                  return `Salt crystal: energy ${E} kJ/mol, far below the atoms`;
+                },
+              },
+              after: r`The electron transfer on its own costs about $+147$ kJ/mol. What pays for it is the attraction afterwards: packing the ions into a crystal, each one surrounded by opposite charges, releases about 787 kJ/mol (the **lattice energy**). Overall the salt ends up about 640 kJ/mol below the separate atoms. Ionic bonding is not really about atoms "wanting" full shells; it is about the huge pull between opposite charges.`,
+            },
             {
               type: 'interactive',
               title: 'Magnesium chloride',
@@ -193,6 +276,51 @@ $$\mathrm{Na \to Na^+ + e^-} \qquad \mathrm{Cl + e^- \to Cl^-}$$`,
 
 The trick is that a shared pair counts towards the shell of **both** atoms. In $\mathrm{H_2}$ each hydrogen sees two electrons, a full shell like helium's.`,
               widget: view(null, { atoms: [['H', 250, 90], ['H', 350, 90]], bonds: [[0, 1, 1]], h: 170 }),
+            },
+            { /*chemanim:bonding.covalent*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two atoms meet',
+              body: r`Bring two hydrogen atoms together and watch the energy. Far apart they ignore each other. As their electron clouds overlap, both electrons can sit between the two nuclei, attracted by both, and the energy drops.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.4, grid: false, axes: false, height: 330,
+                animate: { param: 't', speed: 0.7, max: 6, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [];
+                  const r = h2R(p.t), E = H2_E(r);
+                  // atoms on top: 400 pm spans 6.8 units
+                  const half = (r / 400) * 3.4, c = 5, yA = 5.2, R = 0.95;
+                  const overlap = Math.max(0, 1 - r / 190);
+                  out.push(s('ellipse', { cx: X(c), cy: Y(yA), rx: X(half + R * 0.8) - X(0), ry: (Y(0) - Y(R * 0.75)), fill: 'var(--blue)', opacity: 0.32 * overlap }));
+                  for (const sx of [-1, 1]) {
+                    out.push(s('circle', { cx: X(c + sx * half), cy: Y(yA), r: X(R) - X(0), fill: 'var(--blue)', opacity: 0.16 }));
+                    out.push(s('circle', { cx: X(c + sx * half), cy: Y(yA), r: 6, fill: 'var(--ink)' }));
+                  }
+                  out.push(s('text', { x: X(c), y: Y(yA - 1.2), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(13)}`, text: `${fix(r, 0)} pm apart` }));
+                  // energy curve below
+                  const RX = (rr) => 1.0 + ((rr - 25) / 385) * 8.6, EY = (e) => 1.85 + (e / 500) * 1.6;
+                  out.push(s('line', { x1: X(1.0), x2: X(9.7), y1: Y(EY(0)), y2: Y(EY(0)), stroke: 'var(--axis)', 'stroke-width': 1.5, 'stroke-dasharray': '4 5' }));
+                  out.push(s('text', { x: X(9.7), y: Y(EY(0)) - 7, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-3);${FS(12)}`, text: 'far apart: 0' }));
+                  let d = '';
+                  for (let rr = 31; rr <= 410; rr += 2) d += `${d ? 'L' : 'M'}${X(RX(rr)).toFixed(1)} ${Y(EY(Math.min(500, H2_E(rr)))).toFixed(1)}`;
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  if (p.t > 2.6) {
+                    out.push(s('line', { x1: X(RX(74)), x2: X(RX(74)), y1: Y(EY(0)), y2: Y(EY(-436)), stroke: 'var(--success)', 'stroke-width': 2, 'stroke-dasharray': '3 4' }));
+                    out.push(s('text', { x: X(RX(74) + 0.25), y: Y(EY(-436)) + 18, class: 'lbl', style: `fill:var(--success);${FS(12)}`, text: '74 pm, −436 kJ/mol' }));
+                  }
+                  out.push(s('circle', { cx: X(RX(r)), cy: Y(EY(Math.min(500, E))), r: 8, fill: 'var(--amber)', stroke: 'var(--warn)', 'stroke-width': 2 }));
+                  out.push(s('text', { x: X(9.7), y: Y(0.15), 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'distance between the nuclei →' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const r = h2R(p.t), E = fix(H2_E(r), 0);
+                  if (p.t < 0.6) return `Far apart: energy ${E} kJ/mol`;
+                  if (p.t < 3) return `Clouds overlapping: energy ${E} kJ/mol`;
+                  if (p.t < 4.5) return `Squeezed too close, the nuclei repel: energy ${E} kJ/mol`;
+                  return `The bottom of the well: energy ${E} kJ/mol`;
+                },
+              },
+              after: r`The bond is the bottom of the energy well. At 74 pm the pull of both nuclei on the shared pair is balanced by the nuclei repelling each other; push closer and the energy shoots up. The depth of the well, 436 kJ/mol, is the energy you'd have to put in to pull the atoms apart again: the **bond energy** of $\mathrm{H_2}$.`,
             },
             {
               type: 'interactive',

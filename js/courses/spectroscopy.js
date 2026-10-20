@@ -90,6 +90,29 @@ const PROPANOL = {
   bonds: [[0, 1, 1], [1, 2, 1], [1, 3, 1], [0, 4, 1], [0, 5, 1], [0, 6, 1], [1, 7, 1], [2, 8, 1], [2, 9, 1], [2, 10, 1], [3, 11, 1]],
 };
 
+// ---------- identical slabs of solution, each letting through the same fraction (A = 0.20 each) ----------
+const SLAB_T = 10 ** -0.2; // 63% of the light gets through each slab
+const slabN = (t) => Math.min(5, Math.floor(Math.max(0, t) / 1.3));
+
+// ---------- carbon dioxide's three ways to vibrate, and what each does to the dipole ----------
+// each mode: displacements of [O, C, O] in x and y per unit of the oscillation, plus the oscillation rate
+const CO2_MODES = [
+  { name: 'symmetric stretch', dx: [-1, 0, 1], dy: [0, 0, 0], w: 3.0, note: '~1340 cm⁻¹ · no IR absorption' },
+  { name: 'asymmetric stretch', dx: [1, -1.1, 1], dy: [0, 0, 0], w: 4.4, note: '2349 cm⁻¹ · absorbs' },
+  { name: 'bend', dx: [0, 0, 0], dy: [1, -1.1, 1], w: 1.8, note: '667 cm⁻¹ · absorbs' },
+];
+
+// ---------- time of flight: ions from acetone get the same push; the light ones arrive first ----------
+// [m/z, label, share of the ions (roughly as in acetone's spectrum), colour]
+const TOF_IONS = [[15, 'CH₃⁺', 0.2, 'var(--teal)'], [43, 'CH₃CO⁺', 0.5, 'var(--coral)'], [58, '(CH₃)₂CO⁺', 0.3, 'var(--blue)']];
+const TOF_PULSE = 3.0; // seconds between pulses
+// every pulse sends one of each ion; flight time grows as √(m/z)
+const tofTime = (m) => 0.3 * Math.sqrt(m);
+
+// ---------- why a CH2 next to a CH3 is a 1:3:3:1 quartet: the 8 ways three neighbours can point ----------
+const SPLIT_COMBOS = Array.from({ length: 8 }, (_, k) => [0, 1, 2].map((b) => ((k >> b) & 1 ? 1 : -1)));
+const SPLIT_STEP = 1.1; // seconds per combination
+
 export default {
   id: 'spectroscopy',
   subject: 'physics',
@@ -176,6 +199,44 @@ where $\varepsilon$, the molar absorptivity, is a property of the substance at t
                 readout: (p) => { const A = EPS * p.c * 1e-6; return `A = ${fix(A, 2)} · ${fix(100 * 10 ** -A, 1)}% of the light gets through`; },
               },
             },
+            { /*chemanim:spectroscopy.beer*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Slice the cuvette',
+              body: r`Think of a thick sample as a stack of thin identical slices. Each slice absorbs the **same fraction** of whatever light reaches it (here 37%), not the same amount. Watch the beam as slices are added.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 290,
+                animate: { param: 't', speed: 1, max: 7.2, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], n = slabN(p.t);
+                  const yb = 3.5, x0 = 2.3, w = 1.1;
+                  // the beam: full width and brightness entering, dimming after each slab
+                  let I = 1;
+                  out.push(s('rect', { x: X(0.3), y: Y(yb + 0.45), width: X(x0) - X(0.3), height: Y(yb - 0.45) - Y(yb + 0.45), fill: 'var(--amber)', opacity: 0.85 }));
+                  for (let k = 0; k < 5; k++) {
+                    const xa = x0 + k * w, on = k < n;
+                    out.push(s('rect', { x: X(xa + 0.1), y: Y(yb + 0.9), width: X(w - 0.2) - X(0), height: Y(yb - 0.9) - Y(yb + 0.9), rx: 4, fill: on ? 'var(--violet)' : 'none', 'fill-opacity': 0.3, stroke: on ? 'var(--violet)' : 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': on ? null : '4 4' }));
+                    if (on) I *= SLAB_T;
+                    out.push(s('rect', { x: X(xa + w), y: Y(yb + 0.45), width: X(k === 4 ? 9.7 : xa + 2 * w) - X(xa + w), height: Y(yb - 0.45) - Y(yb + 0.45), fill: 'var(--amber)', opacity: 0.85 * I }));
+                    // remaining light just after this slab, as a bar underneath
+                    if (on) {
+                      const bx = xa + w * 0.5, bh = 2.0 * I;
+                      out.push(s('rect', { x: X(bx - 0.28), y: Y(0.55 + bh), width: X(0.56) - X(0), height: Y(0.55) - Y(0.55 + bh), fill: 'var(--amber)' }));
+                      out.push(s('text', { x: X(bx), y: Y(0.55 + bh) - 5, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: `${fix(100 * I, 0)}%` }));
+                    }
+                  }
+                  out.push(s('rect', { x: X(1.3 - 0.28), y: Y(2.55), width: X(0.56) - X(0), height: Y(0.55) - Y(2.55), fill: 'var(--amber)' }));
+                  out.push(s('text', { x: X(1.3), y: Y(2.55) - 5, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: '100%' }));
+                  out.push(s('line', { x1: X(0.6), x2: X(9.4), y1: Y(0.55), y2: Y(0.55), stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  return out;
+                },
+                readout: (p) => {
+                  const n = slabN(p.t);
+                  return `slices: ${n} · light through: ${fix(100 * SLAB_T ** n, 0)}% · absorbance A = ${fix(0.2 * n, 2)}`;
+                },
+              },
+              after: r`The light left goes 100% → 63% → 40% → 25% → 16% → 10%: each slice multiplies it by the same 0.63, so the intensity falls **exponentially** with thickness. Taking a logarithm turns that repeated multiplication into adding: each slice adds 0.20 to the absorbance. That is why $A = \log_{10}(I_0/I)$ grows in a straight line with path length, and with concentration (twice the molecules per slice is just like two slices).`,
+            },
             {
               type: 'interactive',
               title: 'Hit A = 0.50',
@@ -239,6 +300,38 @@ $$\tilde\nu \propto \sqrt{\frac{k}{\mu}}, \qquad \mu = \frac{m_1 m_2}{m_1 + m_2}
 Light bonds to hydrogen (C–H, O–H, N–H) vibrate fastest, near 3000 cm⁻¹; stiff double bonds such as C=O come around 1700 cm⁻¹. Infrared spectra are plotted with wavenumber decreasing to the right, and absorptions as dips.`,
               widget: ir(IR_HEXANE),
               after: r`Hexane: only C–H stretches (2850–2960) and bends (about 1460 and 1380). No O–H, no C=O.`,
+            },
+            { /*chemanim:spectroscopy.ir*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Which vibrations absorb?',
+              body: r`A vibration can only absorb infrared light if it makes the molecule's **dipole** rock back and forth: the oscillating electric field of the light needs something electrical to push on. Carbon dioxide has no dipole at rest. Watch its three kinds of vibration, and the arrow showing the dipole at each instant.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.3, grid: false, axes: false, height: 340,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [];
+                  CO2_MODES.forEach((m, i) => {
+                    const yc = 5.2 - i * 2.05, q = Math.sin(m.w * p.t), amp = 0.22;
+                    const xs = [4.6, 5.6, 6.6].map((x, k) => x + m.dx[k] * amp * q), ys = [0, 1, 2].map((k) => yc + m.dy[k] * amp * 1.4 * q);
+                    out.push(s('text', { x: X(0.2), y: Y(yc) - 2, class: 'lbl', style: `fill:var(--ink);${FS(12)}`, text: m.name }));
+                    out.push(s('text', { x: X(0.2), y: Y(yc) + 14, class: 'lbl', style: `fill:${i ? 'var(--success)' : 'var(--ink-3)'};${FS(11)}`, text: m.note }));
+                    for (const k of [0, 2]) {
+                      out.push(s('line', { x1: X(xs[1]), y1: Y(ys[1]) - 3, x2: X(xs[k]), y2: Y(ys[k]) - 3, stroke: 'var(--ink)', 'stroke-width': 2.5, 'stroke-opacity': 0.7 }));
+                      out.push(s('line', { x1: X(xs[1]), y1: Y(ys[1]) + 3, x2: X(xs[k]), y2: Y(ys[k]) + 3, stroke: 'var(--ink)', 'stroke-width': 2.5, 'stroke-opacity': 0.7 }));
+                    }
+                    xs.forEach((x, k) => out.push(s('circle', { cx: X(x), cy: Y(ys[k]), r: k === 1 ? 11 : 13, fill: k === 1 ? 'var(--ink-2)' : 'var(--coral)' })));
+                    // the dipole: C carries δ+, each O δ−; its size follows how far the charges' centre moves
+                    const mx = (xs[0] + xs[2]) / 2 - xs[1], my = (ys[0] + ys[2]) / 2 - ys[1];
+                    const ax = 8.7, ay = yc, sc = 2.6;
+                    out.push(s('circle', { cx: X(ax), cy: Y(ay), r: 3, fill: 'var(--ink-3)' }));
+                    if (Math.hypot(mx, my) > 0.01) out.push(s('line', { x1: X(ax), y1: Y(ay), x2: X(ax + sc * mx), y2: Y(ay + sc * my), stroke: 'var(--violet)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+                    out.push(s('text', { x: X(ax), y: Y(ay - 0.62), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--violet);${FS(11)}`, text: i ? 'dipole swings' : 'dipole: always zero' }));
+                  });
+                  return out;
+                },
+              },
+              after: r`In the symmetric stretch both oxygens move out and in together, so the molecule stays perfectly balanced: no dipole ever appears, and this vibration is invisible to infrared. The asymmetric stretch and the bend both shift the negative oxygens relative to the positive carbon, so the dipole swings and the molecule absorbs. The bend, at 667 cm⁻¹ (wavelength 15 µm), falls in the part of the infrared where the warm Earth radiates strongly: it is the main reason carbon dioxide is a greenhouse gas, while $\mathrm{N_2}$ and $\mathrm{O_2}$, with no dipole to swing, are not.`,
             },
             {
               type: 'numeric',
@@ -305,6 +398,48 @@ Light bonds to hydrogen (C–H, O–H, N–H) vibrate fastest, near 3000 cm⁻¹
               body: r`A **mass spectrometer** knocks an electron off molecules, making positive ions, and sorts them by mass-to-charge ratio, $m/z$. The heaviest peak is usually the **molecular ion**, $\mathrm{M^+}$: the mass of the whole molecule. Lighter peaks are **fragments**: pieces it broke into.
 
 Elements also come as **isotopes**. Chlorine is 76% $^{35}$Cl and 24% $^{37}$Cl (about 3:1); bromine is about 50:50 $^{79}$Br and $^{81}$Br. So molecules containing them show tell-tale clusters of peaks two mass units apart.`,
+            },
+            { /*chemanim:spectroscopy.mass*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A race down a tube',
+              body: r`In a **time-of-flight** mass spectrometer, a burst of ions gets exactly the same electrical push. Same energy means the light ions fly fastest (½mv² is fixed), so they reach the detector first. Here are three ions made from acetone.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  const x0 = 0.9, x1 = 9.2, yt = 4.6;
+                  out.push(s('rect', { x: X(x0), y: Y(yt + 0.7), width: X(x1) - X(x0), height: Y(yt - 0.7) - Y(yt + 0.7), rx: 10, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  out.push(s('rect', { x: X(x1 - 0.1), y: Y(yt + 0.7), width: X(0.35) - X(0), height: Y(yt - 0.7) - Y(yt + 0.7), fill: 'var(--ink-2)' }));
+                  out.push(s('text', { x: X(x0), y: Y(yt + 0.7) - 6, class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: 'push' }));
+                  out.push(s('text', { x: X(x1 + 0.1), y: Y(yt + 0.7) - 6, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: 'detector' }));
+                  const u = t % TOF_PULSE, pulses = Math.floor(t / TOF_PULSE);
+                  TOF_IONS.forEach(([m, name, , col], k) => {
+                    const f = u / tofTime(m);
+                    if (f < 1) {
+                      const x = x0 + 0.2 + (x1 - x0 - 0.3) * f, y = yt + (k - 1) * 0.42;
+                      out.push(s('circle', { cx: X(x), cy: Y(y), r: 4 + 0.12 * m, fill: col, opacity: 0.85 }));
+                      out.push(s('text', { x: X(x), y: Y(y) + 4, 'text-anchor': 'middle', class: 'lbl', style: `fill:#fff;${FS(9)}`, text: String(m) }));
+                    }
+                  });
+                  // the record: signal against arrival time, building up pulse by pulse
+                  const gx0 = 0.9, gx1 = 9.2, gy0 = 0.6, gy1 = 3.0, tmax = tofTime(64);
+                  const GX = (tt) => gx0 + ((gx1 - gx0) * tt) / tmax;
+                  out.push(s('path', { d: `M${X(gx0)} ${Y(gy1)}V${Y(gy0)}H${X(gx1)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  out.push(s('text', { x: X(gx1), y: Y(gy0) + 16, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: 'arrival time →' }));
+                  TOF_IONS.forEach(([m, name, share, col]) => {
+                    const arrived = pulses + (u >= tofTime(m) ? 1 : 0), h = Math.min(1, arrived / 6) * share * (gy1 - gy0) * 1.9;
+                    if (arrived > 0) {
+                      out.push(s('rect', { x: X(GX(tofTime(m))) - 4, y: Y(gy0 + h), width: 8, height: Y(gy0) - Y(gy0 + h), fill: col }));
+                      out.push(s('text', { x: X(GX(tofTime(m))), y: Y(gy0 + h) - 5, 'text-anchor': 'middle', class: 'lbl', style: `fill:${col};${FS(11)}`, text: `${name} ${m}` }));
+                    }
+                  });
+                  return out;
+                },
+                readout: () => 'Flight time grows with √(m/z): measure the time, and you have the mass.',
+              },
+              after: r`Because ½mv² is the same for every ion, its speed goes as $1/\sqrt{m}$, and the flight time as $\sqrt{m/z}$. So the timings convert straight into masses: here the methyl ion (15), the acetyl ion (43, the tallest peak, the **base peak**) and the whole molecule (58, the molecular ion). The heights record how many ions of each mass arrived. Each burst takes only microseconds, so a real instrument can record thousands of spectra a second.`,
             },
             {
               type: 'interactive',
@@ -467,6 +602,46 @@ The **area** under each signal (its **integral**) is proportional to the number 
 
 It's exactly like flipping $n$ coins: the middle outcomes have the most ways to happen.`,
               widget: nmr((p) => [[3, 1, p.n]], { params: { n: { min: 0, max: 6, step: 1, value: 3, label: 'Neighbours', control: 'buttons' } }, ymax: 1.1, from: 4, to: 2, readout: (p) => `${p.n + 1} line${p.n ? 's' : ''}: ${Array.from({ length: p.n + 1 }, (_, k) => binom(p.n, k)).join(' : ')} · ${['singlet', 'doublet', 'triplet', 'quartet', 'quintet', 'sextet', 'septet'][p.n]}` }),
+            },
+            { /*chemanim:spectroscopy.nmr-split*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Flip three coins',
+              body: r`The $\mathrm{CH_2}$ protons in bromoethane have three neighbours, the $\mathrm{CH_3}$ protons. Each neighbour's tiny magnet points with the field (↑) or against it (↓), nudging the $\mathrm{CH_2}$ signal slightly one way or the other. In a sample of billions of molecules, every combination occurs equally often.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 8 * SPLIT_STEP + 1.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  const shown = Math.min(8, Math.floor(t / SPLIT_STEP) + 1), cur = SPLIT_COMBOS[Math.min(7, Math.floor(t / SPLIT_STEP))];
+                  // the current combination of the three neighbours
+                  cur.forEach((d, b) => {
+                    const x = 3.6 + b * 1.4;
+                    out.push(s('circle', { cx: X(x), cy: Y(4.9), r: 18, fill: 'var(--card)', stroke: d > 0 ? 'var(--blue)' : 'var(--coral)', 'stroke-width': 2.5 }));
+                    out.push(s('text', { x: X(x), y: Y(4.9) + 7, 'text-anchor': 'middle', class: 'lbl', style: `fill:${d > 0 ? 'var(--blue)' : 'var(--coral)'};${FS(20)}`, text: d > 0 ? '↑' : '↓' }));
+                  });
+                  out.push(s('text', { x: X(1.2), y: Y(4.9) + 5, class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'CH₃ neighbours:' }));
+                  // tally: each combination adds a block at (number up − number down)
+                  const count = { '-3': 0, '-1': 0, '1': 0, '3': 0 };
+                  for (let k = 0; k < shown; k++) count[SPLIT_COMBOS[k].reduce((a, b) => a + b, 0)]++;
+                  const base = 0.9, bh = 0.62;
+                  for (const [sum, n] of Object.entries(count)) {
+                    const x = 5 + Number(sum) * 1.15;
+                    for (let j = 0; j < n; j++) {
+                      const isNew = j === n - 1 && Number(sum) === cur.reduce((a, b) => a + b, 0) && (t % SPLIT_STEP) < 0.5 && shown <= 8 && t < 8 * SPLIT_STEP;
+                      out.push(s('rect', { x: X(x - 0.45), y: Y(base + (j + 1) * bh), width: X(0.9) - X(0), height: Y(0) - Y(bh) - 2, rx: 4, fill: isNew ? 'var(--amber)' : 'var(--violet)', opacity: 0.85 }));
+                    }
+                    out.push(s('text', { x: X(x), y: Y(base) + 16, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: { '-3': '0 up', '-1': '1 up', 1: '2 up', 3: '3 up' }[sum] }));
+                  }
+                  out.push(s('line', { x1: X(0.9), x2: X(9.1), y1: Y(base), y2: Y(base), stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  return out;
+                },
+                readout: (p) => {
+                  const shown = Math.min(8, Math.floor(p.t / SPLIT_STEP) + 1);
+                  return shown < 8 ? `combination ${shown} of 8` : 'All 8 combinations: four lines in the ratio 1 : 3 : 3 : 1, a quartet';
+                },
+              },
+              after: r`Only the **number** of neighbours pointing up matters, not which ones. There is one way to have all three up, three ways to have two up, three ways to have one up, and one way to have none: 1 : 3 : 3 : 1, the row of Pascal's triangle for three coins. With $n$ neighbours there are $n + 1$ possible totals, hence $n + 1$ lines. The $\mathrm{CH_3}$ signal, with the two $\mathrm{CH_2}$ protons as neighbours, gets 1 : 2 : 1: a triplet.`,
             },
             {
               type: 'interactive',

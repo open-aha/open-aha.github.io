@@ -139,6 +139,22 @@ function planner(start, target, steps, solution) {
   };
 }
 
+// ---------- SN1 energy profile: a high first hill, a valley for the carbocation, a low second hill ----------
+// a smooth schematic curve through (reaction progress, energy) points
+const SN1_PTS = [[0, 1.0], [2.2, 4.6], [4.4, 2.85], [5.9, 3.55], [8.2, 0.45], [9.6, 0.45]];
+const sn1E = (x) => {
+  let i = 0;
+  while (i < SN1_PTS.length - 2 && x > SN1_PTS[i + 1][0]) i++;
+  const [x0, y0] = SN1_PTS[i], [x1, y1] = SN1_PTS[i + 1], u = Math.max(0, Math.min(1, (x - x0) / (x1 - x0)));
+  return y0 + (y1 - y0) * (u * u * (3 - 2 * u));
+};
+const sn1X = (t) => {
+  // the dot waits in the valley: the carbocation lives long enough to meet a water molecule
+  if (t < 3) return 0.3 + (4.4 - 0.3) * (t / 3);
+  if (t < 4) return 4.4;
+  return Math.min(9.4, 4.4 + (9.4 - 4.4) * ((t - 4) / 2.5));
+};
+
 export default {
   id: 'mechanisms',
   subject: 'physics',
@@ -354,6 +370,46 @@ Curly arrows almost always run from nucleophile to electrophile.`,
               prompt: r`A water molecule attacks the carbocation. Draw the arrow.`,
               widget: arrows({ ...SN1_B, h: 240 }),
               explain: r`Water's lone pair bonds to the carbocation. The oxygen, now with three bonds, carries the + charge; a third step (another water taking a proton from it) gives the neutral alcohol, 2-methylpropan-2-ol.`,
+            },
+            { /*chemanim:mechanisms.sn1*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Two hills to climb',
+              body: r`Put both steps on one energy diagram. Each step has its own **transition state** (a hilltop). Between them sits a valley: the carbocation, a real **intermediate** that exists for a moment before water finds it.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 0.8, max: 7, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [];
+                  out.push(s('path', { d: `M${X(0.2)} ${Y(5.6)}V${Y(0.1)}H${X(9.8)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  out.push(s('text', { x: X(0.35), y: Y(5.6) + 2, class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'energy' }));
+                  out.push(s('text', { x: X(9.8), y: Y(0.1) + 16, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'reaction progress →' }));
+                  let d = '';
+                  for (let x = 0.3; x <= 9.41; x += 0.05) d += `${d ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(sn1E(x)).toFixed(1)}`;
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  // the climb for each step
+                  out.push(s('line', { x1: X(1.1), x2: X(1.1), y1: Y(1.0), y2: Y(4.6), stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+                  out.push(s('line', { x1: X(0.9), x2: X(2.2), y1: Y(4.6), y2: Y(4.6), stroke: 'var(--coral)', 'stroke-width': 1.2, 'stroke-dasharray': '3 4' }));
+                  out.push(s('text', { x: X(1.0), y: Y(2.8), 'text-anchor': 'end', class: 'lbl halo-text', style: `fill:var(--coral);${FS(11)}`, text: 'slow' }));
+                  out.push(s('line', { x1: X(5.2), x2: X(5.2), y1: Y(2.85), y2: Y(3.55), stroke: 'var(--teal)', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+                  out.push(s('text', { x: X(5.05), y: Y(3.2) + 4, 'text-anchor': 'end', class: 'lbl halo-text', style: `fill:var(--teal);${FS(11)}`, text: 'fast' }));
+                  // what is in the flask at each stage
+                  const lab = (x, y, txt, col) => out.push(s('text', { x: X(x), y: Y(y), 'text-anchor': 'middle', class: 'lbl halo-text', style: `fill:${col};${FS(12)}`, text: txt }));
+                  lab(0.95, 0.45, '(CH₃)₃C–Br', 'var(--ink)');
+                  lab(2.2, 5.05, '(CH₃)₃C···Br', 'var(--coral)');
+                  lab(4.4, 2.3, '(CH₃)₃C⁺ + Br⁻', 'var(--ink)');
+                  lab(5.9, 4.0, 'C···OH₂', 'var(--teal)');
+                  lab(8.6, 0.95, '(CH₃)₃C–OH₂⁺', 'var(--ink)');
+                  const x = sn1X(p.t);
+                  out.push(s('circle', { cx: X(x), cy: Y(sn1E(x)), r: 8, fill: 'var(--amber)', stroke: 'var(--warn)', 'stroke-width': 2 }));
+                  return out;
+                },
+                readout: (p) => {
+                  const x = sn1X(p.t);
+                  return x < 2.1 ? 'Step 1: the C–Br bond stretches. The highest hill: this sets the rate.' : x < 4.39 ? 'Over the top: bromide leaves, the carbocation forms.' : p.t < 4 ? 'The intermediate: a flat carbocation, waiting for a water molecule.' : x < 5.95 ? 'Step 2: water attacks over a small hill.' : 'Product, before a final proton is lost to make the alcohol.';
+                },
+              },
+              after: r`The overall rate is set by the **highest** hill on the route, the first one: the bond to bromine breaking with nothing helping it along. Water only takes part after that hill, which is why its concentration doesn't appear in the rate law, $\text{rate} = k[\mathrm{RBr}]$. Anything that steadies the carbocation lowers the first hill (and the valley), which is why tertiary halides react this way and methyl halides don't.`,
             },
             {
               type: 'order',

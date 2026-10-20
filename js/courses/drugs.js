@@ -66,6 +66,39 @@ function inWindow(D, tau) {
   return true;
 }
 
+// ---------- repeated doses: each one decays on its own, and the blood level is their sum ----------
+// the same drug as the next slide: 250 mg every 6 h into 40 L, half-life 6 h
+const STACK_C0 = 250 / 40, STACK_TAU = 6, STACK_N = 8;
+const stackOne = (t, k) => (t >= k * STACK_TAU ? STACK_C0 * 0.5 ** ((t - k * STACK_TAU) / 6) : 0);
+const stackSum = (t) => { let c = 0; for (let k = 0; k < STACK_N; k++) c += stackOne(t, k); return c; };
+const STACK_COLS = ['var(--blue)', 'var(--coral)', 'var(--teal)', 'var(--violet)', 'var(--amber)', 'var(--pink)', 'var(--blue)', 'var(--coral)'];
+
+// ---------- drug molecules binding and leaving: at [L] = Kd each receptor is occupied half the time ----------
+// each receptor flips between empty and occupied after random waits (mean 1.6 s each way, as when [L] = Kd)
+let BIND = null;
+const bindSim = () => {
+  if (BIND) return BIND;
+  let seed = 61;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const T = 40, flips = [];
+  for (let i = 0; i < 12; i++) {
+    const f = [];
+    let t = -rnd() * 1.6, on = rnd() < 0.5;
+    while (t < T) { t += -1.6 * Math.log(1 - rnd() * 0.999); f.push(t); }
+    flips.push({ on0: on, f });
+  }
+  // the fraction occupied, sampled every 0.05 s, for the running average
+  const occ = [];
+  for (let k = 0; k <= T / 0.05; k++) {
+    const t = k * 0.05;
+    occ.push(flips.filter((r) => (r.f.filter((x) => x <= t).length % 2 === 0) === r.on0).length / 12);
+  }
+  BIND = { flips, occ, T };
+  return BIND;
+};
+const bindOn = (r, t) => (r.f.filter((x) => x <= t).length % 2 === 0) === r.on0;
+const bindLast = (r, t) => { let last = -1e9; for (const x of r.f) if (x <= t) last = x; return last; };
+
 export default {
   id: 'drugs',
   subject: 'physics',
@@ -142,6 +175,41 @@ Each good match lowers the **binding free energy** $\Delta G$; each clash raises
               body: r`For a drug L binding a protein P, the **dissociation constant** $K_d = [\mathrm P][\mathrm L]/[\mathrm{PL}]$ is the drug concentration at which **half** of the protein molecules are occupied. Smaller $K_d$ means tighter binding. The fraction occupied is
 $$\theta = \frac{[\mathrm L]}{[\mathrm L] + K_d}$$
 and the binding free energy is $\Delta G = RT\ln K_d$ (with $K_d$ in mol/L).`,
+            },
+            { /*chemanim:drugs.affinity*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Never still',
+              body: r`Twelve receptors on a cell, bathed in a drug at a concentration exactly equal to its $K_d$. Binding is not permanent: each drug molecule sits in its pocket for a while, then lets go, and another arrives.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.4, grid: false, axes: false, height: 280,
+                animate: { param: 't', speed: 1, max: 40, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t, v = bindSim();
+                  // membrane with pockets
+                  out.push(s('rect', { x: X(0.2), y: Y(1.5), width: X(9.8) - X(0.2), height: Y(0.5) - Y(1.5), fill: 'var(--amber)', opacity: 0.25 }));
+                  // free drug molecules drifting in the solution (their number stays fixed: the concentration is held constant)
+                  for (let k = 0; k < 10; k++) {
+                    const x = 0.6 + ((k * 0.97 + 0.23 * t * (1 + (k % 3) * 0.3)) % 8.8), y = 2.9 + 1.7 * (0.5 + 0.5 * Math.sin(0.8 * t + k * 1.9));
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 7, fill: 'var(--violet)', opacity: 0.75 }));
+                  }
+                  v.flips.forEach((r, i) => {
+                    const x = 0.75 + i * 0.77, on = bindOn(r, t), since = t - bindLast(r, t);
+                    out.push(s('path', { d: `M${X(x - 0.3)} ${Y(1.5)}V${Y(1.0)}H${X(x + 0.3)}V${Y(1.5)}`, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                    // a molecule arriving, sitting in the pocket, or leaving
+                    const slide = Math.min(1, since / 0.35);
+                    const y = on ? 2.4 - (2.4 - 1.25) * slide : 1.25 + (2.4 - 1.25) * slide;
+                    if (on || slide < 1) out.push(s('circle', { cx: X(x), cy: Y(y), r: 7, fill: 'var(--violet)', opacity: on ? 1 : 1 - slide }));
+                  });
+                  return out;
+                },
+                readout: (p) => {
+                  const v = bindSim(), k = Math.min(v.occ.length - 1, Math.round(p.t / 0.05)), now = v.occ[k];
+                  const avg = v.occ.slice(0, k + 1).reduce((a, b) => a + b, 0) / (k + 1);
+                  return `occupied now: ${Math.round(now * 12)} of 12 · average so far: ${fix(100 * avg, 0)}%`;
+                },
+              },
+              after: r`At any instant a different set of receptors is occupied, but averaged over time each one is filled half the time: $\theta = [\mathrm L]/([\mathrm L] + K_d) = 1/2$. That is what $K_d$ means. A tighter binder doesn't hold on forever either; mostly it lets go less often, so it reaches the same half-occupancy at a lower concentration. Medicinal chemists now also tune that **residence time** directly, because a drug that stays bound longer can keep working after its blood level falls.`,
             },
             {
               type: 'interactive',
@@ -330,6 +398,39 @@ Too big, too greasy or too polar, and a molecule usually isn't absorbed well.`,
               body: r`After a dose, the body clears a drug at a rate proportional to how much is there: its concentration falls exponentially, halving every **half-life**. A drug works when its blood level is inside the **therapeutic window**: high enough to act, low enough to avoid toxicity.
 
 Repeated doses stack up until each dose just replaces what was cleared since the last: **steady state**, reached after about four or five half-lives.`,
+            },
+            { /*chemanim:drugs.pk*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Doses pile up',
+              body: r`A drug with a 6-hour half-life, one dose every 6 hours. Each coloured curve is what a single dose would do on its own: jump up, then halve every 6 hours. The black curve is the blood level, simply the **sum** of all of them.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 48, ymin: 0, ymax: 14, height: 300, grid: false,
+                axes: { xticks: 6, yticks: 2, xlabel: 'time (hours)', ylabel: 'blood level (mg/L)', yAt: 0, xAt: 0 },
+                animate: { param: 't', speed: 4, max: 48, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const out = [], tEnd = Math.min(48, p.t);
+                  for (let k = 0; k < STACK_N; k++) {
+                    if (k * STACK_TAU > tEnd) break;
+                    let d = '';
+                    for (let t = k * STACK_TAU; t <= tEnd + 1e-9; t += 0.25) d += `${d ? 'L' : 'M'}${plot.X(t).toFixed(1)} ${plot.Y(stackOne(t, k)).toFixed(1)}`;
+                    out.push(s('path', { d: `M${plot.X(k * STACK_TAU).toFixed(1)} ${plot.Y(0).toFixed(1)}` + d.replace(/^M/, 'L'), fill: 'none', stroke: STACK_COLS[k], 'stroke-width': 2, 'stroke-opacity': 0.7 }));
+                  }
+                  let d = '';
+                  for (let t = 0; t <= tEnd + 1e-9; t += 0.1) d += `${d ? 'L' : 'M'}${plot.X(t).toFixed(1)} ${plot.Y(stackSum(t)).toFixed(1)}`;
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 3 }));
+                  for (const [lv, txt] of [[12.5, 'steady peak 12.5'], [6.25, 'steady trough 6.25']]) {
+                    out.push(s('line', { x1: plot.X(0), x2: plot.X(48), y1: plot.Y(lv), y2: plot.Y(lv), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '4 5' }));
+                    out.push(s('text', { x: plot.X(47.5), y: plot.Y(lv) - 5, 'text-anchor': 'end', class: 'lbl halo-text', style: `fill:var(--ink-2);${FS(11)}`, text: txt }));
+                  }
+                  return out;
+                },
+                readout: (p) => {
+                  const t = Math.min(48, p.t);
+                  return `${fix(t, 0)} h · doses so far: ${Math.min(STACK_N, Math.floor(t / STACK_TAU + 1e-9) + 1)} · blood level ${fix(stackSum(t), 1)} mg/L`;
+                },
+              },
+              after: r`Every dose leaves a tail that is still there when the next one arrives, so the troughs climb: 3.1, 4.7, 5.5, 5.9, 6.1… mg/L, closing in on 6.25. Steady state is reached not because the body changes but because the tails add up to a level where **each new dose exactly replaces what was cleared** since the last. Since each tail halves every half-life, the climb is 50%, 75%, 88%, 94%, 97% of the way after one to five half-lives: hence the rule of thumb.`,
             },
             {
               type: 'interactive',

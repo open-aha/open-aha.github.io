@@ -131,6 +131,38 @@ const ELL = {
 };
 const gE = (k, T) => ELL[k].H - (T * ELL[k].S) / 1000;
 
+// ---------- free expansion: 40 molecules, a divider pulled out, and nobody comes back ----------
+let SPREAD = null;
+const spreadSim = () => {
+  if (SPREAD) return SPREAD;
+  let seed = 17;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const DT = 0.02, STEPS = 1000, x0 = 0.5, x1 = 6.5, y0 = 0.5, y1 = 5.3, xm = 3.5, OPEN = 1.5, r = 0.1;
+  const ps = [];
+  for (let k = 0; k < 40; k++) {
+    const a = rnd() * 6.283;
+    ps.push({ x: x0 + r + rnd() * (xm - x0 - 2 * r), y: y0 + r + rnd() * (y1 - y0 - 2 * r), vx: 1.7 * Math.cos(a), vy: 1.7 * Math.sin(a) });
+  }
+  const frames = [], left = [];
+  for (let k = 0; k <= STEPS; k++) {
+    const t = k * DT, closed = t < OPEN;
+    for (const q of ps) {
+      const ox = q.x;
+      q.x += q.vx * DT; q.y += q.vy * DT;
+      if (q.x < x0 + r) { q.x = 2 * (x0 + r) - q.x; q.vx = -q.vx; }
+      if (q.x > x1 - r) { q.x = 2 * (x1 - r) - q.x; q.vx = -q.vx; }
+      if (q.y < y0 + r) { q.y = 2 * (y0 + r) - q.y; q.vy = -q.vy; }
+      if (q.y > y1 - r) { q.y = 2 * (y1 - r) - q.y; q.vy = -q.vy; }
+      if (closed && ox <= xm - r && q.x > xm - r) { q.x = 2 * (xm - r) - q.x; q.vx = -q.vx; }
+    }
+    frames.push(ps.map((q) => [q.x, q.y]));
+    left.push(ps.filter((q) => q.x < xm).length);
+  }
+  SPREAD = { DT, STEPS, frames, left, x0, x1, y0, y1, xm, OPEN };
+  return SPREAD;
+};
+const spreadK = (t) => { const v = spreadSim(); return Math.max(0, Math.min(v.STEPS, Math.round(t / v.DT))); };
+
 export default {
   id: 'thermochem',
   subject: 'physics',
@@ -502,6 +534,40 @@ $$\Delta H^\circ = \sum \Delta H_f^\circ(\text{products}) - \sum \Delta H_f^\cir
 
 Rough rules: gases have far more entropy than liquids, liquids more than solids; dissolving and mixing usually raise entropy; and a reaction that makes **more gas molecules** than it uses gains entropy.`,
               widget: bars([['diamond\nC(s)', 2.4, 'muted'], ['iron\nFe(s)', 27.3, 'muted'], ['water\nH₂O(l)', 70.0, 'blue'], ['steam\nH₂O(g)', 188.8, 'coral'], ['CO₂(g)', 213.8, 'coral']], { ymax: 250, yticks: 50, ylabel: 'S° (J/(mol·K))', height: 280, labelSize: 12 }),
+            },
+            { /*chemanim:thermochem.entropy*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Why gases spread',
+              body: r`Forty gas molecules are shut in the left half of a box. Then the divider is pulled out. Nothing pushes them to the right, and no energy changes. Watch how many stay on the left.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.8, grid: false, axes: false, height: 290,
+                animate: { param: 't', speed: 1, max: 20, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], v = spreadSim(), k = spreadK(p.t);
+                  out.push(s('rect', { x: X(v.x0), y: Y(v.y1), width: X(v.x1) - X(v.x0), height: Y(v.y0) - Y(v.y1), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5, rx: 4 }));
+                  if (p.t < v.OPEN) out.push(s('line', { x1: X(v.xm), x2: X(v.xm), y1: Y(v.y0), y2: Y(v.y1), stroke: 'var(--ink-2)', 'stroke-width': 4 }));
+                  else out.push(s('line', { x1: X(v.xm), x2: X(v.xm), y1: Y(v.y0), y2: Y(v.y1), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '3 5' }));
+                  for (const [x, y] of v.frames[k]) out.push(s('circle', { cx: X(x), cy: Y(y), r: 4.5, fill: x < v.xm ? 'var(--blue)' : 'var(--coral)' }));
+                  // molecules on the left against time
+                  const gx0 = 7.1, gx1 = 9.8, gy0 = 0.9, gy1 = 4.7;
+                  const GX = (t) => gx0 + ((gx1 - gx0) * t) / 20, GY = (n) => gy0 + ((gy1 - gy0) * n) / 40;
+                  out.push(s('path', { d: `M${X(gx0)} ${Y(gy1)}V${Y(gy0)}H${X(gx1)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  out.push(s('line', { x1: X(gx0), x2: X(gx1), y1: Y(GY(20)), y2: Y(GY(20)), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' }));
+                  for (const [n, txt] of [[40, '40'], [20, '20'], [0, '0']]) out.push(s('text', { x: X(gx0) - 5, y: Y(GY(n)) + 4, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: txt }));
+                  let d = '';
+                  for (let j = 0; j <= k; j += 5) d += `${d ? 'L' : 'M'}${X(GX(j * v.DT)).toFixed(1)} ${Y(GY(v.left[j])).toFixed(1)}`;
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  out.push(s('text', { x: X(gx0), y: Y(gy1) - 9, class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'on the left' }));
+                  out.push(s('text', { x: X(gx1), y: Y(gy0) + 17, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'time →' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const v = spreadSim(), n = v.left[spreadK(p.t)];
+                  return `left half: ${n} · right half: ${40 - n}`;
+                },
+              },
+              after: r`Once the divider is gone, every molecule is equally likely to be in either half, and the count settles around 20 each, flickering a little. Why never all 40 back on the left? There is exactly **one** way to choose all 40 to be on the left, but about $1.4 \times 10^{11}$ ways to split them 20 and 20. The chance of finding all 40 on the left at a given moment is 1 in $2^{40}$, about one in a trillion. With $10^{23}$ molecules it simply never happens. Entropy grows because spread-out states vastly outnumber tidy ones.`,
             },
             {
               type: 'mcq',

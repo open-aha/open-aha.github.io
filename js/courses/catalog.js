@@ -6802,16 +6802,16 @@ export const courses = [
       "title": "Ionic Bonds",
       "summary": "Handing electrons over",
       "icon": "bolt",
-      "nSteps": 8,
-      "minutes": 7
+      "nSteps": 9,
+      "minutes": 8
      },
      {
       "id": "covalent",
       "title": "Sharing Electrons",
       "summary": "The covalent bond",
       "icon": "link",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -6934,8 +6934,8 @@ export const courses = [
       "title": "Polar or Non-polar?",
       "summary": "When bond dipoles cancel",
       "icon": "sparkle",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    },
@@ -6964,8 +6964,8 @@ export const courses = [
       "title": "Molecular Orbitals",
       "summary": "Why oxygen is magnetic",
       "icon": "bolt",
-      "nSteps": 7,
-      "minutes": 6
+      "nSteps": 8,
+      "minutes": 7
      }
     ]
    }
@@ -6998,8 +6998,8 @@ export const courses = [
       "title": "London Forces",
       "summary": "Even non-polar molecules stick",
       "icon": "sparkle",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "hbonds",
@@ -7028,7 +7028,7 @@ export const courses = [
       "title": "Vapour Pressure & Boiling",
       "summary": "Escaping molecules",
       "icon": "flame",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      }
     ]
@@ -7042,7 +7042,7 @@ export const courses = [
       "title": "Like Dissolves Like",
       "summary": "Why oil and water don’t mix",
       "icon": "layers",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -7050,8 +7050,8 @@ export const courses = [
       "title": "Salt on Ice",
       "summary": "Dissolved particles shift boiling and freezing",
       "icon": "sun",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "chromatography",
@@ -7144,7 +7144,7 @@ export const courses = [
       "title": "Entropy in Chemistry",
       "summary": "Counting the ways",
       "icon": "sparkle",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -7224,8 +7224,8 @@ export const courses = [
       "title": "Le Chatelier’s Principle",
       "summary": "Push it and it pushes back",
       "icon": "hand",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "haber",
@@ -7280,8 +7280,8 @@ export const courses = [
       "title": "Proton Swaps",
       "summary": "Donors and acceptors",
       "icon": "link",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "strength",
@@ -7310,7 +7310,7 @@ export const courses = [
       "title": "Buffers",
       "summary": "A weak acid and its partner",
       "icon": "layers",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -7326,7 +7326,7 @@ export const courses = [
       "title": "Titrating a Weak Acid",
       "summary": "Reading pKa off a curve",
       "icon": "target",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      }
     ]
@@ -7434,7 +7434,7 @@ export const courses = [
       "title": "Electrolysis",
       "summary": "Driving reactions backwards",
       "icon": "flame",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -7450,7 +7450,7 @@ export const courses = [
       "title": "Rust & Protection",
       "summary": "Fighting an unwanted cell",
       "icon": "target",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -7458,7 +7458,7 @@ export const courses = [
       "title": "Fuel Cells",
       "summary": "Burning hydrogen without a flame",
       "icon": "sun",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      }
     ]
@@ -7492,8 +7492,8 @@ export const courses = [
       "title": "Skeletal Formulas",
       "summary": "The chemist’s shorthand",
       "icon": "pencil",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "isomers",
@@ -7546,7 +7546,7 @@ export const courses = [
       "title": "Making Molecules",
       "summary": "Addition and esterification",
       "icon": "flame",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      }
     ]
@@ -7580,7 +7580,7 @@ export const courses = [
       "title": "Flames & Fireworks",
       "summary": "Atoms that emit",
       "icon": "flame",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      }
     ]
@@ -7594,7 +7594,7 @@ export const courses = [
       "title": "Conjugated Dyes",
       "summary": "Longer chains, longer wavelengths",
       "icon": "link",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -7624,7 +7624,7 @@ export const courses = [
       "title": "Glowing Molecules",
       "summary": "Fluorescence and chemiluminescence",
       "icon": "sparkle",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -7696,7 +7696,7 @@ export const courses = [
       "title": "DNA",
       "summary": "A code written in pairs",
       "icon": "link",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -7704,7 +7704,7 @@ export const courses = [
       "title": "Fats & Membranes",
       "summary": "Walls that build themselves",
       "icon": "layers",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -7712,7 +7712,7 @@ export const courses = [
       "title": "Sugar to ATP",
       "summary": "The cell’s energy currency",
       "icon": "flame",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      }
     ]
@@ -12013,7 +12013,7 @@ export const courses = [
       "title": "Cis & Trans",
       "summary": "Locked by a double bond",
       "icon": "eye",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -12021,7 +12021,7 @@ export const courses = [
       "title": "Twisting Light",
       "summary": "Optical activity",
       "icon": "sun",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -12085,8 +12085,8 @@ export const courses = [
       "title": "SN1 & Carbocations",
       "summary": "Leave first, then attack",
       "icon": "layers",
-      "nSteps": 6,
-      "minutes": 5
+      "nSteps": 7,
+      "minutes": 6
      },
      {
       "id": "elimination",
@@ -12157,7 +12157,7 @@ export const courses = [
       "title": "Measuring Concentration",
       "summary": "The Beer–Lambert law",
       "icon": "eye",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -12165,7 +12165,7 @@ export const courses = [
       "title": "Bonds as Springs",
       "summary": "Infrared spectroscopy",
       "icon": "bolt",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      },
      {
@@ -12173,7 +12173,7 @@ export const courses = [
       "title": "Weighing Molecules",
       "summary": "Mass spectrometry",
       "icon": "target",
-      "nSteps": 5,
+      "nSteps": 6,
       "minutes": 5
      }
     ]
@@ -12203,7 +12203,7 @@ export const courses = [
       "title": "Splitting Patterns",
       "summary": "The n + 1 rule",
       "icon": "sigma",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -12245,7 +12245,7 @@ export const courses = [
       "title": "Binding Strength",
       "summary": "Kd and occupancy",
       "icon": "link",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {
@@ -12275,7 +12275,7 @@ export const courses = [
       "title": "Half-Life & Dosing",
       "summary": "Staying in the window",
       "icon": "clock",
-      "nSteps": 4,
+      "nSteps": 5,
       "minutes": 5
      },
      {

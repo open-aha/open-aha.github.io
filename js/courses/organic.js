@@ -15,6 +15,24 @@ function isPath(atoms, bonds, sel) {
   return seen.size === sel.length;
 }
 
+// ---------- hexane: the full structure fading into its skeletal formula ----------
+const SKEL_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const SKEL_C = [0, 1, 2, 3, 4, 5].map((i) => [1.6 + 1.36 * i, i % 2 ? 3.45 : 2.55]);
+// hydrogens: two on each middle carbon (pointing away from the chain), three on each end
+const SKEL_H = (() => {
+  const hs = [];
+  SKEL_C.forEach(([x, y], i) => {
+    const out = i % 2 ? 1 : -1;
+    const dirs = i === 0 ? [[-0.95, 0.2], [-0.55, -0.8], [0.3, -0.92]] : i === 5 ? [[0.95, -0.2], [0.55, 0.8], [-0.3, 0.92]] : [[-0.45, 0.78 * out], [0.45, 0.78 * out]];
+    for (const [dx, dy] of dirs) hs.push([x, y, x + dx * 0.95, y + dy * 0.95]);
+  });
+  return hs;
+})();
+
+// ---------- addition polymerisation: ethene units open their double bonds and link up ----------
+const POLY_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const polyJoin = (i, t) => POLY_SM((t - 0.6 - 0.75 * i) / 0.7); // unit i opens up and joins the chain
+
 export default {
   id: 'organic',
   subject: 'physics',
@@ -109,6 +127,40 @@ Here is hexane with every carbon and its hydrogens written out:`,
               title: 'Hexane, the shorthand way',
               body: r`Six corners and ends, so six carbons. Hydrogens are implied.`,
               widget: view('CCCCCC', { h: 140, style: 'skeletal', bond: 66 }),
+            },
+            { /*chemanim:organic.skeletal*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'From full drawing to skeleton',
+              body: r`The two drawings of hexane are the same molecule. Watch one turn into the other: first the hydrogens on carbon go, then the C labels, and what's left is the skeleton.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0.6, ymax: 5.4, grid: false, axes: false, height: 250,
+                animate: { param: 't', speed: 0.8, max: 4.6, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  const hGone = SKEL_SM((t - 0.8) / 1.2), cGone = SKEL_SM((t - 2.4) / 1.0);
+                  // C–H bonds shrink towards their carbon as they fade
+                  for (const [cx, cy, hx, hy] of SKEL_H) {
+                    const k = 1 - 0.6 * hGone, x = cx + (hx - cx) * k, y = cy + (hy - cy) * k;
+                    if (hGone < 1) {
+                      out.push(s('line', { x1: X(cx), y1: Y(cy), x2: X(x), y2: Y(y), stroke: 'var(--ink)', 'stroke-opacity': 0.6 * (1 - hGone), 'stroke-width': 2.5 }));
+                      out.push(s('circle', { cx: X(x), cy: Y(y), r: 10, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1.5, opacity: 1 - hGone }));
+                      out.push(s('text', { x: X(x), y: Y(y) + 4.5, 'text-anchor': 'middle', class: 'lbl', style: `opacity:${1 - hGone};${FS(11)}`, text: 'H' }));
+                    }
+                  }
+                  let d = '';
+                  SKEL_C.forEach(([x, y], i) => (d += `${i ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(y).toFixed(1)}`));
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2.5 + 1.5 * cGone, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+                  for (const [x, y] of SKEL_C) {
+                    if (cGone >= 1) continue;
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 15 * (1 - 0.6 * cGone), fill: 'var(--ink)', opacity: 1 - cGone }));
+                    out.push(s('text', { x: X(x), y: Y(y) + 5, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--card);opacity:${1 - cGone};${FS(13)}`, text: 'C' }));
+                  }
+                  return out;
+                },
+                readout: (p) => (p.t < 0.8 ? 'C₆H₁₄ with every atom drawn: 20 atoms, 19 bonds.' : p.t < 2.4 ? 'Hydrogens on carbon are implied: every carbon makes four bonds.' : 'Carbons are implied too: every corner and line end is one.'),
+              },
+              after: r`Nothing is lost: from the skeleton you can rebuild every atom. Count the corners and ends (6 carbons), then give each carbon enough hydrogens to make four bonds (3 on each end, 2 on each corner: 14). Chemists draw skeletons because a molecule with fifty atoms stays readable.`,
             },
             {
               type: 'numeric',
@@ -497,6 +549,53 @@ As with ozone (see Chemical Bonding), the real molecule is a blend of the two dr
                 { t: 'Combustion', why: 'Combustion would turn it into CO₂ and water.' },
               ],
               explain: r`Thousands of ethene units add end to end: $n\,\mathrm{CH_2{=}CH_2} \to (\mathrm{{-}CH_2{-}CH_2{-}})_n$. Polyesters and nylons, on the other hand, are made by condensation, releasing water at every link.`,
+            },
+            { /*chemanim:organic.making*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A chain grows',
+              body: r`Five ethene molecules, each with a C=C double bond. In the reactor a growing chain end attacks the next molecule: one of the two bonds between its carbons opens, and the electrons it frees make a new bond to the chain.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0.8, ymax: 4.8, grid: false, axes: false, height: 230,
+                animate: { param: 't', speed: 0.8, max: 5.4, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t, y = 2.8;
+                  // carbon positions: start as separate pairs, finish evenly spaced along one chain
+                  const cx = (j) => {
+                    const i = Math.floor(j / 2), f = polyJoin(i, t), start = 1.25 + 1.9 * i + (j % 2 ? 0.36 : -0.36), end = 1.05 + 0.88 * j;
+                    return start + (end - start) * f;
+                  };
+                  const bonds = [], atoms = [];
+                  for (let i = 0; i < 5; i++) {
+                    const a = cx(2 * i), b = cx(2 * i + 1), f = polyJoin(i, t);
+                    bonds.push([a, y, b, y, 1]);
+                    if (f < 0.5) bonds.push([a, y + 0.16, b, y + 0.16, 1 - 2 * f]);
+                    if (i > 0) {
+                      const g = polyJoin(i, t);
+                      if (g > 0.4) bonds.push([cx(2 * i - 1), y, cx(2 * i), y, Math.min(1, (g - 0.4) / 0.4)]);
+                    }
+                    for (const c of [a, b]) {
+                      atoms.push([c, y, 'C']);
+                      for (const dy of [0.75, -0.75]) { bonds.push([c, y, c, y + dy, 1]); atoms.push([c, y + dy, 'H']); }
+                    }
+                  }
+                  for (const [x1, y1, x2, y2, op] of bonds) out.push(s('line', { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y2), stroke: 'var(--ink)', 'stroke-opacity': 0.75 * op, 'stroke-width': 3 }));
+                  for (const [x, yy, el] of atoms) {
+                    const c = el === 'C';
+                    out.push(s('circle', { cx: X(x), cy: Y(yy), r: c ? 13 : 9, fill: c ? 'var(--ink)' : 'var(--card)', stroke: c ? 'var(--ink)' : 'var(--ink-3)', 'stroke-width': 1.5 }));
+                    out.push(s('text', { x: X(x), y: Y(yy) + (c ? 4.5 : 4), 'text-anchor': 'middle', class: 'lbl', style: `fill:${c ? 'var(--card)' : 'var(--ink)'};${FS(c ? 12 : 10)}`, text: el }));
+                  }
+                  if (polyJoin(4, t) > 0.95) for (const [x0, x1] of [[cx(0) - 0.25, cx(0) - 0.85], [cx(9) + 0.25, cx(9) + 0.85]]) {
+                    out.push(s('line', { x1: X(x0), y1: Y(y), x2: X(x1), y2: Y(y), stroke: 'var(--ink)', 'stroke-opacity': 0.6, 'stroke-width': 3, 'stroke-dasharray': '4 4' }));
+                  }
+                  return out;
+                },
+                readout: (p) => {
+                  const n = [0, 1, 2, 3, 4].filter((i) => polyJoin(i, p.t) > 0.5).length;
+                  return n === 0 ? 'Five separate ethene molecules, CH₂=CH₂.' : n < 5 ? `${n} of 5 units linked into the chain` : 'One chain, every C–C bond single: polyethylene, (–CH₂–CH₂–)ₙ.';
+                },
+              },
+              after: r`No atoms are lost or gained: the chain has exactly the atoms of the ethene it was made from, only rearranged into single bonds. A real polyethylene molecule repeats this tens of thousands of times. Swap one hydrogen on ethene for something else and the same trick makes other plastics: Cl gives PVC, a benzene ring gives polystyrene.`,
             },
           ],
           recap: [

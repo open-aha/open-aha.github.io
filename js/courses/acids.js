@@ -56,6 +56,36 @@ const PT = {
   product: { atoms: [['O', 180, 130, { q: 1, lp: 1 }], ['H', 130, 190], ['H', 230, 190], ['H', 270, 85], ['Cl', 440, 130, { q: -1, lp: 4 }]], bonds: [[0, 1, 1], [0, 2, 1], [0, 3, 1]] },
 };
 
+// ---------- the proton relay: an extra proton's charge hops along a chain of hydrogen-bonded water ----------
+const RELAY_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const RELAY_O = [0, 1, 2, 3, 4].map((k) => [1.15 + 1.92 * k, k % 2 ? 3.65 : 2.75]);
+const relayHop = (k, t) => RELAY_SM((t - (1.2 + 1.1 * k)) / 0.55);
+
+// ---------- the same acid dropped into water and into an acetate buffer (1 L each, 8 mmol HA + 8 mmol A−) ----------
+const BUF_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const BUF_DROPS = [1, 2.6, 4.2, 5.8]; // each drop is 1 mmol of strong acid
+const BUF_SPOTS = (() => {
+  const spots = [];
+  for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) spots.push([5.9 + i * 1.0 + (j % 2) * 0.4, 0.9 + j * 0.85, (i + j) % 2 === 1]);
+  return spots; // [x, y, starts as A−]
+})();
+// which A− each drop lands on
+const BUF_TARGET = BUF_SPOTS.map((q, k) => k).filter((k) => BUF_SPOTS[k][2]).slice(0, 4);
+const bufAdded = (t) => BUF_DROPS.filter((d) => t >= d + 0.9).length;
+
+// ---------- 25 mL of 0.10 M acetic acid titrated with 0.10 M NaOH, solved exactly by charge balance ----------
+const titPH = (vb) => {
+  const Ka = 10 ** -4.76, Kw = 1e-14, V = 25 + vb, ct = (0.1 * 25) / V, na = (0.1 * vb) / V;
+  let lo = 0, hi = 14;
+  for (let k = 0; k < 60; k++) {
+    const pH = (lo + hi) / 2, h = 10 ** -pH;
+    const excess = na + h - (ct * Ka) / (Ka + h) - Kw / h; // positive: too many + charges, so the true pH is higher
+    if (excess > 0) lo = pH; else hi = pH;
+  }
+  return (lo + hi) / 2;
+};
+const titV = (t) => Math.min(40, Math.max(0, (t - 0.5) * 3.2));
+
 export default {
   id: 'acids',
   subject: 'physics',
@@ -91,6 +121,52 @@ When hydrogen chloride meets water, water's oxygen uses a lone pair to grab the 
               prompt: r`Draw two curly arrows: tap a lone pair (or a bond) where electrons start, then the atom they move to. First, the oxygen's lone pair attacks the proton; second, the H–Cl bond's electrons go to chlorine.`,
               widget: arrows({ ...PT, h: 250, hints: { 'lp:4>a:3': 'Chlorine keeps its electrons; it’s water’s oxygen that grabs the proton.', 'b:3-4>a:3': 'The H–Cl bond’s electrons leave with chlorine, not with the proton.' } }),
               explain: r`$\mathrm{H_2O + HCl \to H_3O^+ + Cl^-}$. Oxygen gains a third bond and becomes positive (the **hydronium** ion); chlorine leaves with the bonding pair as chloride. A "free $\mathrm{H^+}$" never really floats around in water: it's always attached to a water molecule.`,
+            },
+            { /*chemanim:acids.bronsted*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A relay race for protons',
+              body: r`In water, every molecule is hydrogen-bonded to its neighbours. Start with one hydronium ion at the left end of a chain. Watch the hydrogens between the oxygens: each one only shifts a short way along its hydrogen bond.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0.8, ymax: 5.4, grid: false, axes: false, height: 250,
+                animate: { param: 't', speed: 0.8, max: 7.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  const atoms = [], bonds = [];
+                  const addH = (x, y, ox, oy, solid) => { bonds.push([ox, oy, x, y, solid]); atoms.push([x, y, 'H']); };
+                  RELAY_O.forEach(([ox, oy], k) => {
+                    const up = k % 2 ? 1 : -1;
+                    if (k === 0) { addH(ox - 0.45, oy + 0.48, ox, oy, true); addH(ox - 0.45, oy - 0.48, ox, oy, true); }
+                    else if (k === 4) { addH(ox + 0.45, oy + 0.48, ox, oy, true); addH(ox + 0.45, oy - 0.48, ox, oy, true); }
+                    else addH(ox, oy + up * 0.66, ox, oy, true);
+                    if (k < 4) {
+                      // the hydrogen between O(k) and O(k+1) slides across during hop k
+                      const [nx, ny] = RELAY_O[k + 1], f = 0.35 + 0.3 * relayHop(k, t);
+                      const hx = ox + (nx - ox) * f, hy = oy + (ny - oy) * f;
+                      bonds.push([ox, oy, hx, hy, f < 0.5]);
+                      bonds.push([nx, ny, hx, hy, f >= 0.5]);
+                      atoms.push([hx, hy, 'H']);
+                    }
+                  });
+                  for (const [x1, y1, x2, y2, solid] of bonds) out.push(s('line', { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y2), stroke: 'var(--ink)', 'stroke-opacity': solid ? 0.7 : 0.45, 'stroke-width': solid ? 4 : 2, 'stroke-dasharray': solid ? null : '3 4' }));
+                  for (const [x, y] of atoms) {
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 10, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1.8 }));
+                    out.push(s('text', { x: X(x), y: Y(y) + 4.5, 'text-anchor': 'middle', class: 'lbl', style: FS(11), text: 'H' }));
+                  }
+                  // which oxygen carries three hydrogens (and the + charge) right now
+                  let at = 0;
+                  for (let k = 0; k < 4; k++) if (relayHop(k, t) >= 0.5) at = k + 1;
+                  RELAY_O.forEach(([ox, oy], k) => {
+                    out.push(s('circle', { cx: X(ox), cy: Y(oy), r: 16, fill: k === at ? 'var(--coral)' : 'var(--coral-soft)', stroke: 'var(--coral)', 'stroke-width': 2 }));
+                    out.push(s('text', { x: X(ox), y: Y(oy) + 5, 'text-anchor': 'middle', class: 'lbl', style: `fill:${k === at ? '#fff' : 'var(--ink)'};${FS(14)}`, text: 'O' }));
+                  });
+                  const [cx, cy] = RELAY_O[at];
+                  out.push(s('text', { x: X(cx), y: Y(cy + (at % 2 ? -0.95 : 0.95)) + 5, 'text-anchor': 'middle', class: 'lbl halo-text', style: `fill:var(--coral);${FS(14)}`, text: 'H₃O⁺' }));
+                  return out;
+                },
+                readout: (p) => (p.t < 1.2 ? 'The left molecule is H₃O⁺: three hydrogens and the + charge.' : p.t < 5.8 ? 'Each hydrogen hops one short step; the + charge races along the chain.' : 'Now the right-hand molecule is H₃O⁺. No atom travelled far.'),
+              },
+              after: r`The positive charge crossed the whole chain, yet every hydrogen moved only about a tenth of a nanometre, from one oxygen to the next. This hand-off (the **Grotthuss mechanism**, proposed in 1806) is why hydrochloric acid conducts electricity more than three times better than salt water of the same concentration: $\mathrm{H^+}$ doesn't have to push through the water, it is passed along it.`,
             },
             {
               type: 'explain',
@@ -283,6 +359,51 @@ The approximation works when only a few percent ionises, which is true for most 
 $$\mathrm{pH} = \mathrm pK_a + \log_{10}\frac{[\mathrm{A^-}]}{[\mathrm{HA}]}$$
 With equal amounts of each, pH = $\mathrm pK_a$.`,
             },
+            { /*chemanim:acids.buffers*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Same acid, two beakers',
+              body: r`Two beakers, a litre each: pure water on the left, an acetate buffer on the right (8 mmol of acetic acid HA and 8 mmol of acetate $\mathrm{A^-}$). Drip the same strong acid into both, 1 mmol at a time.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 290,
+                animate: { param: 't', speed: 0.7, max: 7.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  for (const [x0, x1, name] of [[0.3, 4.6, 'water'], [5.4, 9.7, 'buffer']]) {
+                    out.push(s('rect', { x: X(x0), y: Y(4.2), width: X(x1) - X(x0), height: Y(0.4) - Y(4.2), fill: 'var(--blue)', opacity: 0.1 }));
+                    out.push(s('path', { d: `M${X(x0)} ${Y(4.6)}V${Y(0.4)}H${X(x1)}V${Y(4.6)}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                    out.push(s('text', { x: X((x0 + x1) / 2), y: Y(5.15), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(13)}`, text: name }));
+                  }
+                  const pill = (x, y, txt, fill, stroke) => {
+                    out.push(s('rect', { x: X(x) - 17, y: Y(y) - 11, width: 34, height: 22, rx: 11, fill, stroke, 'stroke-width': 1.8 }));
+                    out.push(s('text', { x: X(x), y: Y(y) + 4.5, 'text-anchor': 'middle', class: 'lbl', style: FS(11), text: txt }));
+                  };
+                  // buffer: HA and A−; an A− that catches a drop becomes HA
+                  BUF_SPOTS.forEach(([x, y, isA], k) => {
+                    const di = BUF_TARGET.indexOf(k), caught = di >= 0 && t >= BUF_DROPS[di] + 0.9;
+                    const jx = x + 0.06 * Math.sin(1.7 * t + k), jy = y + 0.05 * Math.cos(1.3 * t + 2 * k);
+                    if (isA && !caught) pill(jx, jy, 'A⁻', 'var(--coral-soft)', 'var(--coral)');
+                    else pill(jx, jy, 'HA', 'var(--blue-soft)', 'var(--blue)');
+                  });
+                  // the drops: falling, then either caught (buffer) or left free (water)
+                  BUF_DROPS.forEach((d, i) => {
+                    if (t < d) return;
+                    const f = BUF_SM((t - d) / 0.9);
+                    const [tx, ty] = BUF_SPOTS[BUF_TARGET[i]];
+                    if (f < 1) pill(tx + 0.0, 5.0 + (ty + 0.35 - 5.0) * f, 'H⁺', 'var(--amber)', 'var(--warn)');
+                    const wx = 0.9 + i * 1.05, wy = 5.0 + (1.2 + (i % 2) * 1.3 - 5.0) * f;
+                    pill(wx + 0.08 * Math.sin(2 * t + i), wy, 'H⁺', 'var(--amber)', 'var(--warn)');
+                  });
+                  return out;
+                },
+                readout: (p) => {
+                  const n = bufAdded(p.t);
+                  const water = n ? -Math.log10(n * 1e-3) : 7, buf = 4.76 + Math.log10((8 - n) / (8 + n));
+                  return `acid added: ${n} mmol · water pH ${fix(water, 2)} · buffer pH ${fix(buf, 2)}`;
+                },
+              },
+              after: r`In water every drop of acid stays free, so 1 mmol takes the pH from 7.00 to 3.00. In the buffer, each $\mathrm{H^+}$ is caught by an acetate and becomes acetic acid; only the **ratio** $[\mathrm{A^-}]/[\mathrm{HA}]$ changes, from 8:8 to 4:12, and the pH slips just from 4.76 to 4.28. The buffer keeps working until its acetate runs out.`,
+            },
             {
               type: 'numeric',
               title: 'An acetate buffer',
@@ -411,6 +532,61 @@ With equal amounts of each, pH = $\mathrm pK_a$.`,
                 curves: [{ f: (v) => titr(v), color: 'blue', n: 400 }, { f: (v) => (v < 25 ? phOf({ Cs: (0.1 * (25 - v)) / (25 + v) }) : phOf({ Cb: (0.1 * (v - 25)) / (25 + v) })), color: 'muted', dash: true, n: 400 }],
                 extra: ({ plot, s }) => [s('text', { x: plot.X(1), y: plot.Y(1.4), class: 'lbl halo-text', style: `fill:var(--ink-3);${FS(13)}`, text: 'strong acid (dashed)' })],
               },
+            },
+            { /*chemanim:acids.titration*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Run the titration',
+              body: r`Sodium hydroxide drips from the burette into 25 mL of 0.10 M acetic acid, with a few drops of phenolphthalein. Watch the pH curve being drawn, and the bars underneath: how much of the acid is still HA and how much has become acetate, $\mathrm{A^-}$.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.2, grid: false, axes: false, height: 330,
+                animate: { param: 't', speed: 1, max: 13.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], vb = titV(p.t), pH = titPH(vb);
+                  // burette, a falling drop, the flask
+                  out.push(s('rect', { x: X(1.3), y: Y(6.0), width: X(1.7) - X(1.3), height: Y(3.9) - Y(6.0), rx: 3, fill: 'var(--blue)', 'fill-opacity': 0.12 + 0.2 * (1 - vb / 40), stroke: 'var(--ink-3)', 'stroke-width': 2 }));
+                  out.push(s('line', { x1: X(1.5), x2: X(1.5), y1: Y(3.9), y2: Y(3.6), stroke: 'var(--ink-3)', 'stroke-width': 3 }));
+                  if (vb > 0 && vb < 40) {
+                    const f = (p.t * 4) % 1;
+                    out.push(s('circle', { cx: X(1.5), cy: Y(3.5 - 1.0 * f), r: 4, fill: 'var(--blue)', opacity: 0.8 }));
+                  }
+                  const pink = Math.max(0, Math.min(1, (pH - 8.2) / 1.6));
+                  const fl = `M${X(1.15)} ${Y(2.45)}L${X(0.45)} ${Y(1.25)}Q${X(0.4)} ${Y(1.05)} ${X(0.65)} ${Y(1.05)}H${X(2.35)}Q${X(2.6)} ${Y(1.05)} ${X(2.55)} ${Y(1.25)}L${X(1.85)} ${Y(2.45)}`;
+                  out.push(s('path', { d: `${fl}Z`, fill: 'var(--blue)', opacity: 0.12, stroke: 'none' }));
+                  out.push(s('path', { d: `${fl}Z`, style: `fill:color-mix(in srgb, #e0429a ${fix(pink * 75, 0)}%, transparent)`, stroke: 'none' }));
+                  out.push(s('path', { d: `${fl}M${X(1.15)} ${Y(2.45)}V${Y(2.85)}M${X(1.85)} ${Y(2.45)}V${Y(2.85)}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                  // HA and A− amounts (mmol): 2.5 mmol in total
+                  const nA = Math.min(2.5, 0.1 * vb), nHA = 2.5 - nA;
+                  for (const [k, n, col, name] of [[0, nHA, 'var(--blue)', 'HA'], [1, nA, 'var(--coral)', 'A⁻']]) {
+                    const y = 0.55 - k * 0.42;
+                    out.push(s('rect', { x: X(0.75), y: Y(y + 0.13), width: (X(2.45) - X(0.75)) * (n / 2.5), height: Y(0) - Y(0.26), rx: 3, fill: col }));
+                    out.push(s('text', { x: X(0.65), y: Y(y) + 4, 'text-anchor': 'end', class: 'lbl', style: `fill:${col};${FS(11)}`, text: name }));
+                  }
+                  // the curve so far
+                  const gx0 = 3.6, gx1 = 9.7, gy0 = 0.6, gy1 = 5.8;
+                  const GX = (v) => gx0 + ((gx1 - gx0) * v) / 40, GY = (ph) => gy0 + ((gy1 - gy0) * ph) / 14;
+                  out.push(s('path', { d: `M${X(gx0)} ${Y(gy1)}V${Y(gy0)}H${X(gx1)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  for (const ph of [4, 7, 10]) {
+                    out.push(s('line', { x1: X(gx0), x2: X(gx1), y1: Y(GY(ph)), y2: Y(GY(ph)), stroke: 'var(--grid)', 'stroke-width': 1 }));
+                    out.push(s('text', { x: X(gx0) - 5, y: Y(GY(ph)) + 4, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: String(ph) }));
+                  }
+                  for (const v of [12.5, 25]) out.push(s('text', { x: X(GX(v)), y: Y(gy0) + 16, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-3);${FS(11)}`, text: `${v} mL` }));
+                  let d = '';
+                  for (let v = 0; v <= vb + 1e-9; v += 0.25) d += `${d ? 'L' : 'M'}${X(GX(v)).toFixed(1)} ${Y(GY(titPH(v))).toFixed(1)}`;
+                  if (d) out.push(s('path', { d, fill: 'none', stroke: 'var(--violet)', 'stroke-width': 3 }));
+                  if (vb >= 12.5) {
+                    out.push(s('circle', { cx: X(GX(12.5)), cy: Y(GY(titPH(12.5))), r: 5.5, fill: 'var(--success)' }));
+                    out.push(s('text', { x: X(GX(12.5)), y: Y(GY(titPH(12.5))) - 12, 'text-anchor': 'middle', class: 'lbl halo-text', style: `fill:var(--success);${FS(12)}`, text: 'pH = pKa' }));
+                  }
+                  out.push(s('text', { x: X(gx0), y: Y(gy1) - 6, class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'pH' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const vb = titV(p.t);
+                  return `NaOH added: ${fix(vb, 1)} mL · pH ${fix(titPH(vb), 2)}`;
+                },
+              },
+              after: r`Through the long flat stretch, the flask holds both {blue:HA} and {coral:$\mathrm{A^-}$}: it is a buffer, so each drop barely moves the pH. Halfway, at 12.5 mL, the two bars are equal and pH = $\mathrm pK_a$ = 4.76. When the HA bar is gone (25 mL) nothing is left to absorb the hydroxide, the pH leaps, and the phenolphthalein turns pink.`,
             },
             {
               type: 'interactive',

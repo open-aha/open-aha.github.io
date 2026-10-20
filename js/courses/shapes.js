@@ -82,6 +82,22 @@ function moFigure({ withCharge = false, goal, solution, mol = 3 } = {}) {
   };
 }
 
+// ---------- two 1s waves meeting: in step (bonding) and out of step (antibonding) ----------
+const MO_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const moSep = (t) => 6.4 - 4.8 * MO_SM(t / 3.2);
+
+// ---------- polar molecules turn in an electric field; non-polar ones don't ----------
+const FIELD_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const FIELD_MOLS = (() => {
+  let seed = 23;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const out = [];
+  for (const box of [0, 1]) for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+    out.push({ box, x: (box ? 5.55 : 0.55) + 0.55 + i * 1.0 + (rnd() - 0.5) * 0.3, y: 1.35 + j * 1.15 + (rnd() - 0.5) * 0.25, a0: (rnd() - 0.5) * 360, w: 1.3 + rnd() * 1.6, ph: rnd() * 6.28 });
+  }
+  return out;
+})();
+
 export default {
   id: 'shapes',
   subject: 'physics',
@@ -422,6 +438,59 @@ When the two atoms of a bond differ, the shared pair sits closer to the greedier
               body: r`Water's two O–H dipoles both point up towards the oxygen. Because the molecule is bent they don't cancel: they add to a net dipole pointing from the hydrogens to the oxygen. Water is strongly **polar**.`,
               widget: lab({ center: 'O', ligand: 'H', n: 2, l: 2, fixN: true, fixL: true, dipoles: true }),
             },
+            { /*chemanim:shapes.polar-molecules*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Switch on a field',
+              body: r`Put molecules between two charged plates. A polar molecule has a positive end and a negative end, so the field twists it; a non-polar one has nothing to grab. Left: water. Right: carbon dioxide, whose bond dipoles cancel.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 280,
+                animate: { param: 't', speed: 1, max: 9, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], u = (X(1) - X(0));
+                  const on = FIELD_SM((p.t - 2) / 1.6);
+                  for (const box of [0, 1]) {
+                    const x0 = box ? 5.4 : 0.4, x1 = box ? 9.6 : 4.6;
+                    out.push(s('text', { x: X((x0 + x1) / 2), y: Y(0.12), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(13)}`, text: box ? 'CO₂ (non-polar)' : 'H₂O (polar)' }));
+                    // plates: + on top, − below once the field is on
+                    out.push(s('rect', { x: X(x0), y: Y(5.05), width: X(x1) - X(x0), height: 18, rx: 5, fill: on > 0.5 ? 'var(--coral)' : 'var(--ink-3)', opacity: 0.35 + 0.65 * on }));
+                    out.push(s('rect', { x: X(x0), y: Y(0.55) - 18, width: X(x1) - X(x0), height: 18, rx: 5, fill: on > 0.5 ? 'var(--blue)' : 'var(--ink-3)', opacity: 0.35 + 0.65 * on }));
+                    if (on > 0.5) for (let k = 0; k < 4; k++) {
+                      const xx = x0 + 0.5 + k * ((x1 - x0 - 1) / 3);
+                      out.push(s('text', { x: X(xx), y: Y(5.05) + 14, 'text-anchor': 'middle', class: 'lbl', style: `fill:#fff;${FS(15)}`, text: '+' }));
+                      out.push(s('text', { x: X(xx), y: Y(0.55) - 4, 'text-anchor': 'middle', class: 'lbl', style: `fill:#fff;${FS(15)}`, text: '−' }));
+                    }
+                  }
+                  for (const m of FIELD_MOLS) {
+                    const jig = 22 * Math.sin(m.w * p.t + m.ph);
+                    // water's dipole (from the H side to O) swings towards the + plate; CO2 keeps tumbling at random
+                    const ang = m.box ? m.a0 + 25 * p.t * (m.w - 2) + jig : 90 + (m.a0 + jig) * (1 - 0.85 * on);
+                    const a = (ang * Math.PI) / 180, cx = X(m.x), cy = Y(m.y);
+                    if (m.box) {
+                      // O=C=O along the direction a
+                      const dx = Math.cos(a) * 0.25 * u, dy = -Math.sin(a) * 0.25 * u;
+                      out.push(s('line', { x1: cx - dx, y1: cy - dy, x2: cx + dx, y2: cy + dy, stroke: 'var(--ink)', 'stroke-opacity': 0.6, 'stroke-width': 3 }));
+                      out.push(s('circle', { cx: cx - dx, cy: cy - dy, r: 6.5, fill: 'var(--coral)' }));
+                      out.push(s('circle', { cx: cx + dx, cy: cy + dy, r: 6.5, fill: 'var(--coral)' }));
+                      out.push(s('circle', { cx, cy, r: 6, fill: 'var(--ink-2)' }));
+                    } else {
+                      // O at the head of the dipole, the two H's behind it, 104.5° apart
+                      const ox = cx + Math.cos(a) * 0.1 * u, oy = cy - Math.sin(a) * 0.1 * u;
+                      for (const sd of [-1, 1]) {
+                        const b = a + Math.PI + sd * 0.912;
+                        const hx = ox + Math.cos(b) * 0.3 * u, hy = oy - Math.sin(b) * 0.3 * u;
+                        out.push(s('line', { x1: ox, y1: oy, x2: hx, y2: hy, stroke: 'var(--ink)', 'stroke-opacity': 0.6, 'stroke-width': 3 }));
+                        out.push(s('circle', { cx: hx, cy: hy, r: 5, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1.5 }));
+                      }
+                      out.push(s('circle', { cx: ox, cy: oy, r: 8, fill: 'var(--coral)' }));
+                    }
+                  }
+                  return out;
+                },
+                readout: (p) => (p.t < 2 ? 'Field off: every molecule points a different way.' : p.t < 3.6 ? 'Field on: the plates charge up…' : 'Water lines up, O towards +; CO₂ just keeps tumbling.'),
+              },
+              after: r`Each water molecule turns its oxygen (the negative end) towards the positive plate, while heat keeps jostling it. $\mathrm{CO_2}$ has two polar bonds but no net dipole, so the field has nothing to turn. A microwave oven uses exactly this: its field flips direction about 2.45 billion times a second, the water molecules in food keep trying to follow, and their jostling heats the food.`,
+            },
             {
               type: 'interactive',
               title: 'Polar bonds, non-polar molecule',
@@ -669,6 +738,50 @@ A **π (pi) bond** forms when two parallel p orbitals overlap **side by side**, 
 Electrons fill the lowest orbitals first, two per orbital. The **bond order** is
 $$\text{bond order} = \frac{\text{bonding electrons} - \text{antibonding electrons}}{2}$$
 For $\mathrm{H_2}$: two electrons in σ1s and none in σ*1s, bond order 1.`,
+            },
+            { /*chemanim:shapes.mo*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Waves in step, waves out of step',
+              body: r`An electron in an atom behaves like a wave, peaked at its nucleus. Bring two hydrogen atoms together and their 1s waves overlap. They can combine in two ways: **added** or **subtracted**. The shaded area shows where the electrons are likely to be (the wave squared).`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.6, grid: false, axes: false, height: 340,
+                animate: { param: 't', speed: 0.8, max: 5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [];
+                  const d = moSep(p.t), xa = -d / 2, xb = d / 2, XX = (x) => 5 + x;
+                  const wA = (x) => Math.exp(-Math.abs(x - xa)), wB = (x) => Math.exp(-Math.abs(x - xb));
+                  const panel = (y0, sign, col, name) => {
+                    const f = (x) => wA(x) + sign * wB(x);
+                    let dens = `M${X(XX(-4.6)).toFixed(1)} ${Y(y0).toFixed(1)}`, line = '', fa = '', fb = '';
+                    for (let x = -4.6; x <= 4.61; x += 0.04) {
+                      const px = X(XX(x)).toFixed(1);
+                      dens += `L${px} ${Y(y0 + 0.62 * f(x) ** 2).toFixed(1)}`;
+                      line += `${line ? 'L' : 'M'}${px} ${Y(y0 + 1.25 * f(x)).toFixed(1)}`;
+                      fa += `${fa ? 'L' : 'M'}${px} ${Y(y0 + 1.25 * wA(x)).toFixed(1)}`;
+                      fb += `${fb ? 'L' : 'M'}${px} ${Y(y0 + 1.25 * sign * wB(x)).toFixed(1)}`;
+                    }
+                    dens += `L${X(XX(4.6)).toFixed(1)} ${Y(y0).toFixed(1)}Z`;
+                    out.push(s('path', { d: dens, fill: col, stroke: 'none', opacity: 0.22 }));
+                    out.push(s('line', { x1: X(0.4), x2: X(9.6), y1: Y(y0), y2: Y(y0), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                    out.push(s('path', { d: fa, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                    out.push(s('path', { d: fb, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                    out.push(s('path', { d: line, fill: 'none', stroke: col, 'stroke-width': 3 }));
+                    for (const xn of [xa, xb]) out.push(s('circle', { cx: X(XX(xn)), cy: Y(y0), r: 5, fill: 'var(--ink)' }));
+                    out.push(s('text', { x: X(0.4), y: Y(y0 + 1.55), class: 'lbl', style: `fill:${col};${FS(13)}`, text: name }));
+                  };
+                  panel(4.1, 1, 'var(--blue)', 'added: bonding σ');
+                  panel(1.45, -1, 'var(--coral)', 'subtracted: antibonding σ*');
+                  if (p.t > 3.2) {
+                    // the node of the antibonding orbital
+                    out.push(s('line', { x1: X(5), x2: X(5), y1: Y(0.3), y2: Y(2.6), stroke: 'var(--coral)', 'stroke-width': 1.5, 'stroke-dasharray': '3 4' }));
+                    out.push(s('text', { x: X(5.15), y: Y(0.2), class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'node' }));
+                  }
+                  return out;
+                },
+                readout: (p) => (p.t < 1.2 ? 'Far apart: the two waves barely touch.' : p.t < 3.2 ? 'Overlapping: the waves start to add (top) or cancel (bottom).' : 'Bonded: density piles up between the nuclei, or vanishes there.'),
+              },
+              after: r`In the {blue:bonding} orbital the two waves reinforce each other between the nuclei, so the electrons spend time where **both** nuclei pull on them: that glue lowers the energy. In the {coral:antibonding} orbital the waves cancel exactly halfway, leaving a **node** with no electron density at all; its electrons sit on the outside and push the atoms apart. One electron in σ* roughly undoes one in σ, which is why counting them gives the bond order.`,
             },
             {
               type: 'numeric',

@@ -115,6 +115,17 @@ function mystery(ion) {
   };
 }
 
+// ---------- A ⇌ B with K = 2: add A, later remove B, and watch the mixture recover ----------
+// each disturbance resets the start of an exponential approach (rate kf + kb) to the new equilibrium
+const LC_EVENTS = [[0, 1, 2], [2.5, 2.5, 2], [10, 1.5, 1]]; // [time, A just after, B just after]
+const lcConc = (t) => {
+  let ev = LC_EVENTS[0];
+  for (const e of LC_EVENTS) if (t >= e[0]) ev = e;
+  const [t0, a0, b0] = ev, tot = a0 + b0, aeq = tot / 3, f = Math.exp(-0.75 * (t - t0));
+  const a = aeq + (a0 - aeq) * f;
+  return [a, tot - a];
+};
+
 export default {
   id: 'equilibrium',
   subject: 'physics',
@@ -417,6 +428,37 @@ Cobalt chloride shows it in colour. In water, cobalt is pink $\mathrm{Co(H_2O)_6
 $$\mathrm{Co(H_2O)_6^{2+} + 4Cl^- \rightleftharpoons CoCl_4^{2-} + 6H_2O} \qquad \Delta H > 0$$
 Try changing the temperature and the chloride concentration.`,
               widget: cobalt({}),
+            },
+            { /*chemanim:equilibrium.lechatelier*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Disturb it twice',
+              body: r`A simple equilibrium $\mathrm{A \rightleftharpoons B}$ with $K = [\mathrm B]/[\mathrm A] = 2$. First a dose of extra A is poured in; later some B is taken out. Follow the two concentrations, and the ratio $Q = [\mathrm B]/[\mathrm A]$.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 17, ymin: 0, ymax: 3.6, grid: false, height: 290,
+                axes: { xticks: 0, yticks: 1, ylabel: 'concentration', xlabel: 'time' },
+                animate: { param: 't', speed: 1.4, max: 17, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const out = [], tEnd = Math.min(p.t, 17);
+                  for (const [idx, col, name] of [[0, 'var(--blue)', 'A'], [1, 'var(--coral)', 'B']]) {
+                    let d = '';
+                    for (let t = 0; t <= tEnd + 1e-9; t += 0.05) d += `${d ? 'L' : 'M'}${plot.X(t).toFixed(1)} ${plot.Y(lcConc(t)[idx]).toFixed(1)}`;
+                    out.push(s('path', { d, fill: 'none', stroke: col, 'stroke-width': 3 }));
+                    out.push(s('text', { x: plot.X(0.8), y: plot.Y(idx ? 2.25 : 0.65), class: 'lbl halo-text', style: `fill:${col};${FS(14)}`, text: `[${name}]` }));
+                  }
+                  for (const [t0, txt] of [[2.5, 'add A'], [10, 'remove B']]) {
+                    if (p.t < t0) continue;
+                    out.push(s('line', { x1: plot.X(t0), x2: plot.X(t0), y1: plot.Y(0), y2: plot.Y(3.4), stroke: 'var(--ink-3)', 'stroke-width': 1.2, 'stroke-dasharray': '3 4' }));
+                    out.push(s('text', { x: plot.X(t0) + 5, y: plot.Y(3.35), class: 'lbl halo-text', style: `fill:var(--ink-2);${FS(12)}`, text: txt }));
+                  }
+                  return out;
+                },
+                readout: (p) => {
+                  const [a, b] = lcConc(Math.min(p.t, 17)), q = b / a;
+                  return `Q = [B]/[A] = ${fix(q, 2)} · K = 2.00 · ${Math.abs(q - 2) < 0.02 ? 'at equilibrium' : q < 2 ? 'Q < K: shifting towards B' : 'Q > K: shifting towards A'}`;
+                },
+              },
+              after: r`Adding A drops $Q$ below $K$, so some A turns into B until the ratio is back to 2: the extra A is **partly** used up, not completely. Removing B also drops $Q$, and again the mixture shifts towards B to replace part of what was taken. In both cases the system ends at a **new** mixture with the **same** $K$. That is Le Chatelier's principle, seen as a ratio finding its way home.`,
             },
             {
               type: 'interactive',

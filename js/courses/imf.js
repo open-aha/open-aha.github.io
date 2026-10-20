@@ -65,6 +65,80 @@ const ALPHA = 2.4;
 const yOf = (x) => (ALPHA * x) / (1 + (ALPHA - 1) * x);
 const stages = (x0, n) => { const xs = [x0]; for (let i = 0; i < n; i++) xs.push(yOf(xs[xs.length - 1])); return xs; };
 
+// ---------- London forces: two electron clouds that flicker in step ----------
+// how far each cloud has slid sideways (left atom, then the right one, which follows it a moment later)
+const lonL = (t) => 0.55 * Math.sin(2.1 * t) + 0.35 * Math.sin(3.7 * t + 1) + 0.22 * Math.sin(5.9 * t + 2);
+const lonR = (t) => 0.85 * lonL(t - 0.15);
+
+// ---------- a closed flask: molecules escape at a steady rate and return at a rate that grows ----------
+// precomputed once (seeded), then played back frame by frame
+let VAP = null;
+const vapSim = () => {
+  if (VAP) return VAP;
+  let seed = 5;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const DT = 0.02, STEPS = 1100, x0 = 0.6, x1 = 5.4, yS = 1.3, yT = 5.1, RATE = 4;
+  let gas = [], frames = [], escT = [], retT = [], next = 0.1;
+  for (let k = 0; k <= STEPS; k++) {
+    const t = k * DT;
+    if (t >= next) {
+      next += 1 / RATE;
+      const a = 0.35 + rnd() * 2.44;
+      gas.push({ x: x0 + 0.2 + rnd() * (x1 - x0 - 0.4), y: yS + 0.02, vx: 1.6 * Math.cos(a), vy: 1.6 * Math.sin(a) });
+      escT.push(t);
+    }
+    const keep = [];
+    for (const g of gas) {
+      g.x += g.vx * DT; g.y += g.vy * DT;
+      if (g.x < x0 + 0.08) { g.x = 2 * (x0 + 0.08) - g.x; g.vx = -g.vx; }
+      if (g.x > x1 - 0.08) { g.x = 2 * (x1 - 0.08) - g.x; g.vx = -g.vx; }
+      if (g.y > yT - 0.08) { g.y = 2 * (yT - 0.08) - g.y; g.vy = -g.vy; }
+      if (g.y <= yS) { retT.push(t); continue; } // hit the surface: back into the liquid
+      keep.push(g);
+    }
+    gas = keep;
+    frames.push(gas.map((g) => [g.x, g.y]));
+  }
+  VAP = { DT, STEPS, frames, escT, retT, x0, x1, yS, yT };
+  return VAP;
+};
+const vapFrame = (t) => { const v = vapSim(); return Math.max(0, Math.min(v.STEPS, Math.round(t / v.DT))); };
+const vapRate = (list, t) => list.filter((q) => q <= t && q > t - 5).length / Math.min(5, Math.max(t, 1));
+
+// ---------- salt dissolving: water molecules turn the right way round each ion and carry it off ----------
+const DIS_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const DISSOLVE = (() => {
+  let seed = 31;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const ions = [];
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) ions.push({ x: 2.6 + i * 0.95, y: 0.75 + j * 0.95, na: (i + j) % 2 === 0, leave: null });
+  // the exposed ions (top row and the ends) leave one after another
+  const order = [[0, 2], [5, 2], [2, 2], [3, 2], [0, 1], [5, 1], [1, 2], [4, 2]];
+  order.forEach(([i, j], k) => {
+    const ion = ions.find((q) => Math.abs(q.x - (2.6 + i * 0.95)) < 1e-6 && Math.abs(q.y - (0.75 + j * 0.95)) < 1e-6);
+    ion.leave = 0.8 + k * 1.15;
+    [ion.tx, ion.ty] = [[0.8, 3.95], [2.0, 5.35], [3.2, 3.95], [4.4, 5.35], [5.6, 3.95], [6.8, 5.35], [8.0, 3.95], [9.2, 5.35]][k];
+    ion.spin = rnd() * 6.28;
+  });
+  return { ions };
+})();
+
+// ---------- osmosis: water crosses a membrane both ways, more often into the sugar side, until the height pushes back ----------
+const OSM_H = (t) => 1.7 * (1 - Math.exp(-t / 3.2)); // height difference between the two sides
+const OSMOSIS = (() => {
+  let seed = 41;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const water = [];
+  for (const side of [0, 1]) for (let k = 0; k < 26; k++) water.push({ side, u: rnd(), v: rnd(), ph: rnd() * 6.28, w: 0.8 + rnd() * 1.4 });
+  const sugar = [];
+  for (let k = 0; k < 9; k++) sugar.push({ u: 0.17 + (k % 3) * 0.33 + 0.1 * (rnd() - 0.5), v: 0.17 + Math.floor(k / 3) * 0.33 + 0.1 * (rnd() - 0.5), ph: rnd() * 6.28 });
+  // crossings: into the sugar side at a steady rate; back out at a rate that catches up as the height grows
+  const cross = [];
+  for (let t = 0.2; t < 16; t += 0.42) cross.push({ t: t + 0.2 * rnd(), dir: 1, y: rnd() });
+  for (let t = 0.3; t < 16; t += 0.42) if (rnd() < 0.3 + 0.7 * OSM_H(t) / 1.7) cross.push({ t: t + 0.2 * rnd(), dir: -1, y: rnd() });
+  return { water, sugar, cross };
+})();
+
 export default {
   id: 'imf',
   subject: 'physics',
@@ -161,6 +235,44 @@ There are three main kinds, from weakest to strongest:
 Bigger molecules have bigger, floppier electron clouds and more surface to touch, so the forces grow with size:`,
               widget: bars([['CH₄', -162, 'teal'], ['C₂H₆', -89, 'teal'], ['C₃H₈', -42, 'teal'], ['C₄H₁₀', -0.5, 'teal'], ['C₅H₁₂', 36, 'teal'], ['C₆H₁₄', 69, 'teal'], ['C₇H₁₆', 98, 'teal'], ['C₈H₁₈', 126, 'teal']], { ymin: -180, ymax: 150, yticks: 60, ylabel: 'boiling point (°C)', height: 320, labelSize: 12 }),
               after: r`The straight-chain alkanes from methane to octane. The first four are gases at room temperature (fuel gas, lighter fuel); pentane to octane are liquids (petrol).`,
+            },
+            { /*chemanim:imf.dispersion*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Clouds that flicker together',
+              body: r`Two neighbouring atoms, each a nucleus inside a cloud of electrons. Each cloud wobbles at random, so on average neither atom has a dipole at all. But watch the right one: whenever the left cloud slides towards it, its own electrons are pushed away.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.2, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t, u = X(1) - X(0);
+                  const atoms = [[2.9, lonL(t), 'var(--blue)'], [7.1, lonR(t), 'var(--coral)']];
+                  for (const [x, d, col] of atoms) {
+                    out.push(s('circle', { cx: X(x + d * 0.4), cy: Y(4.3), r: 1.1 * Math.min(u, Y(0) - Y(1)), fill: col, opacity: 0.22 }));
+                    out.push(s('circle', { cx: X(x + d * 0.4), cy: Y(4.3), r: 1.1 * Math.min(u, Y(0) - Y(1)), fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+                    out.push(s('circle', { cx: X(x), cy: Y(4.3), r: 6, fill: 'var(--ink)' }));
+                    if (Math.abs(d) > 0.2) {
+                      const side = d > 0 ? 1 : -1;
+                      out.push(s('text', { x: X(x + side * 1.8), y: Y(4.3) + 6, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink);${FS(16)}`, text: 'δ−' }));
+                      out.push(s('text', { x: X(x - side * 1.8), y: Y(4.3) + 6, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink);${FS(16)}`, text: 'δ+' }));
+                    }
+                  }
+                  // the last few seconds of both wobbles: they move together
+                  const x0 = 0.8, x1 = 9.2, span = 5, yc = 1.45;
+                  out.push(s('line', { x1: X(x0), x2: X(x1), y1: Y(yc), y2: Y(yc), stroke: 'var(--axis)', 'stroke-width': 1.2 }));
+                  for (const [f, col] of [[lonL, 'var(--blue)'], [lonR, 'var(--coral)']]) {
+                    let d = '';
+                    for (let k = 0; k <= 160; k++) {
+                      const tt = t - span + (span * k) / 160;
+                      d += `${k ? 'L' : 'M'}${X(x0 + ((x1 - x0) * k) / 160).toFixed(1)} ${Y(yc + 0.85 * f(tt)).toFixed(1)}`;
+                    }
+                    out.push(s('path', { d, fill: 'none', stroke: col, 'stroke-width': 2.5 }));
+                  }
+                  out.push(s('text', { x: X(x0), y: Y(2.75), class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'how far each cloud has slid →, over the last few seconds' }));
+                  return out;
+                },
+              },
+              after: r`The two traces rise and fall together. Because the second cloud always follows the first, the facing sides are nearly always $\delta-$ next to $\delta+$, so the atoms attract at almost every instant, even though each atom's dipole averages out to zero. That correlation is the London force. A bigger, floppier cloud wobbles further, which is why the force grows with size.`,
             },
             {
               type: 'numeric',
@@ -366,6 +478,38 @@ Change the air pressure and watch where the boiling point lands.`,
                 readout: (p) => `water boils at **${fix(boilAt(p.P), 1)} °C** under ${fix(p.P, 2)} atm`,
               },
             },
+            { /*chemanim:imf.vapour*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A balance in a closed flask',
+              body: r`Water in a sealed flask, with empty space above it. Molecules escape from the surface at a steady rate. Any molecule of vapour that hits the surface again is recaptured, and the more vapour there is, the more often that happens.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.6, grid: false, axes: false, height: 290,
+                animate: { param: 't', speed: 1.5, max: 22, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], v = vapSim(), k = vapFrame(p.t);
+                  // flask, liquid, vapour molecules
+                  out.push(s('rect', { x: X(v.x0), y: Y(v.yS), width: X(v.x1) - X(v.x0), height: Y(0.3) - Y(v.yS), fill: 'var(--blue)', opacity: 0.3 }));
+                  out.push(s('rect', { x: X(v.x0), y: Y(v.yT), width: X(v.x1) - X(v.x0), height: Y(0.3) - Y(v.yT), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5, rx: 6 }));
+                  for (const [x, y] of v.frames[k]) out.push(s('circle', { cx: X(x), cy: Y(y), r: 4.5, fill: 'var(--blue)' }));
+                  // molecules in the vapour against time
+                  const gx0 = 6.3, gx1 = 9.7, gy0 = 1.0, gy1 = 4.6, NMAX = 45;
+                  const GX = (t) => gx0 + ((gx1 - gx0) * t) / 22, GY = (n) => gy0 + ((gy1 - gy0) * n) / NMAX;
+                  out.push(s('path', { d: `M${X(gx0)} ${Y(gy1)}V${Y(gy0)}H${X(gx1)}`, fill: 'none', stroke: 'var(--axis)', 'stroke-width': 1.5 }));
+                  let d = '';
+                  for (let j = 0; j <= k; j += 5) d += `${d ? 'L' : 'M'}${X(GX(j * v.DT)).toFixed(1)} ${Y(GY(v.frames[j].length)).toFixed(1)}`;
+                  out.push(s('path', { d, fill: 'none', stroke: 'var(--blue)', 'stroke-width': 2.5 }));
+                  out.push(s('text', { x: X(gx0), y: Y(gy1) - 8, class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'molecules in the vapour' }));
+                  out.push(s('text', { x: X(gx1), y: Y(gy0) + 18, 'text-anchor': 'end', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'time →' }));
+                  return out;
+                },
+                readout: (p) => {
+                  const v = vapSim();
+                  return `escaping: ${fix(vapRate(v.escT, p.t), 1)} per second · returning: ${fix(vapRate(v.retT, p.t), 1)} per second`;
+                },
+              },
+              after: r`At first nothing comes back, so the vapour builds up. As it fills, more molecules land on the surface each second, until returning matches escaping. From then on the amount of vapour stays roughly constant even though molecules never stop swapping: a **dynamic equilibrium**. The pressure of that vapour is the liquid's **vapour pressure**. Heat the liquid and more molecules escape each second, so the balance settles at a higher pressure.`,
+            },
             {
               type: 'interactive',
               title: 'Everest tea',
@@ -478,6 +622,51 @@ Oil doesn't dissolve in water because water molecules would have to give up thei
                 },
               },
             },
+            { /*chemanim:imf.dissolving*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Water takes a crystal apart',
+              body: r`Salt is a stack of $\mathrm{Na^+}$ and $\mathrm{Cl^-}$ ions held by strong attractions. Water can still dissolve it, because each water molecule is a small dipole: oxygen slightly negative, hydrogens slightly positive. Watch how the water molecules turn as they crowd round each ion.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.3, grid: false, axes: false, height: 310,
+                animate: { param: 't', speed: 0.9, max: 13, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), u = X(1) - X(0), out = [], t = p.t;
+                  // a water molecule: O at (x, y), its two H's on the far side from direction a (a points from the H's to O)
+                  const water = (x, y, a, op = 1) => {
+                    const els = [];
+                    for (const sd of [-1, 1]) {
+                      const b = a + Math.PI + sd * 0.912, hx = x + Math.cos(b) * 0.24, hy = y + Math.sin(b) * 0.24;
+                      els.push(s('line', { x1: X(x), y1: Y(y), x2: X(hx), y2: Y(hy), stroke: 'var(--ink)', 'stroke-opacity': 0.5, 'stroke-width': 2.5, opacity: op }));
+                      els.push(s('circle', { cx: X(hx), cy: Y(hy), r: 0.075 * u, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1.3, opacity: op }));
+                    }
+                    els.push(s('circle', { cx: X(x), cy: Y(y), r: 0.13 * u, fill: 'var(--coral)', opacity: op }));
+                    return els;
+                  };
+                  for (const ion of DISSOLVE.ions) {
+                    let x = ion.x, y = ion.y, shell = 0;
+                    if (ion.leave != null) {
+                      shell = DIS_SM((t - ion.leave + 0.6) / 0.6);
+                      const go = DIS_SM((t - ion.leave) / 2.2);
+                      x = ion.x + (ion.tx - ion.x) * go + 0.08 * go * Math.sin(1.3 * t + ion.spin);
+                      y = ion.y + (ion.ty - ion.y) * go;
+                    }
+                    // hydration shell: oxygen inwards for Na+, a hydrogen inwards for Cl−
+                    if (shell > 0) for (let k = 0; k < 4; k++) {
+                      const g = ion.spin + (k * Math.PI) / 2 + 0.2 * Math.sin(t + k), dist = ion.na ? 0.42 : 0.56;
+                      const wx = x + Math.cos(g) * dist * (2 - shell), wy = y + Math.sin(g) * dist * (2 - shell);
+                      const toIon = Math.atan2(y - wy, x - wx);
+                      out.push(...water(wx, wy, ion.na ? toIon : toIon - 2.23, shell));
+                    }
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: (ion.na ? 0.22 : 0.33) * u, fill: ion.na ? 'var(--violet-soft)' : 'var(--teal-soft)', stroke: ion.na ? 'var(--violet)' : 'var(--teal)', 'stroke-width': 2.2 }));
+                    out.push(s('text', { x: X(x), y: Y(y) + 4, 'text-anchor': 'middle', class: 'lbl', style: FS(ion.na ? 10 : 11), text: ion.na ? '+' : '−' }));
+                  }
+                  return out;
+                },
+                readout: (p) => (p.t < 0.8 ? 'Violet: Na⁺. Green: Cl⁻. Water (red O, white H) closes in.' : 'Oxygen ends face each Na⁺; hydrogen ends face each Cl⁻.'),
+              },
+              after: r`Each ion that leaves trades its neighbours in the crystal for a shell of water molecules, all turned the right way: the negative oxygen ends point at {violet:sodium}, a positive hydrogen points at {teal:chloride}. Those many small attractions together nearly pay for breaking the crystal apart. Oil has no dipoles to offer, which is why salt won't dissolve in it.`,
+            },
             {
               type: 'multi',
               kicker: 'Challenge',
@@ -555,6 +744,48 @@ where $m$ is moles of solute per kilogram of water and $i$ is the number of part
               body: r`Particles also pull water through membranes. If a membrane lets water through but not the dissolved particles, water flows towards the side with more particles, building up an **osmotic pressure**:
 $$\Pi = i\,c\,R\,T$$
 That's why salted cucumbers shrivel into pickles, why drinking seawater dehydrates you, and why hospital drips must match the particle concentration of blood.`,
+            },
+            { /*chemanim:imf.colligative*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Water through a membrane',
+              body: r`Pure water on the left, sugar solution on the right, separated by a membrane with pores big enough for water molecules but too small for sugar. Water molecules cross in both directions, but dissolved sugar makes water less inclined to leave its side (the same effect that lowers its vapour pressure and freezing point), so more crosses in than out.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 300,
+                animate: { param: 't', speed: 1, max: 16, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), u = X(1) - X(0), out = [], t = p.t, h = OSM_H(t);
+                  const lv = [3 - h / 2, 3 + h / 2], xs = [[0.6, 4.85], [5.15, 9.4]];
+                  for (const side of [0, 1]) out.push(s('rect', { x: X(xs[side][0]), y: Y(lv[side]), width: X(xs[side][1]) - X(xs[side][0]), height: Y(0.3) - Y(lv[side]), fill: 'var(--blue)', opacity: 0.16 }));
+                  out.push(s('path', { d: `M${X(0.6)} ${Y(5.7)}V${Y(0.3)}H${X(9.4)}V${Y(5.7)}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                  out.push(s('line', { x1: X(5), x2: X(5), y1: Y(5.7), y2: Y(0.3), stroke: 'var(--ink-2)', 'stroke-width': 3, 'stroke-dasharray': '7 5' }));
+                  const place = (side, a, b, pad) => [xs[side][0] + pad + a * (xs[side][1] - xs[side][0] - 2 * pad), 0.3 + pad + b * (lv[side] - 0.3 - 2 * pad)];
+                  for (const w of OSMOSIS.water) {
+                    const [x, y] = place(w.side, (w.u + 0.04 * Math.sin(w.w * t + w.ph) + 1) % 1, (w.v + 0.04 * Math.cos(w.w * t)) % 1, 0.12);
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 0.07 * u, fill: 'var(--blue)', opacity: 0.8 }));
+                  }
+                  for (const q of OSMOSIS.sugar) {
+                    const [x, y] = place(1, q.u + 0.05 * Math.sin(1.1 * t + q.ph), q.v + 0.05 * Math.cos(0.9 * t + q.ph), 0.25);
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 0.17 * u, fill: 'var(--amber)', stroke: 'var(--warn)', 'stroke-width': 1.5 }));
+                  }
+                  // molecules passing through the membrane right now
+                  for (const c of OSMOSIS.cross) {
+                    const f = (t - c.t) / 0.8;
+                    if (f < 0 || f > 1) continue;
+                    const x = c.dir > 0 ? 4.3 + 1.4 * f : 5.7 - 1.4 * f, y = 0.6 + c.y * (Math.min(lv[0], lv[1]) - 0.9);
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 0.1 * u, fill: 'var(--blue)', stroke: 'var(--card)', 'stroke-width': 1.5 }));
+                  }
+                  out.push(s('text', { x: X(2.7), y: Y(5.6) + 12, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(13)}`, text: 'pure water' }));
+                  out.push(s('text', { x: X(7.3), y: Y(5.6) + 12, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(13)}`, text: 'sugar solution' }));
+                  if (h > 0.4) {
+                    out.push(s('line', { x1: X(9.7), x2: X(9.7), y1: Y(lv[0]), y2: Y(lv[1]), stroke: 'var(--coral)', 'stroke-width': 2.5 }));
+                    out.push(s('line', { x1: X(4.85), x2: X(9.85), y1: Y(lv[0]), y2: Y(lv[0]), stroke: 'var(--coral)', 'stroke-width': 1.2, 'stroke-dasharray': '3 4' }));
+                  }
+                  return out;
+                },
+                readout: (p) => (p.t < 0.6 ? 'Both sides start at the same level.' : p.t < 9 ? 'More water crosses into the sugar side than comes back: its level rises.' : 'The extra height pushes back; now water crosses equally both ways.'),
+              },
+              after: r`Water keeps flowing into the sugar side until the weight of the extra column (the {coral:coral bar}) pushes water back through the membrane as fast as it arrives. The pressure needed to stop the flow is the **osmotic pressure**, $\Pi = icRT$. Notice that it depends only on how many dissolved particles there are, not what they are: that's why it belongs with the freezing-point drop.`,
             },
             {
               type: 'numeric',

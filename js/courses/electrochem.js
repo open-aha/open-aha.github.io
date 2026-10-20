@@ -132,6 +132,23 @@ function displacement({ goal, solution, m0 = 1, s0 = 4 } = {}) {
   };
 }
 
+// ---------- a Hofmann voltameter: every 4 electrons make 2 H2 at the − electrode and 1 O2 at the + one ----------
+const hofN = (t) => 4 * Math.floor(Math.max(0, t - 0.5) * 3); // electrons passed (counted in molecules' worth)
+
+// ---------- Evans's water drop: iron dissolves under the oxygen-poor middle, oxygen is used at the airy rim ----------
+const DROP_SM = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const dropTop = (x) => 1.3 + 2.4 * Math.sqrt(Math.max(0, 1 - ((x - 5) / 3.6) ** 2)); // the drop's surface
+
+// ---------- a proton-exchange-membrane fuel cell: protons through the membrane, electrons round the circuit ----------
+// a point a fraction f of the way along a polyline
+const fcAlong = (pts, f) => {
+  const segs = pts.slice(1).map((q, i) => Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1])), tot = segs.reduce((a, b) => a + b, 0);
+  let d = f * tot, i = 0;
+  while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; }
+  const g = d / segs[i];
+  return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * g, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * g];
+};
+
 export default {
   id: 'electrochem',
   subject: 'physics',
@@ -542,6 +559,49 @@ with $I$ in amps, $t$ in seconds and $n$ the electrons per ion.`,
               ],
               explain: r`At the negative electrode $\mathrm{H^+}$ (or water) is reduced to $\mathrm{H_2}$; at the positive one water is oxidised to $\mathrm{O_2}$. Twice as much hydrogen as oxygen bubbles off, matching $\mathrm{2H_2O \to 2H_2 + O_2}$.`,
             },
+            { /*chemanim:electrochem.electrolysis*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Count the bubbles',
+              body: r`Hofmann's apparatus: two closed tubes of slightly acidified water, joined at the bottom, with an electrode in each. Switch on the current and gas collects at the top of each tube, pushing the water down.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6.2, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 10.5, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t, n = hofN(t);
+                  const tubes = [[2.6, 'H₂', 'var(--blue)', n / 2, '−', '4H₂O + 4e⁻ → 2H₂ + 4OH⁻'], [7.4, 'O₂', 'var(--coral)', n / 4, '+', '2H₂O → O₂ + 4H⁺ + 4e⁻']];
+                  const top = 5.6, bot = 1.6, perMol = 0.045;
+                  // the shared reservoir at the bottom
+                  out.push(s('rect', { x: X(2.1), y: Y(1.6), width: X(7.9) - X(2.1), height: Y(0.9) - Y(1.6), fill: 'var(--blue)', opacity: 0.3 }));
+                  out.push(s('path', { d: `M${X(2.1)} ${Y(1.6)}V${Y(0.9)}H${X(7.9)}V${Y(1.6)}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                  for (const [x, gas, col, mol, sign, eq] of tubes) {
+                    const gasH = mol * perMol, water = top - gasH;
+                    out.push(s('rect', { x: X(x - 0.5), y: Y(water), width: X(x + 0.5) - X(x - 0.5), height: Y(bot) - Y(water), fill: 'var(--blue)', opacity: 0.3 }));
+                    if (gasH > 0) out.push(s('rect', { x: X(x - 0.5), y: Y(top), width: X(x + 0.5) - X(x - 0.5), height: Y(water) - Y(top), fill: 'var(--card)' }));
+                    out.push(s('path', { d: `M${X(x - 0.5)} ${Y(1.6)}V${Y(top)}H${X(x + 0.5)}V${Y(1.6)}`, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                    // electrode and its rising bubbles (the − side bubbles twice as fast)
+                    out.push(s('rect', { x: X(x - 0.12), y: Y(2.3), width: X(0.24) - X(0), height: Y(1.6) - Y(2.3), fill: 'var(--ink-2)' }));
+                    out.push(s('text', { x: X(x), y: Y(0.4), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(16)}`, text: sign }));
+                    if (t > 0.5) {
+                      const nb = gas === 'H₂' ? 6 : 3;
+                      for (let k = 0; k < nb; k++) {
+                        const f = (t * 0.8 + k / nb) % 1, y = 2.4 + f * (water - 2.4);
+                        if (y < water - 0.05) out.push(s('circle', { cx: X(x + 0.22 * Math.sin(k * 2.3 + 6 * f)), cy: Y(y), r: 3.5, fill: 'none', stroke: col, 'stroke-width': 1.5 }));
+                      }
+                    }
+                    out.push(s('text', { x: X(x), y: Y(top) - 8, 'text-anchor': 'middle', class: 'lbl', style: `fill:${col};${FS(15)}`, text: gas }));
+                    out.push(s('text', { x: X(x + (x < 5 ? -0.65 : 0.65)), y: Y(3.6), 'text-anchor': x < 5 ? 'end' : 'start', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: eq.split(' → ')[0] + ' →' }));
+                    out.push(s('text', { x: X(x + (x < 5 ? -0.65 : 0.65)), y: Y(3.6) + 16, 'text-anchor': x < 5 ? 'end' : 'start', class: 'lbl', style: `fill:var(--ink-2);${FS(11)}`, text: eq.split(' → ')[1] }));
+                  }
+                  return out;
+                },
+                readout: (p) => {
+                  const n = hofN(p.t);
+                  return `electrons passed: ${n} · H₂ molecules: ${n / 2} · O₂ molecules: ${n / 4}`;
+                },
+              },
+              after: r`Each $\mathrm{O_2}$ molecule needs four electrons taken away, while each $\mathrm{H_2}$ needs only two given. So the same current makes **twice as many** hydrogen molecules as oxygen ones, and since equal numbers of gas molecules take up equal volumes, the hydrogen tube fills twice as fast. The 2 : 1 volumes were one of the first clues that water is $\mathrm{H_2O}$.`,
+            },
             {
               type: 'numeric',
               kicker: 'Challenge',
@@ -640,6 +700,58 @@ with $I$ in amps, $t$ in seconds and $n$ the electrons per ion.`,
               title: 'Rust is a tiny battery',
               body: r`Rusting is electrochemistry. On a wet steel surface, iron at one spot is oxidised ($\mathrm{Fe \to Fe^{2+} + 2e^-}$), the electrons travel through the metal, and at another spot oxygen is reduced ($\mathrm{O_2 + 2H_2O + 4e^- \to 4OH^-}$). The ions meet and, with more oxygen, form rust. Salt water conducts ions well, so it speeds rusting up: cars rot faster where roads are salted.`,
             },
+            { /*chemanim:electrochem.corrosion*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'A drop on steel',
+              body: r`A drop of salty water on clean iron, seen from the side. Oxygen from the air dissolves into the drop, but it reaches the thin edge far more easily than the deep middle. Watch where the iron actually dissolves.`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 5.5, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 16, loop: false },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  const grow = DROP_SM(t / 14), pit = 0.35 * grow;
+                  // the drop
+                  let d = `M${X(1.4)} ${Y(1.3)}`;
+                  for (let x = 1.4; x <= 8.61; x += 0.1) d += `L${X(x).toFixed(1)} ${Y(dropTop(x)).toFixed(1)}`;
+                  out.push(s('path', { d: d + 'Z', fill: 'var(--blue)', opacity: 0.16, stroke: 'var(--blue)', 'stroke-opacity': 0.5, 'stroke-width': 1.5 }));
+                  // iron, with a pit growing under the middle
+                  let fe = `M${X(0.3)} ${Y(1.3)}`;
+                  for (let x = 0.3; x <= 9.71; x += 0.1) fe += `L${X(x).toFixed(1)} ${Y(1.3 - pit * Math.exp(-(((x - 5) / 0.8) ** 2))).toFixed(1)}`;
+                  fe += `L${X(9.7)} ${Y(0.2)}H${X(0.3)}Z`;
+                  out.push(s('path', { d: fe, fill: 'var(--ink-3)', opacity: 0.55 }));
+                  out.push(s('text', { x: X(0.5), y: Y(0.5), class: 'lbl halo-text', style: `fill:var(--ink);${FS(13)}`, text: 'iron' }));
+                  // oxygen entering near the rims
+                  for (let k = 0; k < 6; k++) {
+                    const side = k % 2 ? 1 : -1, f = (t * 0.45 + k / 6) % 1, x = 5 + side * (2.9 + 0.35 * Math.sin(k * 1.7)), y = 4.4 - f * 3.0;
+                    if (y > 1.45) {
+                      out.push(s('circle', { cx: X(x - 0.07), cy: Y(y), r: 4, fill: 'var(--coral)' }));
+                      out.push(s('circle', { cx: X(x + 0.07), cy: Y(y), r: 4, fill: 'var(--coral)' }));
+                    }
+                  }
+                  // electrons flow through the iron from the middle to the rims
+                  for (let k = 0; k < 8; k++) {
+                    const side = k % 2 ? 1 : -1, f = (t * 0.7 + k / 8) % 1;
+                    out.push(s('circle', { cx: X(5 + side * (0.4 + 2.6 * f)), cy: Y(0.95), r: 4, fill: 'var(--blue)' }));
+                  }
+                  // Fe2+ drifting out from the pit, OH− drifting in from the rims; rust where they meet
+                  for (let k = 0; k < 6; k++) {
+                    const side = k % 2 ? 1 : -1, f = (t * 0.35 + k / 6) % 1;
+                    out.push(s('circle', { cx: X(5 + side * (0.3 + 1.5 * f)), cy: Y(1.75 + 0.35 * Math.sin(k)), r: 5, fill: 'var(--violet)' }));
+                    out.push(s('circle', { cx: X(5 + side * (3.1 - 1.2 * f)), cy: Y(1.6 + 0.25 * Math.cos(k)), r: 5, fill: 'var(--teal)' }));
+                  }
+                  for (const side of [-1, 1]) for (let k = 0; k < 5; k++) {
+                    const r = 0.08 + 0.05 * grow * (k % 3);
+                    if (grow * 5 > k) out.push(s('circle', { cx: X(5 + side * (1.6 + 0.2 * k)), cy: Y(1.4 + 0.07 * (k % 2)), r: r * (X(1) - X(0)), style: 'fill:#b5651d', opacity: 0.85 }));
+                  }
+                  out.push(s('text', { x: X(5), y: Y(5.2), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'middle (little O₂): iron dissolves, the anode' }));
+                  out.push(s('text', { x: X(5), y: Y(5.2) + 17, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'edges (plenty of O₂): O₂ is used, the cathode' }));
+                  return out;
+                },
+                readout: (p) => (p.t < 4 ? 'Blue: electrons, flowing through the iron from the middle to the edges. Red pairs: O₂.' : 'Violet: Fe²⁺ leaving the pit. Green: OH⁻ from the edges. Rust forms where they meet.'),
+              },
+              after: r`Ulick Evans showed this in the 1920s with an indicator drop: the middle turns blue (iron dissolving), the edge turns pink (hydroxide forming), and a brown ring of rust appears in between. The surprise is that iron dissolves where oxygen is **scarce**, because the oxygen-rich part becomes the cathode. That's why steel rusts worst in crevices, under paint blisters and beneath dirt, where air can't reach.`,
+            },
             {
               type: 'interactive',
               title: 'Protect the hull',
@@ -702,6 +814,57 @@ with $I$ in amps, $t$ in seconds and $n$ the electrons per ion.`,
               type: 'explain',
               title: 'Combustion, split in two',
               body: r`A **fuel cell** is a galvanic cell whose reactants are supplied continuously. In a hydrogen fuel cell, hydrogen is oxidised at one electrode ($\mathrm{H_2 \to 2H^+ + 2e^-}$) and oxygen reduced at the other ($\mathrm{O_2 + 4H^+ + 4e^- \to 2H_2O}$). The only exhaust is water.`,
+            },
+            { /*chemanim:electrochem.fuelcells*/
+              type: 'explain',
+              kicker: 'Explore',
+              title: 'Inside a fuel cell',
+              body: r`In a car's fuel cell, hydrogen and oxygen never meet directly. They are kept apart by a thin plastic **membrane** that lets protons through but not electrons, so the electrons have to take the long way round, through the motor (here, a light bulb).`,
+              widget: {
+                kind: 'graph', xmin: 0, xmax: 10, ymin: 0, ymax: 6, grid: false, axes: false, height: 320,
+                animate: { param: 't', speed: 1, max: 600, autoplay: true },
+                extra: ({ plot, p, s }) => {
+                  const X = (v) => plot.X(v), Y = (v) => plot.Y(v), out = [], t = p.t;
+                  // chambers, electrodes and the membrane
+                  out.push(s('rect', { x: X(0.4), y: Y(4.0), width: X(9.6) - X(0.4), height: Y(0.5) - Y(4.0), rx: 8, fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2.5 }));
+                  out.push(s('rect', { x: X(4.6), y: Y(4.0), width: X(5.4) - X(4.6), height: Y(0.5) - Y(4.0), fill: 'var(--amber)', opacity: 0.3 }));
+                  for (const x of [3.7, 6.3]) out.push(s('rect', { x: X(x - 0.15), y: Y(4.0), width: X(0.3) - X(0), height: Y(0.5) - Y(4.0), fill: 'var(--ink-2)', opacity: 0.8 }));
+                  out.push(s('text', { x: X(5), y: Y(0.12), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--ink-2);${FS(12)}`, text: 'membrane' }));
+                  out.push(s('text', { x: X(2.3), y: Y(0.12), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--blue);${FS(12)}`, text: 'H₂ in' }));
+                  out.push(s('text', { x: X(7.7), y: Y(0.12), 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'O₂ in, water out' }));
+                  // the outer circuit with a bulb
+                  const wire = [[3.7, 4.0], [3.7, 5.3], [6.3, 5.3], [6.3, 4.0]];
+                  out.push(s('path', { d: `M${X(3.7)} ${Y(4.0)}V${Y(5.3)}H${X(6.3)}V${Y(4.0)}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2.5 }));
+                  out.push(s('circle', { cx: X(5), cy: Y(5.3), r: 15, fill: 'var(--amber)', opacity: 0.55 + 0.25 * Math.sin(t * 9) ** 2, stroke: 'var(--warn)', 'stroke-width': 2 }));
+                  for (let k = 0; k < 6; k++) {
+                    const [x, y] = fcAlong(wire, (t * 0.35 + k / 6) % 1);
+                    out.push(s('circle', { cx: X(x), cy: Y(y), r: 4.5, fill: 'var(--blue)' }));
+                  }
+                  // hydrogen molecules drift to the anode and split
+                  for (let k = 0; k < 5; k++) {
+                    const f = (t * 0.3 + k / 5) % 1, x = 0.8 + 2.6 * f, y = 1.0 + ((k * 0.61) % 1) * 2.6;
+                    out.push(s('circle', { cx: X(x - 0.09), cy: Y(y), r: 5.5, fill: 'var(--blue-soft)', stroke: 'var(--blue)', 'stroke-width': 1.5 }));
+                    out.push(s('circle', { cx: X(x + 0.09), cy: Y(y), r: 5.5, fill: 'var(--blue-soft)', stroke: 'var(--blue)', 'stroke-width': 1.5 }));
+                  }
+                  // protons cross the membrane
+                  for (let k = 0; k < 7; k++) {
+                    const f = (t * 0.45 + k / 7) % 1, x = 3.95 + 2.1 * f, y = 0.9 + ((k * 0.43) % 1) * 2.8;
+                    out.push(s('text', { x: X(x), y: Y(y) + 4, 'text-anchor': 'middle', class: 'lbl', style: `fill:var(--coral);${FS(12)}`, text: 'H⁺' }));
+                  }
+                  // oxygen in on the right, water leaving lower down
+                  for (let k = 0; k < 4; k++) {
+                    const f = (t * 0.25 + k / 4) % 1, x = 9.3 - 2.7 * f, y = 2.6 + ((k * 0.57) % 1) * 1.1;
+                    out.push(s('circle', { cx: X(x - 0.09), cy: Y(y), r: 5.5, fill: 'var(--coral)' }));
+                    out.push(s('circle', { cx: X(x + 0.09), cy: Y(y), r: 5.5, fill: 'var(--coral)' }));
+                    const g = (t * 0.25 + k / 4 + 0.5) % 1, wx = 6.65 + 2.7 * g, wy = 0.9 + ((k * 0.37) % 1) * 1.1;
+                    out.push(s('circle', { cx: X(wx), cy: Y(wy), r: 6, fill: 'var(--coral)' }));
+                    out.push(s('circle', { cx: X(wx - 0.13), cy: Y(wy - 0.12), r: 3.5, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1 }));
+                    out.push(s('circle', { cx: X(wx + 0.13), cy: Y(wy - 0.12), r: 3.5, fill: 'var(--card)', stroke: 'var(--ink-3)', 'stroke-width': 1 }));
+                  }
+                  return out;
+                },
+              },
+              after: r`At the left electrode each $\mathrm{H_2}$ splits into two protons and two electrons. The {coral:protons} pass through the membrane; the {blue:electrons} can't, so they flow round the outer circuit and light the bulb on the way. At the right electrode they all meet oxygen and make water. It's the same reaction as burning hydrogen, but split into two halves with a wire in between, so the energy comes out as electricity instead of a flame.`,
             },
             {
               type: 'numeric',
