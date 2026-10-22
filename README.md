@@ -1,10 +1,38 @@
-# OpenAha
+<p align="center">
+  <a href="https://openaha.org"><img src="img/social.png" alt="OpenAha: learn math and science by doing. Free, interactive lessons. No account, no paywall, open source." width="820"></a>
+</p>
 
-Free, interactive lessons in math and science. Every lesson is a short sequence of
-hands-on puzzles: predict, drag, simulate and solve, with instant feedback and an explanation
-behind every answer.
+<h3 align="center">
+  👉 <a href="https://openaha.org">Start learning at openaha.org</a>
+</h3>
 
-**Start learning at [openaha.org](https://openaha.org)**
+<p align="center">
+  <a href="https://openaha.org"><img src="https://img.shields.io/badge/website-openaha.org-f26b3a?style=for-the-badge" alt="Website: openaha.org"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-MIT-3b6fe0?style=for-the-badge" alt="Code license: MIT"></a>
+  <a href="LICENSE-CONTENT.md"><img src="https://img.shields.io/badge/lessons-CC_BY--SA_4.0-3b6fe0?style=for-the-badge" alt="Lesson license: CC BY-SA 4.0"></a>
+</p>
+
+<p align="center">
+  Free, interactive lessons in math and science. Every lesson is a short sequence of
+  hands-on puzzles: predict, drag, simulate and solve, with instant feedback and an explanation
+  behind every answer.
+</p>
+
+<p align="center">
+  <b>140+ courses</b> · <b>1,000+ lessons</b> · no account · no ads · free forever
+</p>
+
+<p align="center">
+  Try one: <a href="https://openaha.org/courses/graphs/planar/?step=1">untangle a graph</a> ·
+  <a href="https://openaha.org/courses/graphs/konigsberg/?step=3">draw the house in one stroke</a> ·
+  <a href="https://openaha.org/courses/coding/sequence/?step=6">program a robot to grab the gem</a>
+</p>
+
+<p align="center">
+  Found something confusing or wrong? Tap the flag in any lesson, or see <a href="CONTRIBUTING.md">how to contribute</a>.
+</p>
+
+---
 
 ## Layout
 
