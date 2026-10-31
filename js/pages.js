@@ -226,8 +226,14 @@ export function aboutPage() {
         h('li', h('strong', 'Teachers:'), ' tell us what would make a lesson work in your classroom, or which topic is missing.')),
       h('div.about-help-cta',
         h('button.btn', { type: 'button', onClick: () => openSuggest() }, 'Suggest an improvement'),
-        h('a.btn.btn-secondary', { href: `${REPO}/blob/main/CONTRIBUTING.md`, target: '_blank', rel: 'noopener' }, 'Contribute on GitHub')),
-      h('p.about-help-mail', { html: `Want to use OpenAha in your school, help translate it, or partner with us? Or have something you’d rather not post publicly? Write to <a href="mailto:${EMAIL}">${EMAIL}</a>.` })),
+        h('a.btn.btn-secondary', { href: `${REPO}/blob/main/CONTRIBUTING.md`, target: '_blank', rel: 'noopener' }, 'Contribute on GitHub'))),
+    // review status: update the share and the date as more lessons are checked
+    h('section.about-help',
+      h('h2', 'How these lessons were made'),
+      h('p.about-help-lead', 'We planned every course, then wrote the lessons with the help of AI tools. As of October 2026, about one third have been carefully reviewed by a person. The rest haven’t been yet and may contain mistakes.')),
+    h('section.about-help',
+      h('h2', 'Contact'),
+      h('p.about-help-lead', { html: `Want to use OpenAha in your school, help translate it, or partner with us? Or have something you’d rather not post publicly? Write to <a href="mailto:${EMAIL}">${EMAIL}</a>.` })),
     h('div.about-cta',
       h('a.btn', { href: paths.courses() }, 'Browse the courses'),
       h('a.btn.btn-secondary', { href: paths.home() }, 'Back to home')));

@@ -1033,15 +1033,7 @@ button.tcard:active {
   flex-wrap: wrap;
   gap: 12px;
 }
-.about-help-mail {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 2px solid var(--line);
-  font-size: 15px;
-  color: var(--ink-2);
-  line-height: 1.6;
-}
-.about-help-mail a {
+.about-help-lead a {
   color: var(--ink);
   font-weight: 600;
 }
