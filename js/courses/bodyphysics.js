@@ -23,7 +23,9 @@ export default {
   level: 'Intermediate',
   cover: 'bodyphysics',
   tagline: 'Metabolism, blood flow, nerves, scaling, muscles, walking and the eye.',
-  description: r`Your body obeys the same physics as engines, pumps and electrical circuits. Calculate how much you sweat, how hard your heart works, how fast your nerves carry signals and how sensitive your eyes and ears are, then see how the rules change from mice to elephants. Finally, treat your arms as levers, your legs as pendulums and your eyes as cameras.`,
+  description: r`Your body obeys the same physics as engines, pumps and electrical circuits. Calculate how much you sweat, how hard your heart works, how fast your nerves carry signals and how sensitive your eyes and ears are, then see how the rules change from mice to elephants. Finally, treat your arms as levers, your legs as pendulums and your eyes as cameras.
+
+This course is for learning only, not medical advice.`,
   prereq: 'Energy',
   chapters: [
     {

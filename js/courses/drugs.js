@@ -106,7 +106,9 @@ export default {
   level: 'Advanced',
   cover: 'drugs',
   tagline: 'How medicines are made: binding pockets, affinity, dose curves, getting into the body and dosing schedules.',
-  description: r`A medicine is a molecule shaped to fit a particular protein, strongly enough to change what it does, and then it has to survive the journey through the body. Decorate a drug to fit a binding pocket, turn binding energies into dissociation constants, read dose–response curves, use Lipinski's rules to judge whether a pill can be absorbed, design a dosing schedule that keeps a drug in its therapeutic window, and follow the long odds from a hit in the lab to a medicine on the shelf.`,
+  description: r`A medicine is a molecule shaped to fit a particular protein, strongly enough to change what it does, and then it has to survive the journey through the body. Decorate a drug to fit a binding pocket, turn binding energies into dissociation constants, read dose–response curves, use Lipinski's rules to judge whether a pill can be absorbed, design a dosing schedule that keeps a drug in its therapeutic window, and follow the long odds from a hit in the lab to a medicine on the shelf.
+
+This course is for learning only, not medical advice.`,
   prereq: 'Molecules of Life, and Acids, Bases & Buffers',
   chapters: [
     {

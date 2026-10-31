@@ -1060,11 +1060,52 @@ button.tcard:active {
 .text-page h2 {
   margin-top: 36px;
   font-size: 22px;
+  scroll-margin-top: 100px;
 }
 .text-page p {
   margin-top: 14px;
   color: var(--ink-2);
   line-height: 1.6;
+}
+
+.contact-form {
+  scroll-margin-top: 140px;
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.contact-form label {
+  margin-top: 8px;
+  font-weight: 650;
+}
+.contact-form .field {
+  width: 100%;
+  padding: 12px 16px;
+  font: inherit;
+  color: var(--ink);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  border: 2px solid var(--line-2);
+  outline: none;
+  transition: border-color var(--t-fast) var(--ease);
+}
+.contact-form .field:focus {
+  border-color: var(--select);
+}
+.contact-form textarea.field {
+  resize: vertical;
+}
+.contact-form .btn {
+  margin-top: 12px;
+}
+.contact-trap {
+  position: absolute;
+  left: -9999px;
+}
+.text-page .contact-status {
+  margin-top: 8px;
+  color: var(--ink-2);
 }
 
 /* A lesson's outline, written into its page for search engines and browsers without JavaScript.

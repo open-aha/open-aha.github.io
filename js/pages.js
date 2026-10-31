@@ -95,7 +95,7 @@ function header(active) {
 function footer() {
   return h('footer.site-footer',
     h('div.wrap',
-      h('div', { html: `<strong style="color:var(--ink)">OpenAha</strong>: free, interactive math and science for everyone. <a href="${paths.about()}">About</a> · <a href="${paths.legal()}">Impressum &amp; Privacy</a>` }),
+      h('div', { html: `<strong style="color:var(--ink)">OpenAha</strong>: free, interactive math and science for everyone. <a href="${paths.about()}">About</a> · <a href="${paths.legal()}">Impressum</a> · <a href="${paths.legal()}#privacy">Privacy</a>` }),
       h('div',
         h('button.btn.btn-ghost.btn-sm', {
           type: 'button',
@@ -243,25 +243,74 @@ export function aboutPage() {
   };
 }
 
-// ---------- legal notice (§ 18 MStV) and privacy (Art. 13 GDPR) ----------
+// ---------- contact form: posts to a Cloudflare Worker at contact.openaha.org that emails the inbox ----------
+const CONTACT_URL = 'https://contact.openaha.org';
+
+function contactForm() {
+  const email = h('input.field', { type: 'email', id: 'contact-email', name: 'email', required: true, maxlength: 200, autocomplete: 'email' });
+  const message = h('textarea.field', { id: 'contact-message', name: 'message', required: true, maxlength: 5000, rows: 6 });
+  // never shown to people: bots that fill in every field give themselves away
+  const trap = h('input', { type: 'text', name: 'website', tabindex: -1, autocomplete: 'off', 'aria-hidden': 'true', class: 'contact-trap' });
+  const send = h('button.btn', { type: 'submit' }, 'Send');
+  const status = h('p.contact-status', { role: 'status', 'aria-live': 'polite' });
+  // method post: should the script not run, the fields still never end up in the page address
+  const form = h('form.contact-form#contact', {
+    method: 'post',
+    onSubmit: async (e) => {
+      e.preventDefault();
+      send.disabled = true;
+      status.textContent = 'Sending…';
+      try {
+        const res = await fetch(CONTACT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.value, message: message.value, website: trap.value }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        form.replaceChildren(h('p.contact-status', { role: 'status' }, 'Thanks! Your message was sent, and we’ll answer by email.'));
+      } catch {
+        send.disabled = false;
+        status.innerHTML = `Sorry, that didn’t work. Please write to <a href="mailto:${EMAIL}">${EMAIL}</a> instead.`;
+      }
+    },
+  },
+    h('label', { for: 'contact-email' }, 'Your email'), email,
+    h('label', { for: 'contact-message' }, 'Message'), message,
+    trap, send, status);
+  return form;
+}
+
+// ---------- legal notice (§ 5 DDG, § 18 MStV) and privacy (Art. 13 GDPR) ----------
 export function legalPage() {
   const page = h('section.text-page.wrap',
     h('h1', 'Impressum'),
-    h('p', 'Information according to § 18 (1) MStV:'),
+    // English for the site's readers, German alongside for the German law it answers to
+    h('p', { html: 'Information according to § 5 DDG and § 18 (1) MStV:<br><span lang="de">Angaben gemäß § 5 DDG und § 18 Abs. 1 MStV:</span>' }),
     h('p', { html: 'Kiarash Parvizi<br>Altheimer Straße 56a<br>64807 Dieburg<br>Germany' }),
-    h('p', { html: `Email: <a href="mailto:${EMAIL}">${EMAIL}</a>` }),
-    h('h2', 'Privacy'),
+    h('p', { html: `Email / <span lang="de">E-Mail</span>: <a href="mailto:${EMAIL}">${EMAIL}</a><br>Contact form / <span lang="de">Kontaktformular</span>: <a href="#contact">below / <span lang="de">unten</span></a>` }),
+    h('p', { html: 'Responsible for content according to § 18 (2) MStV: Kiarash Parvizi, address as above.<br><span lang="de">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Kiarash Parvizi, Anschrift wie oben.</span>' }),
+    h('h2', 'Contact'),
+    h('p', 'Write to us here and we’ll answer by email.'),
+    contactForm(),
+    h('h2#privacy', 'Privacy'),
     h('p', 'Controller: Kiarash Parvizi, address above.'),
     h('p', { html: 'This site is hosted on GitHub Pages by GitHub, Inc. (USA). When you visit, GitHub logs your IP address for security purposes (Art. 6 (1) (f) GDPR: our legitimate interest in a secure, working website). The site cannot be delivered without it. GitHub keeps these logs as long as it needs them for security and publishes no fixed period. GitHub takes part in the EU-US Data Privacy Framework; see the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub Privacy Statement</a>.' }),
     h('p', 'Your progress, XP, streak, theme and how often a tip has been shown to you are saved only in your browser’s local storage, because the site needs them to work (§ 25 (2) no. 2 TDDDG). They are never sent to us or anyone else. You can delete them with “Reset progress” or by clearing this site’s data.'),
     h('p', 'There are no cookies, no analytics or visitor tracking, and no advertising.'),
+    h('p', 'The “Suggest an improvement” button opens GitHub in a new tab with your note filled in. Nothing is sent until you post it there yourself; the note is then public, and the GitHub Privacy Statement linked above applies.'),
+    h('p', { html: 'If you write to us by email or through the contact form, we use your email address and message only to answer you and for any follow-up (Art. 6 (1) (f) GDPR: our legitimate interest in replying to you). Giving us your email address is voluntary, but we need it to reply. We keep these messages at most three years after our last exchange (the general limitation period for legal claims, § 195 BGB), or delete them sooner if you ask. Email to our address and messages from the contact form are delivered by Cloudflare, Inc. (USA) to our inbox at Gmail by Google. When you send the form, your browser connects to Cloudflare, which also sees your IP address and uses it for one minute to stop the form being flooded. Cloudflare and Google take part in the EU-US Data Privacy Framework; see the <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">Cloudflare Privacy Policy</a> and the <a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a>.' }),
     h('p', 'You have the right to access, rectification, erasure, restriction of processing and data portability (Art. 15–18, 20 GDPR), and to lodge a complaint with a supervisory authority, such as the Hessian Commissioner for Data Protection and Freedom of Information (HBDI).'),
     h('p', { html: '<strong>Right to object:</strong> you can object at any time, on grounds relating to your particular situation, to processing of your data based on Art. 6 (1) (f) GDPR (Art. 21 GDPR).' }));
   return {
     // kept out of search results: it has no lessons, only the operator's postal address
     head: { title: 'Impressum & Privacy · OpenAha', description: 'Legal notice (Impressum) and privacy policy of OpenAha.', path: paths.legal(), noindex: true },
     body: [header(), h('main.page-enter', page), footer()],
-    mount: toTop,
+    // the footer's Privacy link and the Impressum's contact link point at sections of this page
+    mount: ({ hydrating }) => {
+      const target = location.hash && document.getElementById(location.hash.slice(1));
+      if (target) target.scrollIntoView();
+      else toTop({ hydrating });
+    },
   };
 }
 

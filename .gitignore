@@ -4,3 +4,5 @@ local-only/
 .DS_Store
 DESIGN.md
 _site/
+.wrangler/
+workers/
