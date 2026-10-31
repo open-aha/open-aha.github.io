@@ -321,6 +321,31 @@
   font-size: 20px;
   color: var(--ink-2);
 }
+.num-keys {
+  display: none;
+  gap: 8px;
+}
+@media (pointer: coarse) {
+  .num-keys:not([hidden]) {
+    display: flex;
+  }
+}
+.num-key {
+  width: 52px;
+  height: 52px;
+  font-size: 24px;
+  font-weight: 650;
+  color: var(--ink);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  border: 2px solid var(--line-2);
+  box-shadow: 0 4px 0 var(--edge);
+  cursor: pointer;
+}
+.num-key:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--edge);
+}
 
 /* ---------- order ---------- */
 .order-list {

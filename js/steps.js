@@ -90,10 +90,26 @@ const RENDERERS = {
         ctx.onReady();
       },
     });
+    // phone number pads have no "/" or "−" key, so touch screens get them as buttons
+    const typeKey = (k) => {
+      const a = input.selectionStart ?? input.value.length, b = input.selectionEnd ?? a;
+      input.value = input.value.slice(0, a) + k + input.value.slice(b);
+      input.focus();
+      input.setSelectionRange(a + 1, a + 1);
+      input.dispatchEvent(new Event('input'));
+    };
+    const keys = h('div.num-keys',
+      [['/', 'Fraction bar'], ['−', 'Minus sign']].map(([k, label]) => h('button.num-key', {
+        type: 'button',
+        'aria-label': label,
+        onMousedown: (e) => e.preventDefault(), // keep the keyboard open
+        onClick: () => typeKey(k),
+      }, k)));
     const row = h('div.numeric',
       step.lhs ? h('span.lhs', { html: mdi(step.lhs) }) : null,
       input,
-      step.unit ? h('span.unit', { html: mdi(step.unit) }) : null);
+      step.unit ? h('span.unit', { html: mdi(step.unit) }) : null,
+      keys);
     const el = h('section.step', header(step), fig, step.prompt ? h('div.prompt', { html: mdi(step.prompt) }) : null, row);
     setTimeout(() => {
       if (window.matchMedia('(hover: hover)').matches) input.focus({ preventScroll: true });
@@ -110,6 +126,7 @@ const RENDERERS = {
         input.classList.toggle('is-correct', ok);
         input.classList.toggle('is-wrong', !ok);
         input.disabled = ok;
+        keys.hidden = ok;
         let msg = null;
         if (!ok && step.wrong) {
           const w = step.wrong.find((w) => Math.abs(v - w.v) <= (w.tol ?? tol));
@@ -123,6 +140,7 @@ const RENDERERS = {
         input.classList.remove('is-wrong');
         input.classList.add('is-correct');
         input.disabled = true;
+        keys.hidden = true;
       },
       retry() {
         input.classList.remove('is-wrong');

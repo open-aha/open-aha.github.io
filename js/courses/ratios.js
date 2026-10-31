@@ -91,7 +91,7 @@ export default {
             {
               type: 'numeric',
               title: 'Add fractions',
-              prompt: r`What is $\tfrac12 + \tfrac13$? (Give a fraction.)`,
+              prompt: r`What is $\tfrac12 + \tfrac13$? (Type a fraction like 3/4.)`,
               answer: 5 / 6,
               tol: 0.002,
               wrong: [{ v: 2 / 5, tol: 0.002, why: r`You can't add tops and bottoms separately. Use a common denominator: $\tfrac36 + \tfrac26$.` }],
@@ -571,12 +571,12 @@ $$\frac{\text{new} - \text{old}}{\text{old}} \times 100\%.$$`,
               type: 'interactive',
               kicker: 'Try it',
               title: 'Undo a discount',
-              prompt: r`A £100 item is reduced by 25%. What percentage increase brings it back to exactly £100?`,
+              prompt: r`A £100 item is reduced by 50%. What percentage increase brings it back to exactly £100?`,
               widget: {
-                kind: 'graph', xmin: 0, xmax: 6, ymin: 0, ymax: 120, grid: false, axes: false, height: 240,
-                params: { p: { min: 0, max: 50, step: 0.1, value: 25, label: 'increase', color: 'teal', format: (v) => `${v.toFixed(1)}%` } },
+                kind: 'graph', xmin: 0, xmax: 6, ymin: 0, ymax: 140, grid: false, axes: false, height: 240,
+                params: { p: { min: 0, max: 150, step: 5, value: 50, label: 'increase', color: 'teal', format: (v) => `${v}%` } },
                 extra: ({ plot, p, s }) => {
-                  const vals = [[1, 100, 'blue', 'start'], [3, 75, 'coral', '−25%'], [5, 75 * (1 + p.p / 100), 'teal', `+${p.p.toFixed(1)}%`]];
+                  const vals = [[1, 100, 'blue', 'start'], [3, 50, 'coral', '−50%'], [5, 50 * (1 + p.p / 100), 'teal', `+${p.p}%`]];
                   const els = [], labels = [];
                   for (const [x, v, c, lab] of vals) {
                     els.push(s('rect', { x: plot.X(x - 0.6), y: plot.Y(v), width: plot.X(x + 0.6) - plot.X(x - 0.6), height: plot.Y(0) - plot.Y(v), rx: 5, class: `fl-${c}` }));
@@ -586,12 +586,12 @@ $$\frac{\text{new} - \text{old}}{\text{old}} \times 100\%.$$`,
                   els.push(s('line', { x1: plot.X(0), x2: plot.X(6), y1: plot.Y(100), y2: plot.Y(100), stroke: 'var(--ink-3)', 'stroke-width': 1.5, 'stroke-dasharray': '5 5' }), ...labels);
                   return els;
                 },
-                readout: (p) => r`$100 \times 0.75 \times ${(1 + p.p / 100).toFixed(3)} = ${(75 * (1 + p.p / 100)).toFixed(2)}$`,
-                goal: (p) => Math.abs(75 * (1 + p.p / 100) - 100) < 0.05,
-                hint: r`You need $75 \times m = 100$, so $m = \frac{100}{75}$.`,
-                solution: { p: 33.3 },
+                readout: (p) => r`$100 \times 0.5 \times ${(1 + p.p / 100).toFixed(2)} = ${(50 * (1 + p.p / 100)).toFixed(2)}$`,
+                goal: (p) => Math.abs(50 * (1 + p.p / 100) - 100) < 1e-9,
+                hint: r`You need $50 \times m = 100$, so $m = \frac{100}{50}$.`,
+                solution: { p: 100 },
               },
-              explain: r`You need a multiplier of $\frac{100}{75} = \frac43 \approx 1.333$: an increase of about **33.3%**, not 25%. The 25% cut was taken from £100; the rise is calculated on the smaller £75.`,
+              explain: r`You need a multiplier of $\frac{100}{50} = 2$: an increase of **100%**, not 50%. The 50% cut was taken from £100; the rise is calculated on the smaller £50. The same happens with any discount: undoing a 25% cut takes a rise of $\frac{100}{75} \approx 1.333$, about 33.3%.`,
             },
             {
               type: 'numeric',
@@ -616,7 +616,7 @@ $$\frac{\text{new} - \text{old}}{\text{old}} \times 100\%.$$`,
           recap: [
             'Up p% means × (1 + p/100). Down p% means × (1 − p/100). Successive changes multiply.',
             'Percent change is always measured from the old value.',
-            'To undo a discount, divide by the multiplier: −25% needs +33.3% to recover.',
+            'To undo a discount, divide by the multiplier: −50% needs +100% to recover, and −25% needs about +33.3%.',
           ],
         },
         {

@@ -5,6 +5,17 @@ const HOUSE = {
   nodes: [[220, 310, '1'], [380, 310, '2'], [220, 170, '3'], [380, 170, '4'], [300, 50, '5']],
   edges: [[0, 1], [0, 2], [1, 3], [2, 3], [2, 4], [3, 4], [0, 3], [1, 2]],
 };
+// the river, two islands and seven bridges of Königsberg
+const KONIGSBERG = {
+  kind: 'figure', w: 600, h: 300, label: 'The seven bridges of Königsberg',
+  draw: ({ s }) => [
+    s('path', { d: 'M0 120 C 150 100, 300 140, 600 115 L600 185 C 300 205, 150 165, 0 185 Z', class: 'fl-blue', opacity: 0.25 }),
+    s('ellipse', { cx: 230, cy: 152, rx: 70, ry: 26, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 2 }),
+    s('ellipse', { cx: 450, cy: 150, rx: 55, ry: 22, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 2 }),
+    ...[[195, 105, 195, 128], [265, 108, 265, 128], [195, 177, 195, 197], [265, 177, 265, 196], [450, 105, 450, 128], [450, 172, 450, 192], [300, 152, 395, 150]].map(([x1, y1, x2, y2]) => s('line', { x1, y1, x2, y2, stroke: 'var(--coral)', 'stroke-width': 9, 'stroke-linecap': 'round' })),
+    s('text', { x: 90, y: 70, class: 'lbl', text: 'North bank' }), s('text', { x: 90, y: 250, class: 'lbl', text: 'South bank' }),
+  ],
+};
 const pentagon = Array.from({ length: 5 }, (_, k) => {
   const a = -Math.PI / 2 + (2 * Math.PI * k) / 5;
   return [300 + 130 * Math.cos(a), 175 + 130 * Math.sin(a), ''];
@@ -147,16 +158,7 @@ export default {
               kicker: 'Warm-up',
               title: 'A Sunday stroll',
               body: r`The city of Königsberg had two islands linked to the riverbanks and to each other by seven bridges. Locals wondered: is there a walk that crosses every bridge **exactly once**?`,
-              widget: {
-                kind: 'figure', w: 600, h: 300, label: 'The seven bridges of Königsberg',
-                draw: ({ s }) => [
-                  s('path', { d: 'M0 120 C 150 100, 300 140, 600 115 L600 185 C 300 205, 150 165, 0 185 Z', class: 'fl-blue', opacity: 0.25 }),
-                  s('ellipse', { cx: 230, cy: 152, rx: 70, ry: 26, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 2 }),
-                  s('ellipse', { cx: 450, cy: 150, rx: 55, ry: 22, class: 'fl-surface', stroke: 'var(--ink-3)', 'stroke-width': 2 }),
-                  ...[[195, 105, 195, 128], [265, 108, 265, 128], [195, 177, 195, 197], [265, 177, 265, 196], [450, 105, 450, 128], [450, 172, 450, 192], [300, 152, 395, 150]].map(([x1, y1, x2, y2]) => s('line', { x1, y1, x2, y2, stroke: 'var(--coral)', 'stroke-width': 9, 'stroke-linecap': 'round' })),
-                  s('text', { x: 90, y: 70, class: 'lbl', text: 'North bank' }), s('text', { x: 90, y: 250, class: 'lbl', text: 'South bank' }),
-                ],
-              },
+              widget: KONIGSBERG,
               prompt: 'Is there such a walk?',
               choices: [
                 { t: 'No: it’s impossible', ok: true },
@@ -210,6 +212,7 @@ In Königsberg, all four land masses had odd degree (5, 3, 3, 3). Hopeless.`,
               type: 'mcq',
               kicker: 'Challenge',
               title: 'Fix Königsberg',
+              widget: KONIGSBERG,
               prompt: 'What is the smallest number of new bridges that would make a walk crossing every bridge exactly once possible?',
               cols: 2,
               choices: [
